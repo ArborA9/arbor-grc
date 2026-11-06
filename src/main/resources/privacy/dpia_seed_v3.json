@@ -1,0 +1,354 @@
+{
+  "questions": [
+    {
+      "code": "A1",
+      "section": "Processing overview",
+      "principle": "General",
+      "question": "Describe, step by step, how personal data moves through this process: collection, use, storage, sharing and deletion.",
+      "guidance": "Go deeper than the ROPA description by covering each stage of the data lifecycle, e.g. 1. Applicant submits online form > 2. Data saved in the case management system > 3. Team verifies the details > 4. Data shared with a service provider where needed > 5. Record deleted at the end of the retention period. Attach a data flow diagram if available.",
+      "responseType": "FREE_TEXT_ATTACHMENT",
+      "options": []
+    },
+    {
+      "code": "A2",
+      "section": "Processing overview",
+      "principle": "General",
+      "question": "Does the process involve any of the following? List all that apply.",
+      "guidance": "Options: New technology or AI; Automated decisions about people; Systematic monitoring of individuals (e.g. video surveillance, tracking, location); Profiling; Children or vulnerable individuals; Combining data from different sources; None.",
+      "responseType": "MULTI_SELECT",
+      "options": [
+        "New technology or AI",
+        "Automated decisions about people",
+        "Systematic monitoring of individuals (e.g. video surveillance, tracking, location)",
+        "Profiling",
+        "Children or vulnerable individuals",
+        "Combining data from different sources",
+        "None"
+      ]
+    },
+    {
+      "code": "B1",
+      "section": "Purpose limitation",
+      "principle": "Purpose limitation",
+      "question": "What is the specific purpose of this processing? What business outcome does it achieve?",
+      "guidance": "Be specific. 'Improve services' is too vague; 'Verify an applicant's identity before issuing a permit or service' is clear.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "B2",
+      "section": "Purpose limitation",
+      "principle": "Purpose limitation",
+      "question": "Will the data be used for any other purpose, now or planned in the future?",
+      "guidance": "Examples: performance monitoring, analytics, marketing. If Yes, describe in the details column.",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "C1",
+      "section": "Data minimization",
+      "principle": "Data minimization",
+      "question": "For each personal and sensitive data item listed in ROPA, why is it needed? Could any item be removed, anonymized or pseudonymized?",
+      "guidance": "If you cannot explain why a data item is needed, it should probably not be collected.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "D1",
+      "section": "Fairness, necessity and proportionality",
+      "principle": "Fairness",
+      "question": "Is this processing necessary to achieve the purpose? Could the same result be achieved with less data or a less intrusive method?",
+      "guidance": "Describe any alternatives you considered and why they were rejected.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "D2",
+      "section": "Fairness, necessity and proportionality",
+      "principle": "Fairness",
+      "question": "Would the individuals reasonably expect their data to be used in this way?",
+      "guidance": "Consider what they were told and their relationship with the organization. Explain your answer in the details column.",
+      "responseType": "YES_NO_PARTLY",
+      "options": []
+    },
+    {
+      "code": "D3",
+      "section": "Fairness, necessity and proportionality",
+      "principle": "Fairness",
+      "question": "Could this processing negatively affect individuals?",
+      "guidance": "Examples: discrimination, financial loss, damage to reputation, loss of access to a service, distress. If Yes, describe.",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "E1",
+      "section": "Lawfulness",
+      "principle": "Lawfulness",
+      "question": "Why does the legal basis recorded in ROPA apply to this processing?",
+      "guidance": "Name the specific law, contract, obligation or consent mechanism that supports it.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "E2",
+      "section": "Lawfulness",
+      "principle": "Lawfulness",
+      "question": "If Consent is the legal basis: how is consent obtained, recorded and withdrawn?",
+      "guidance": "Attach the consent wording. Withdrawing consent must be as easy as giving it. Write N/A if consent is not used.",
+      "responseType": "FREE_TEXT_ATTACHMENT",
+      "options": []
+    },
+    {
+      "code": "E3",
+      "section": "Lawfulness",
+      "principle": "Lawfulness",
+      "question": "If sensitive data is processed: what additional justification or safeguard applies to it?",
+      "guidance": "Write N/A if ROPA lists no sensitive data.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "F1",
+      "section": "Transparency",
+      "principle": "Transparency",
+      "question": "How and when are individuals informed that their data is being processed?",
+      "guidance": "Examples: privacy notice, signage, form wording, contract clause, email. Attach a copy.",
+      "responseType": "FREE_TEXT_ATTACHMENT",
+      "options": []
+    },
+    {
+      "code": "F2",
+      "section": "Transparency",
+      "principle": "Transparency",
+      "question": "Does the notice explain the purpose, data collected, who it is shared with, how long it is kept, and how to exercise rights?",
+      "guidance": "If Partly, list what is missing.",
+      "responseType": "YES_NO_PARTLY",
+      "options": []
+    },
+    {
+      "code": "G1",
+      "section": "Accuracy",
+      "principle": "Accuracy",
+      "question": "How do you make sure the data is accurate and kept up to date?",
+      "guidance": "Examples: validation at entry, periodic review, sync with source system.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "G2",
+      "section": "Accuracy",
+      "principle": "Accuracy",
+      "question": "Can individuals ask for their data to be corrected?",
+      "guidance": "If Yes, describe how.",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "H1",
+      "section": "Storage limitation",
+      "principle": "Storage limitation",
+      "question": "How is the data deleted or anonymized at the end of the retention period recorded in ROPA, and who is responsible?",
+      "guidance": "State whether deletion is automatic or manual, and how it is evidenced.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "I1",
+      "section": "Security",
+      "principle": "Security",
+      "question": "For each system listed in ROPA, is it hosted on-premise or in the cloud, and in which country?",
+      "guidance": "List each system with its hosting type and country.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "I2",
+      "section": "Security",
+      "principle": "Security",
+      "question": "Who has access to the data, and how is access controlled?",
+      "guidance": "Approximate number of users, roles, approval process, and how often access is reviewed.",
+      "responseType": "FREE_TEXT",
+      "options": []
+    },
+    {
+      "code": "I3",
+      "section": "Security",
+      "principle": "Security",
+      "question": "Which technical security measures are in place?",
+      "guidance": "Options: Encryption at rest; Encryption in transit; Multi-factor authentication; Role-based access; Access logging/monitoring; Backup; Data masking; Other. Confirms in detail the general measures recorded in ROPA.",
+      "responseType": "MULTI_SELECT",
+      "options": [
+        "Encryption at rest",
+        "Encryption in transit",
+        "Multi-factor authentication",
+        "Role-based access",
+        "Access logging/monitoring",
+        "Backup",
+        "Data masking",
+        "Other. Confirms in detail the general measures recorded in ROPA"
+      ]
+    },
+    {
+      "code": "I4",
+      "section": "Security",
+      "principle": "Security",
+      "question": "Which organizational security measures are in place?",
+      "guidance": "Options: Policies/procedures; Staff privacy training; Confidentiality agreements; Periodic access review; Other.",
+      "responseType": "MULTI_SELECT",
+      "options": [
+        "Policies/procedures",
+        "Staff privacy training",
+        "Confidentiality agreements",
+        "Periodic access review",
+        "Other"
+      ]
+    },
+    {
+      "code": "I5",
+      "section": "Security",
+      "principle": "Security",
+      "question": "Has there been any security incident or data breach involving this process in the last 24 months?",
+      "guidance": "If Yes, describe briefly.",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "J1",
+      "section": "Third parties and cross-border transfer",
+      "principle": "Third party",
+      "question": "Is there a signed data processing or data sharing agreement with each external entity listed in ROPA?",
+      "guidance": "Attach the agreements. Write N/A in details if ROPA lists no external entities.",
+      "responseType": "YES_NO_PARTLY",
+      "options": []
+    },
+    {
+      "code": "J2",
+      "section": "Third parties and cross-border transfer",
+      "principle": "Cross-border transfer",
+      "question": "Apart from the transfers listed in ROPA, is the data stored, backed up or accessible outside the UAE?",
+      "guidance": "Examples: cloud hosting or backups abroad, remote access by overseas support teams. If Yes, list the countries.",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "K1",
+      "section": "Data subject rights",
+      "principle": "Data subject rights",
+      "question": "If an individual asks, can you give them a copy of their data (right of access)?",
+      "guidance": "",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "K2",
+      "section": "Data subject rights",
+      "principle": "Data subject rights",
+      "question": "Can you correct an individual's data on request (rectification)?",
+      "guidance": "",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "K3",
+      "section": "Data subject rights",
+      "principle": "Data subject rights",
+      "question": "Can you delete an individual's data on request (erasure)?",
+      "guidance": "If legal retention prevents deletion, explain.",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "K4",
+      "section": "Data subject rights",
+      "principle": "Data subject rights",
+      "question": "Can you restrict or stop processing of an individual's data on request (restriction / objection)?",
+      "guidance": "",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "K5",
+      "section": "Data subject rights",
+      "principle": "Data subject rights",
+      "question": "Can you export an individual's data in a common format (portability)?",
+      "guidance": "",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "K6",
+      "section": "Data subject rights",
+      "principle": "Data subject rights",
+      "question": "Are any decisions about individuals made automatically without human review?",
+      "guidance": "If Yes, describe the decision and any human review step.",
+      "responseType": "YES_NO",
+      "options": []
+    },
+    {
+      "code": "L1",
+      "section": "Declaration",
+      "principle": "Declaration",
+      "question": "I confirm the answers are complete and accurate to the best of my knowledge.",
+      "guidance": "Enter your name and date in the details column.",
+      "responseType": "CONFIRMATION",
+      "options": []
+    }
+  ],
+  "principles": [
+    {
+      "sortOrder": 1,
+      "principle": "Lawfulness",
+      "description": "Organization must have a lawful basis in place for processing and disclosing of Personal Data."
+    },
+    {
+      "sortOrder": 2,
+      "principle": "Purpose limitation",
+      "description": "Organization must: \n- have a specific purpose for Processing the Personal Data, which must be documented in the RoPA; \n- only collect and process Personal Data to fulfill a legitimate purpose, which is specified in the RoPA, and not process Personal Data beyond such a purpose."
+    },
+    {
+      "sortOrder": 3,
+      "principle": "Transparency",
+      "description": "Organization must be transparent, open and clear towards Data Subjects when Processing Personal Data."
+    },
+    {
+      "sortOrder": 4,
+      "principle": "Fairness",
+      "description": "Organization must process Personal Data only in ways that Data Subject would reasonably expect."
+    },
+    {
+      "sortOrder": 5,
+      "principle": "Data minimization",
+      "description": "Organization must only collect and process the minimum amount of Personal Data that is relevant, necessary, and adequate to fulfill the purposes for which it is processed."
+    },
+    {
+      "sortOrder": 6,
+      "principle": "Storage limitation",
+      "description": "Organization must only store/ process Personal Data for a specified time period, necessary for the purposes for which the Personal Data has been collected, unless Processing (storing) for a longer time is required by the applicable laws."
+    },
+    {
+      "sortOrder": 7,
+      "principle": "Accuracy",
+      "description": "Organization must:\u00a0\n- take reasonable measures to ensure that Personal Data is accurate and up to date (for example: it regularly reviews the Personal Data that it holds);\u00a0\n- provide an opportunity to individuals to correct and update their Personal Data, where necessary."
+    },
+    {
+      "sortOrder": 8,
+      "principle": "Security",
+      "description": "Organization must have in place appropriate technical and organizational measures to ensure security of Personal Data. Such measures shall protect the confidentiality, integrity and availability of Personal Data."
+    },
+    {
+      "sortOrder": 9,
+      "principle": "Accountability",
+      "description": "Organization must have appropriate measures and records in place to be able to demonstrate compliance with the PDPL."
+    },
+    {
+      "sortOrder": 10,
+      "principle": "Data Subject Rights",
+      "description": "Organization must ensure handling/responding the following rights:\n- Right to Information Right to Rectification and Erasure  \n- Right to Restrict Processing \n- Right to Data Portability \n- Right to Stop Processing / Objection \n- Rights in Relation to Automated Decisions \n- Right to Lodge a Complaint"
+    },
+    {
+      "sortOrder": 11,
+      "principle": "Third Party and Cross Border Transfer",
+      "description": "Organization must ensure the following measures in place:\nOrganization enters into Data Processing Agreements\nIf Organization transfers personal data outside UAE, transfer impact assessment is conducted and appropriate safeguards for lawful cross border data transfer are in place"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+# Build output
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+
+# Logs and local run state
+*.log
+.run/
+
+# Local env
+*.env
+.env
+application-local.yml
+
+# Node
+node_modules/
+dist/
+
+# Vite build copied into the JAR before mvn package (generated, do not commit)
+src/main/resources/static/

@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Azure / SQL Server profile.
+# Connection settings are supplied via environment variables (Key Vault in prod).
+# Activate with: --spring.profiles.active=azure
+# ---------------------------------------------------------------------------
+# App Service (UAT) and App Gateway (prod) terminate TLS. Trust X-Forwarded-* from that hop.
+server:
+  forward-headers-strategy: framework
+
+arbor:
+  jpa:
+    dialect: org.hibernate.dialect.SQLServerDialect
+  security:
+    jwt:
+      expiry-minutes: ${ARBOR_JWT_EXPIRY_MINUTES:60}
+    cors:
+      # Localhost entries merged from application.yml are dropped. Hosts come from App Settings.
+      drop-local-dev-origins: true
+      allowed-origins: "${ARBOR_CORS_ALLOWED_ORIGINS:https://app.arborgrc.com}"
+      allowed-origin-patterns: "${ARBOR_CORS_ALLOWED_ORIGIN_PATTERNS:https://*.arborgrc.com}"
+    password:
+      strict: true
+    demo-endpoints-enabled: false
+  tenancy:
+    vendor: sqlserver
+    # true: app CREATE DATABASE on provision (into elastic pool when elastic-pool-name is set).
+    create-database: ${ARBOR_TENANCY_CREATE_DATABASE:true}
+    elastic-pool-name: ${ARBOR_ELASTIC_POOL_NAME:}
+    # LOCAL keeps backups in the server region. Blank leaves the Azure default (GEO).
+    backup-storage-redundancy: ${ARBOR_BACKUP_STORAGE_REDUNDANCY:}
+    master-url: ${ARBOR_MASTER_URL:jdbc:sqlserver://localhost:1433;databaseName=master;encrypt=true;trustServerCertificate=true}
+    url-template: ${ARBOR_URL_TEMPLATE:jdbc:sqlserver://localhost:1433;databaseName=%s;encrypt=true;trustServerCertificate=true}
+    username: ${ARBOR_DB_USER:sa}
+    password: ${ARBOR_DB_PASSWORD:}
+    catalog-database: ${ARBOR_CATALOG_DB:arbor_catalog}
+    tenant-db-prefix: ${ARBOR_TENANT_DB_PREFIX:arbor_tenant_}
+  notifications:
+    email-delivery: ${ARBOR_EMAIL_DELIVERY:OUTBOX}
+    app-base-url: ${ARBOR_APP_BASE_URL:}
+    smtp:
+      host: ${ARBOR_SMTP_HOST:}
+      port: ${ARBOR_SMTP_PORT:587}
+      username: ${ARBOR_SMTP_USERNAME:}
+      password: ${ARBOR_SMTP_PASSWORD:}
+      from: ${ARBOR_SMTP_FROM:notifications@arborgrc.com}
+      starttls: ${ARBOR_SMTP_STARTTLS:true}
+    acs:
+      connection-string: ${ACS_CONNECTION_STRING:}
+      sender-address: ${ACS_SENDER_ADDRESS:notifications@arborgrc.com}
+  # Blob UAE North when connection string is set; keep local until then.
+  evidence:
+    storage: ${ARBOR_EVIDENCE_STORAGE:local}
+    blob-connection-string: ${ARBOR_EVIDENCE_BLOB_CONNECTION_STRING:}
+    blob-container: ${ARBOR_EVIDENCE_BLOB_CONTAINER:arbor-evidence}
+    virus-scan-on-upload: ${ARBOR_EVIDENCE_VIRUS_SCAN:PENDING}
+    block-download-unless-clean: ${ARBOR_EVIDENCE_BLOCK_UNSCANNED:true}
+    malware-webhook-token: ${ARBOR_MALWARE_WEBHOOK_TOKEN:}

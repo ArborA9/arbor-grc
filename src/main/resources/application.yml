@@ -1,0 +1,123 @@
+spring:
+  application:
+    name: arbor-grc
+  # We run Flyway manually (catalog once + per-tenant on provisioning), so disable auto-run.
+  flyway:
+    enabled: false
+  jpa:
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 26MB
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# ---------------------------------------------------------------------------
+# Default profile = local development using H2 (file-backed under .run/h2/, survives restart).
+# No external database required. Override with the 'azure' profile for SQL Server.
+# ---------------------------------------------------------------------------
+arbor:
+  security:
+    jwt:
+      # Dev-only secret (>= 32 bytes for HS256). In Azure this comes from Key Vault.
+      secret: ${ARBOR_JWT_SECRET:dev-only-secret-change-me-please-rotate-in-production-0123456789}
+      expiry-minutes: ${ARBOR_JWT_EXPIRY_MINUTES:480}
+    # First Super Admin (Arbor platform team) — seeded on startup if none exists.
+    # In production this is replaced by Arbor's internal Entra ID SSO.
+    super-admin:
+      email: ${ARBOR_SUPERADMIN_EMAIL:superadmin@arborgrc.local}
+      password: ${ARBOR_SUPERADMIN_PASSWORD:ChangeMe_SuperAdmin_123}
+      full-name: ${ARBOR_SUPERADMIN_NAME:Arbor Platform Admin}
+      # Blank = off.
+      reset-code: ${ARBOR_SUPERADMIN_RESET:}
+    # After a successful SSO handshake the backend redirects the browser back to the SPA with a
+    # short-lived JWT in the URL fragment. In dev the SPA runs on the Vite server (:5173); in prod
+    # it is same-origin, so set this to the public app URL.
+    sso:
+      frontend-base-url: ${ARBOR_FRONTEND_BASE_URL:http://localhost:5173}
+    rate-limit:
+      enabled: ${ARBOR_RATE_LIMIT_ENABLED:true}
+      auth-max-per-minute: ${ARBOR_AUTH_RATE_LIMIT:20}
+      otp-redeem-max-per-minute: ${ARBOR_OTP_RATE_LIMIT:10}
+      otp-max-failures: ${ARBOR_OTP_MAX_FAILURES:5}
+      otp-lockout-minutes: ${ARBOR_OTP_LOCKOUT_MINUTES:15}
+    sso-exchange:
+      code-ttl-seconds: ${ARBOR_SSO_CODE_TTL_SECONDS:60}
+    password:
+      strict: ${ARBOR_PASSWORD_STRICT:false}
+      min-length: 8
+    # ALL: any role may use a local password (local dev, E2E, UAT).
+    # OWNER_ONLY: after tenant SSO is on, only an Owner may use or re-arm local login (prod).
+    local-login-scope: ${ARBOR_LOCAL_LOGIN_SCOPE:ALL}
+    cors:
+      allowed-origins:
+        - http://localhost:5173
+        - http://127.0.0.1:5173
+    session:
+      validate-token-version: true
+    demo-endpoints-enabled: true
+  jpa:
+    dialect: org.hibernate.dialect.H2Dialect
+  frameworks:
+    # Module folders with framework Excels (Import V2). Override: ARBOR_FRAMEWORKS_DIR
+    dir: ${ARBOR_FRAMEWORKS_DIR:docs/frameworks}
+  tenancy:
+    vendor: h2
+    create-database: false
+    master-url: ""
+    url-template: ${ARBOR_TENANCY_URL_TEMPLATE:jdbc:h2:file:./.run/h2/%s;MODE=MSSQLServer;DATABASE_TO_UPPER=false}
+    username: sa
+    password: ""
+    catalog-database: arbor_catalog
+    tenant-db-prefix: arbor_tenant_
+  # Evidence files — local disk (default) or Azure Blob (storage=blob + connection string).
+  evidence:
+    storage: ${ARBOR_EVIDENCE_STORAGE:local}
+    storage-root: ${ARBOR_EVIDENCE_ROOT:.run/evidence}
+    blob-connection-string: ${ARBOR_EVIDENCE_BLOB_CONNECTION_STRING:}
+    blob-container: ${ARBOR_EVIDENCE_BLOB_CONTAINER:arbor-evidence}
+    max-file-bytes: ${ARBOR_EVIDENCE_MAX_BYTES:26214400}
+    allowed-extensions: pdf,docx,xlsx,png,jpg,jpeg
+    block-download-unless-clean: ${ARBOR_EVIDENCE_BLOCK_UNSCANNED:false}
+    # Never CLEAN without a scanner — SKIPPED (local) or PENDING (awaiting Defender/ClamAV).
+    virus-scan-on-upload: ${ARBOR_EVIDENCE_VIRUS_SCAN:SKIPPED}
+    malware-webhook-token: ${ARBOR_MALWARE_WEBHOOK_TOKEN:}
+    expiry-warn-days: 30
+    expiry-cron: "0 30 2 * * *"
+  # Notifications — default OUTBOX queues rows only (safe for local/E2E).
+  # SMTP: Mailhog/Mailtrap/UAT relay. ACS: Azure Communication Services (needs connection string).
+  notifications:
+    email-delivery: ${ARBOR_EMAIL_DELIVERY:OUTBOX}
+    app-base-url: ${ARBOR_APP_BASE_URL:}
+    smtp:
+      host: ${ARBOR_SMTP_HOST:}
+      port: ${ARBOR_SMTP_PORT:587}
+      username: ${ARBOR_SMTP_USERNAME:}
+      password: ${ARBOR_SMTP_PASSWORD:}
+      from: ${ARBOR_SMTP_FROM:notifications@arborgrc.local}
+      starttls: ${ARBOR_SMTP_STARTTLS:true}
+    acs:
+      connection-string: ${ACS_CONNECTION_STRING:}
+      sender-address: ${ACS_SENDER_ADDRESS:notifications@arborgrc.com}
+  # Locked audit PDF storage (Path C1). Local disk by default; blob reuse via evidence connection.
+  audit:
+    reports:
+      storage: ${ARBOR_AUDIT_REPORTS_STORAGE:local}
+      storage-root: ${ARBOR_AUDIT_REPORTS_ROOT:.run/audit-reports}
+      classification-footer: ${ARBOR_AUDIT_REPORTS_CLASSIFICATION:CONFIDENTIAL}
+    external-access:
+      expiry-days: ${ARBOR_AUDIT_EXTERNAL_EXPIRY_DAYS:7}
+      expose-credentials-in-response: ${ARBOR_AUDIT_EXTERNAL_EXPOSE_CREDS:true}
+
+logging:
+  level:
+    org.flywaydb: info
+    com.a9.arbor.grc.tenancy: debug

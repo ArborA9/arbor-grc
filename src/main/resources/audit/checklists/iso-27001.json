@@ -1,0 +1,990 @@
+{
+  "key": "ISO_27001",
+  "name": "Checklist ISO 27001",
+  "lines": [
+    {
+      "clauseRef": "4.1",
+      "section": "4 Context",
+      "title": "Understanding the organization and its context",
+      "testFocus": "External and internal issues relevant to information security are identified and kept current.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 ISMS scope document"
+    },
+    {
+      "clauseRef": "4.2",
+      "section": "4 Context",
+      "title": "Needs and expectations of interested parties",
+      "testFocus": "Interested parties and their information security requirements, including legal and regulatory, are identified.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 ISMS scope document"
+    },
+    {
+      "clauseRef": "4.3",
+      "section": "4 Context",
+      "title": "Determining the scope of the ISMS",
+      "testFocus": "Scope is documented, boundaries and interfaces are justified, and it matches what is actually operated.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 ISMS scope document"
+    },
+    {
+      "clauseRef": "4.4",
+      "section": "4 Context",
+      "title": "Information security management system",
+      "testFocus": "The ISMS and its processes are established, implemented, maintained and continually improved.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 ISMS scope document"
+    },
+    {
+      "clauseRef": "5.1",
+      "section": "5 Leadership",
+      "title": "Leadership and commitment",
+      "testFocus": "Top management demonstrates commitment - resources, direction, integration into business processes.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "5.2",
+      "section": "5 Leadership",
+      "title": "Policy",
+      "testFocus": "An information security policy exists, is appropriate, communicated and available to interested parties.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "5.3",
+      "section": "5 Leadership",
+      "title": "Organizational roles, responsibilities and authorities",
+      "testFocus": "Security roles are assigned, communicated and understood by the people holding them.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "6.1.1",
+      "section": "6 Planning",
+      "title": "Actions to address risks and opportunities - general",
+      "testFocus": "Risks and opportunities to the ISMS achieving its outcomes are determined and planned for.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Statement of Applicability"
+    },
+    {
+      "clauseRef": "6.1.2",
+      "section": "6 Planning",
+      "title": "Information security risk assessment",
+      "testFocus": "A defined, repeatable risk assessment process with criteria for acceptance and for performing assessment.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Statement of Applicability"
+    },
+    {
+      "clauseRef": "6.1.3",
+      "section": "6 Planning",
+      "title": "Information security risk treatment",
+      "testFocus": "Treatment options selected, controls determined, Statement of Applicability produced, owners accept residual risk.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Statement of Applicability"
+    },
+    {
+      "clauseRef": "6.2",
+      "section": "6 Planning",
+      "title": "Information security objectives and planning to achieve them",
+      "testFocus": "Objectives are measurable, monitored, communicated and supported by plans with resources and dates.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Statement of Applicability"
+    },
+    {
+      "clauseRef": "6.3",
+      "section": "6 Planning",
+      "title": "Planning of changes",
+      "testFocus": "Changes to the ISMS are carried out in a planned manner.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Statement of Applicability"
+    },
+    {
+      "clauseRef": "7.1",
+      "section": "7 Support",
+      "title": "Resources",
+      "testFocus": "Resources needed for the ISMS are determined and provided.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "7.2",
+      "section": "7 Support",
+      "title": "Competence",
+      "testFocus": "Competence requirements are defined, met, and evidence of competence is retained.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "7.3",
+      "section": "7 Support",
+      "title": "Awareness",
+      "testFocus": "Staff are aware of the policy, their contribution, and the consequences of not conforming.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "7.4",
+      "section": "7 Support",
+      "title": "Communication",
+      "testFocus": "Internal and external security communications are defined - what, when, with whom, by whom.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "7.5.1",
+      "section": "7 Support",
+      "title": "Documented information - general",
+      "testFocus": "The ISMS includes the documented information required by the standard and that needed for effectiveness.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "7.5.2",
+      "section": "7 Support",
+      "title": "Creating and updating documented information",
+      "testFocus": "Identification, format and review/approval of documents is controlled.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "7.5.3",
+      "section": "7 Support",
+      "title": "Control of documented information",
+      "testFocus": "Availability, protection, distribution, version control, retention and disposal are controlled.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "8.1",
+      "section": "8 Operation",
+      "title": "Operational planning and control",
+      "testFocus": "Processes are planned, implemented and controlled; outsourced processes are controlled.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Treatment plan"
+    },
+    {
+      "clauseRef": "8.2",
+      "section": "8 Operation",
+      "title": "Information security risk assessment (performance)",
+      "testFocus": "Risk assessments are performed at planned intervals and when significant change occurs; results retained.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Treatment plan"
+    },
+    {
+      "clauseRef": "8.3",
+      "section": "8 Operation",
+      "title": "Information security risk treatment (performance)",
+      "testFocus": "The risk treatment plan is implemented and results are retained.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "IS Risk Register \u00b7 Treatment plan"
+    },
+    {
+      "clauseRef": "9.1",
+      "section": "9 Performance",
+      "title": "Monitoring, measurement, analysis and evaluation",
+      "testFocus": "What is measured, by what method, when, by whom, and how results are evaluated.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 Management review records"
+    },
+    {
+      "clauseRef": "9.2.1",
+      "section": "9 Performance",
+      "title": "Internal audit - general",
+      "testFocus": "Internal audits are conducted at planned intervals against the standard and the department's own requirements.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 Management review records"
+    },
+    {
+      "clauseRef": "9.2.2",
+      "section": "9 Performance",
+      "title": "Internal audit programme",
+      "testFocus": "Programme covers frequency, methods, responsibilities, reporting; auditors are objective and impartial.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 Management review records"
+    },
+    {
+      "clauseRef": "9.3.1",
+      "section": "9 Performance",
+      "title": "Management review - general",
+      "testFocus": "Top management reviews the ISMS at planned intervals.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 Management review records"
+    },
+    {
+      "clauseRef": "9.3.2",
+      "section": "9 Performance",
+      "title": "Management review inputs",
+      "testFocus": "All required inputs are present, including audit results, risk status and interested party feedback.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 Management review records"
+    },
+    {
+      "clauseRef": "9.3.3",
+      "section": "9 Performance",
+      "title": "Management review results",
+      "testFocus": "Decisions on improvement and change are recorded and acted on.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 Management review records"
+    },
+    {
+      "clauseRef": "10.1",
+      "section": "10 Improvement",
+      "title": "Continual improvement",
+      "testFocus": "The suitability, adequacy and effectiveness of the ISMS is continually improved.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 CAPA tracker"
+    },
+    {
+      "clauseRef": "10.2",
+      "section": "10 Improvement",
+      "title": "Nonconformity and corrective action",
+      "testFocus": "Nonconformities are reacted to, root cause established, action taken and effectiveness reviewed; records kept.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Audit module \u00b7 CAPA tracker"
+    },
+    {
+      "clauseRef": "A.5.1",
+      "section": "A.5 Organizational controls",
+      "title": "Policies for information security",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.2",
+      "section": "A.5 Organizational controls",
+      "title": "Information security roles and responsibilities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.3",
+      "section": "A.5 Organizational controls",
+      "title": "Segregation of duties",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.4",
+      "section": "A.5 Organizational controls",
+      "title": "Management responsibilities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.5",
+      "section": "A.5 Organizational controls",
+      "title": "Contact with authorities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.6",
+      "section": "A.5 Organizational controls",
+      "title": "Contact with special interest groups",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.7",
+      "section": "A.5 Organizational controls",
+      "title": "Threat intelligence",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.8",
+      "section": "A.5 Organizational controls",
+      "title": "Information security in project management",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.9",
+      "section": "A.5 Organizational controls",
+      "title": "Inventory of information and other associated assets",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.10",
+      "section": "A.5 Organizational controls",
+      "title": "Acceptable use of information and other associated assets",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.11",
+      "section": "A.5 Organizational controls",
+      "title": "Return of assets",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.12",
+      "section": "A.5 Organizational controls",
+      "title": "Classification of information",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.13",
+      "section": "A.5 Organizational controls",
+      "title": "Labelling of information",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.14",
+      "section": "A.5 Organizational controls",
+      "title": "Information transfer",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.15",
+      "section": "A.5 Organizational controls",
+      "title": "Access control",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.16",
+      "section": "A.5 Organizational controls",
+      "title": "Identity management",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.17",
+      "section": "A.5 Organizational controls",
+      "title": "Authentication information",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.18",
+      "section": "A.5 Organizational controls",
+      "title": "Access rights",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.19",
+      "section": "A.5 Organizational controls",
+      "title": "Information security in supplier relationships",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.20",
+      "section": "A.5 Organizational controls",
+      "title": "Addressing information security within supplier agreements",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.21",
+      "section": "A.5 Organizational controls",
+      "title": "Managing information security in the ICT supply chain",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.22",
+      "section": "A.5 Organizational controls",
+      "title": "Monitoring, review and change management of supplier services",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.23",
+      "section": "A.5 Organizational controls",
+      "title": "Information security for use of cloud services",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.24",
+      "section": "A.5 Organizational controls",
+      "title": "Information security incident management planning and preparation",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.25",
+      "section": "A.5 Organizational controls",
+      "title": "Assessment and decision on information security events",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.26",
+      "section": "A.5 Organizational controls",
+      "title": "Response to information security incidents",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.27",
+      "section": "A.5 Organizational controls",
+      "title": "Learning from information security incidents",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.28",
+      "section": "A.5 Organizational controls",
+      "title": "Collection of evidence",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.29",
+      "section": "A.5 Organizational controls",
+      "title": "Information security during disruption",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.30",
+      "section": "A.5 Organizational controls",
+      "title": "ICT readiness for business continuity",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.31",
+      "section": "A.5 Organizational controls",
+      "title": "Legal, statutory, regulatory and contractual requirements",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.32",
+      "section": "A.5 Organizational controls",
+      "title": "Intellectual property rights",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.33",
+      "section": "A.5 Organizational controls",
+      "title": "Protection of records",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.34",
+      "section": "A.5 Organizational controls",
+      "title": "Privacy and protection of PII",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.35",
+      "section": "A.5 Organizational controls",
+      "title": "Independent review of information security",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.36",
+      "section": "A.5 Organizational controls",
+      "title": "Compliance with policies, rules and standards for information security",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.5.37",
+      "section": "A.5 Organizational controls",
+      "title": "Documented operating procedures",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Statement of Applicability \u00b7 Gap Assessment \u00b7 Supplier records"
+    },
+    {
+      "clauseRef": "A.6.1",
+      "section": "A.6 People controls",
+      "title": "Screening",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.6.2",
+      "section": "A.6 People controls",
+      "title": "Terms and conditions of employment",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.6.3",
+      "section": "A.6 People controls",
+      "title": "Information security awareness, education and training",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.6.4",
+      "section": "A.6 People controls",
+      "title": "Disciplinary process",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.6.5",
+      "section": "A.6 People controls",
+      "title": "Responsibilities after termination or change of employment",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.6.6",
+      "section": "A.6 People controls",
+      "title": "Confidentiality or non-disclosure agreements",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.6.7",
+      "section": "A.6 People controls",
+      "title": "Remote working",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.6.8",
+      "section": "A.6 People controls",
+      "title": "Information security event reporting",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 HR and training records"
+    },
+    {
+      "clauseRef": "A.7.1",
+      "section": "A.7 Physical controls",
+      "title": "Physical security perimeters",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.2",
+      "section": "A.7 Physical controls",
+      "title": "Physical entry",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.3",
+      "section": "A.7 Physical controls",
+      "title": "Securing offices, rooms and facilities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.4",
+      "section": "A.7 Physical controls",
+      "title": "Physical security monitoring",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.5",
+      "section": "A.7 Physical controls",
+      "title": "Protecting against physical and environmental threats",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.6",
+      "section": "A.7 Physical controls",
+      "title": "Working in secure areas",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.7",
+      "section": "A.7 Physical controls",
+      "title": "Clear desk and clear screen",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.8",
+      "section": "A.7 Physical controls",
+      "title": "Equipment siting and protection",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.9",
+      "section": "A.7 Physical controls",
+      "title": "Security of assets off-premises",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.10",
+      "section": "A.7 Physical controls",
+      "title": "Storage media",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.11",
+      "section": "A.7 Physical controls",
+      "title": "Supporting utilities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.12",
+      "section": "A.7 Physical controls",
+      "title": "Cabling security",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.13",
+      "section": "A.7 Physical controls",
+      "title": "Equipment maintenance",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.7.14",
+      "section": "A.7 Physical controls",
+      "title": "Secure disposal or re-use of equipment",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "A.8.1",
+      "section": "A.8 Technological controls",
+      "title": "User endpoint devices",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.2",
+      "section": "A.8 Technological controls",
+      "title": "Privileged access rights",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.3",
+      "section": "A.8 Technological controls",
+      "title": "Information access restriction",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.4",
+      "section": "A.8 Technological controls",
+      "title": "Access to source code",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.5",
+      "section": "A.8 Technological controls",
+      "title": "Secure authentication",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.6",
+      "section": "A.8 Technological controls",
+      "title": "Capacity management",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.7",
+      "section": "A.8 Technological controls",
+      "title": "Protection against malware",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.8",
+      "section": "A.8 Technological controls",
+      "title": "Management of technical vulnerabilities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.9",
+      "section": "A.8 Technological controls",
+      "title": "Configuration management",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.10",
+      "section": "A.8 Technological controls",
+      "title": "Information deletion",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.11",
+      "section": "A.8 Technological controls",
+      "title": "Data masking",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.12",
+      "section": "A.8 Technological controls",
+      "title": "Data leakage prevention",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.13",
+      "section": "A.8 Technological controls",
+      "title": "Information backup",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.14",
+      "section": "A.8 Technological controls",
+      "title": "Redundancy of information processing facilities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.15",
+      "section": "A.8 Technological controls",
+      "title": "Logging",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.16",
+      "section": "A.8 Technological controls",
+      "title": "Monitoring activities",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.17",
+      "section": "A.8 Technological controls",
+      "title": "Clock synchronization",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.18",
+      "section": "A.8 Technological controls",
+      "title": "Use of privileged utility programs",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.19",
+      "section": "A.8 Technological controls",
+      "title": "Installation of software on operational systems",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.20",
+      "section": "A.8 Technological controls",
+      "title": "Networks security",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.21",
+      "section": "A.8 Technological controls",
+      "title": "Security of network services",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.22",
+      "section": "A.8 Technological controls",
+      "title": "Segregation of networks",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.23",
+      "section": "A.8 Technological controls",
+      "title": "Web filtering",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.24",
+      "section": "A.8 Technological controls",
+      "title": "Use of cryptography",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.25",
+      "section": "A.8 Technological controls",
+      "title": "Secure development life cycle",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.26",
+      "section": "A.8 Technological controls",
+      "title": "Application security requirements",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.27",
+      "section": "A.8 Technological controls",
+      "title": "Secure system architecture and engineering principles",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.28",
+      "section": "A.8 Technological controls",
+      "title": "Secure coding",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.29",
+      "section": "A.8 Technological controls",
+      "title": "Security testing in development and acceptance",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.30",
+      "section": "A.8 Technological controls",
+      "title": "Outsourced development",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.31",
+      "section": "A.8 Technological controls",
+      "title": "Separation of development, test and production environments",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.32",
+      "section": "A.8 Technological controls",
+      "title": "Change management",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.33",
+      "section": "A.8 Technological controls",
+      "title": "Test information",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    },
+    {
+      "clauseRef": "A.8.34",
+      "section": "A.8 Technological controls",
+      "title": "Protection of information systems during audit testing",
+      "testFocus": "Control is implemented as declared in the Statement of Applicability, and is operating.",
+      "soaApplicability": "Per Statement of Applicability",
+      "evidenceLives": "Gap Assessment \u00b7 Technical control evidence"
+    }
+  ]
+}

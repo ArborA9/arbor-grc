@@ -1,0 +1,478 @@
+{
+  "key": "UAE_IA",
+  "name": "Checklist UAE IA",
+  "lines": [
+    {
+      "clauseRef": "M1.1",
+      "section": "M1 Strategy and Planning",
+      "title": "Information Security Strategy",
+      "testFocus": "A documented strategy exists, is approved at executive level and is aligned to entity objectives.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment (UAE IA) \u00b7 Governance records"
+    },
+    {
+      "clauseRef": "M1.2",
+      "section": "M1 Strategy and Planning",
+      "title": "Information Security Governance and Roles",
+      "testFocus": "A governance body meets, security roles are formally assigned and authority is clear.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment (UAE IA) \u00b7 Governance records"
+    },
+    {
+      "clauseRef": "M1.3",
+      "section": "M1 Strategy and Planning",
+      "title": "Information Security Programme and Plan",
+      "testFocus": "A costed, dated implementation plan exists and progress against it is reported.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment (UAE IA) \u00b7 Governance records"
+    },
+    {
+      "clauseRef": "M1.4",
+      "section": "M1 Strategy and Planning",
+      "title": "Resourcing and Budget",
+      "testFocus": "Budget and people are allocated to the programme and are sufficient for the priority level claimed.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment (UAE IA) \u00b7 Governance records"
+    },
+    {
+      "clauseRef": "M2.1",
+      "section": "M2 Information Security Risk Management",
+      "title": "Risk Management Framework",
+      "testFocus": "A documented framework defines method, scale, criteria, roles and frequency.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "IS Risk Register \u00b7 Enterprise Risk Register"
+    },
+    {
+      "clauseRef": "M2.2",
+      "section": "M2 Information Security Risk Management",
+      "title": "Risk Assessment",
+      "testFocus": "Assessments are performed for assets in scope, are current, and cover threats and vulnerabilities.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "IS Risk Register \u00b7 Enterprise Risk Register"
+    },
+    {
+      "clauseRef": "M2.3",
+      "section": "M2 Information Security Risk Management",
+      "title": "Risk Treatment and Acceptance",
+      "testFocus": "Treatment plans have owners and dates; residual risk is formally accepted by the risk owner.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "IS Risk Register \u00b7 Enterprise Risk Register"
+    },
+    {
+      "clauseRef": "M2.4",
+      "section": "M2 Information Security Risk Management",
+      "title": "Risk Monitoring and Review",
+      "testFocus": "Risks are reviewed at defined intervals and after significant change; the register is live, not annual.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "IS Risk Register \u00b7 Enterprise Risk Register"
+    },
+    {
+      "clauseRef": "M3.1",
+      "section": "M3 Awareness and Training",
+      "title": "Awareness Programme",
+      "testFocus": "A programme exists, reaches all staff and contractors, and is refreshed.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "M3.2",
+      "section": "M3 Awareness and Training",
+      "title": "Role-based Training",
+      "testFocus": "Staff in security-relevant roles receive training specific to those roles; records are retained.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "M3.3",
+      "section": "M3 Awareness and Training",
+      "title": "Effectiveness Measurement",
+      "testFocus": "Awareness effectiveness is measured, not just attendance - testing, phishing simulation, incident trend.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 Training records"
+    },
+    {
+      "clauseRef": "M4.1",
+      "section": "M4 Human Resources Security",
+      "title": "Prior to Employment",
+      "testFocus": "Screening proportionate to the role and to the classification of information handled.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 HR records"
+    },
+    {
+      "clauseRef": "M4.2",
+      "section": "M4 Human Resources Security",
+      "title": "During Employment",
+      "testFocus": "Terms of employment carry security obligations; a disciplinary process exists and is used.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 HR records"
+    },
+    {
+      "clauseRef": "M4.3",
+      "section": "M4 Human Resources Security",
+      "title": "Termination or Change of Employment",
+      "testFocus": "Access revoked, assets returned, obligations that survive employment are communicated.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 HR records"
+    },
+    {
+      "clauseRef": "M5.1",
+      "section": "M5 Compliance",
+      "title": "Legal, Regulatory and Contractual Requirements",
+      "testFocus": "Applicable UAE law, regulator direction and contract terms are identified and tracked.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 Privacy (ROPA, DPIA) \u00b7 Legal register"
+    },
+    {
+      "clauseRef": "M5.2",
+      "section": "M5 Compliance",
+      "title": "Compliance with Security Policies and Standards",
+      "testFocus": "Technical and procedural compliance is checked, not assumed; deviations are recorded.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 Privacy (ROPA, DPIA) \u00b7 Legal register"
+    },
+    {
+      "clauseRef": "M5.3",
+      "section": "M5 Compliance",
+      "title": "Information Systems Audit Considerations",
+      "testFocus": "Audit activity on live systems is planned and controlled so it does not disrupt the service.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 Privacy (ROPA, DPIA) \u00b7 Legal register"
+    },
+    {
+      "clauseRef": "M5.4",
+      "section": "M5 Compliance",
+      "title": "Protection of Records and Privacy",
+      "testFocus": "Records are protected against loss and falsification; personal data handled per applicable law.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Gap Assessment \u00b7 Privacy (ROPA, DPIA) \u00b7 Legal register"
+    },
+    {
+      "clauseRef": "M6.1",
+      "section": "M6 Performance Evaluation and Improvement",
+      "title": "Monitoring and Measurement",
+      "testFocus": "Security performance indicators are defined, collected and reported to management.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Audit module \u00b7 CAPA tracker \u00b7 Management review"
+    },
+    {
+      "clauseRef": "M6.2",
+      "section": "M6 Performance Evaluation and Improvement",
+      "title": "Internal Audit",
+      "testFocus": "An internal audit programme covers the IA controls and auditors are independent of what they audit.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Audit module \u00b7 CAPA tracker \u00b7 Management review"
+    },
+    {
+      "clauseRef": "M6.3",
+      "section": "M6 Performance Evaluation and Improvement",
+      "title": "Management Review",
+      "testFocus": "Executive review at planned intervals with defined inputs and recorded decisions.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Audit module \u00b7 CAPA tracker \u00b7 Management review"
+    },
+    {
+      "clauseRef": "M6.4",
+      "section": "M6 Performance Evaluation and Improvement",
+      "title": "Corrective Action and Continual Improvement",
+      "testFocus": "Nonconformities are recorded, root cause established, actions tracked to verified closure.",
+      "soaApplicability": "Management control",
+      "evidenceLives": "Audit module \u00b7 CAPA tracker \u00b7 Management review"
+    },
+    {
+      "clauseRef": "T1.1",
+      "section": "T1 Asset Management",
+      "title": "Inventory and Ownership of Assets",
+      "testFocus": "A current inventory of information assets with a named owner for each.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "T1.2",
+      "section": "T1 Asset Management",
+      "title": "Acceptable Use",
+      "testFocus": "Rules for acceptable use are documented, communicated and acknowledged.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "T1.3",
+      "section": "T1 Asset Management",
+      "title": "Information Classification and Labelling",
+      "testFocus": "A classification scheme is applied and labelling is visible in practice, not only in policy.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "T1.4",
+      "section": "T1 Asset Management",
+      "title": "Media Handling and Disposal",
+      "testFocus": "Removable media is controlled, transported securely and disposed of so data cannot be recovered.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "T2.1",
+      "section": "T2 Physical and Environmental Security",
+      "title": "Secure Areas and Physical Entry",
+      "testFocus": "Perimeters defined, entry controlled and logged, visitors escorted.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "T2.2",
+      "section": "T2 Physical and Environmental Security",
+      "title": "Equipment Security and Siting",
+      "testFocus": "Equipment is sited and protected against unauthorised access and environmental hazard.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "T2.3",
+      "section": "T2 Physical and Environmental Security",
+      "title": "Supporting Utilities and Environmental Threats",
+      "testFocus": "Power, cooling and fire protection are adequate, maintained and tested.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "T2.4",
+      "section": "T2 Physical and Environmental Security",
+      "title": "Secure Disposal and Off-premises Assets",
+      "testFocus": "Assets leaving the premises are authorised and protected; disposal is certified.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Facilities records"
+    },
+    {
+      "clauseRef": "T3.1",
+      "section": "T3 Operations Management",
+      "title": "Operational Procedures and Responsibilities",
+      "testFocus": "Documented operating procedures exist, are current, and segregation of duties is applied.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Operations evidence"
+    },
+    {
+      "clauseRef": "T3.2",
+      "section": "T3 Operations Management",
+      "title": "Change and Capacity Management",
+      "testFocus": "Changes are assessed, approved and recorded; capacity is monitored against requirement.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Operations evidence"
+    },
+    {
+      "clauseRef": "T3.3",
+      "section": "T3 Operations Management",
+      "title": "Protection from Malicious Code",
+      "testFocus": "Anti-malware is deployed, current across the estate, and exceptions are known.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Operations evidence"
+    },
+    {
+      "clauseRef": "T3.4",
+      "section": "T3 Operations Management",
+      "title": "Backup",
+      "testFocus": "Backups are taken per policy, protected, and - the point most audits fail - restore-tested.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Operations evidence"
+    },
+    {
+      "clauseRef": "T3.5",
+      "section": "T3 Operations Management",
+      "title": "Logging and Monitoring",
+      "testFocus": "Security events are logged, logs are protected from alteration, and someone actually reviews them.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Operations evidence"
+    },
+    {
+      "clauseRef": "T3.6",
+      "section": "T3 Operations Management",
+      "title": "Technical Vulnerability Management",
+      "testFocus": "Vulnerabilities are identified, risk-rated and remediated within defined timescales.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Operations evidence"
+    },
+    {
+      "clauseRef": "T4.1",
+      "section": "T4 Communications",
+      "title": "Network Security Management",
+      "testFocus": "Networks are managed and controlled; security features of network services are defined.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Network documentation"
+    },
+    {
+      "clauseRef": "T4.2",
+      "section": "T4 Communications",
+      "title": "Information Transfer and Exchange",
+      "testFocus": "Transfer of information inside and outside the entity is governed by policy and agreement.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Network documentation"
+    },
+    {
+      "clauseRef": "T4.3",
+      "section": "T4 Communications",
+      "title": "Electronic Messaging and Public Services",
+      "testFocus": "Messaging and publicly available information are protected against interception and alteration.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Network documentation"
+    },
+    {
+      "clauseRef": "T5.1",
+      "section": "T5 Access Control",
+      "title": "Access Control Policy",
+      "testFocus": "A policy exists based on business and security requirements, and reflects least privilege.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Access review records"
+    },
+    {
+      "clauseRef": "T5.2",
+      "section": "T5 Access Control",
+      "title": "User Access Management and Privileged Access",
+      "testFocus": "Provisioning, review and revocation are controlled; privileged accounts are restricted and reviewed.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Access review records"
+    },
+    {
+      "clauseRef": "T5.3",
+      "section": "T5 Access Control",
+      "title": "User Responsibilities and Authentication",
+      "testFocus": "Authentication is adequate for the classification; users understand their obligations.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Access review records"
+    },
+    {
+      "clauseRef": "T5.4",
+      "section": "T5 Access Control",
+      "title": "Network Access Control",
+      "testFocus": "Access to networks and network services is authorised and enforced.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Access review records"
+    },
+    {
+      "clauseRef": "T5.5",
+      "section": "T5 Access Control",
+      "title": "Operating System and Application Access Control",
+      "testFocus": "Access at OS and application layer is restricted, and utility programs are controlled.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Access review records"
+    },
+    {
+      "clauseRef": "T5.6",
+      "section": "T5 Access Control",
+      "title": "Mobile Computing and Teleworking",
+      "testFocus": "Mobile devices and remote working are governed by policy and technical control.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Access review records"
+    },
+    {
+      "clauseRef": "T6.1",
+      "section": "T6 Third-Party Security",
+      "title": "Third-Party Risk Identification and Agreements",
+      "testFocus": "Risks from third-party access are assessed and security terms are in the agreement.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier register"
+    },
+    {
+      "clauseRef": "T6.2",
+      "section": "T6 Third-Party Security",
+      "title": "Third-Party Service Delivery Monitoring",
+      "testFocus": "Delivery, reports and records from third parties are monitored and reviewed.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier register"
+    },
+    {
+      "clauseRef": "T6.3",
+      "section": "T6 Third-Party Security",
+      "title": "Managing Changes to Third-Party Services",
+      "testFocus": "Changes to third-party services are managed with regard to the criticality of what they support.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier register"
+    },
+    {
+      "clauseRef": "T7.1",
+      "section": "T7 Information Systems Acquisition, Development and Maintenance",
+      "title": "Security Requirements of Information Systems",
+      "testFocus": "Security requirements are stated in the specification before build or purchase.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Project and development records"
+    },
+    {
+      "clauseRef": "T7.2",
+      "section": "T7 Information Systems Acquisition, Development and Maintenance",
+      "title": "Correct Processing in Applications",
+      "testFocus": "Input, processing and output validation prevent corruption and misuse.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Project and development records"
+    },
+    {
+      "clauseRef": "T7.3",
+      "section": "T7 Information Systems Acquisition, Development and Maintenance",
+      "title": "Cryptographic Controls",
+      "testFocus": "A policy on cryptography exists and key management is defined and practised.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Project and development records"
+    },
+    {
+      "clauseRef": "T7.4",
+      "section": "T7 Information Systems Acquisition, Development and Maintenance",
+      "title": "Security of System Files and Test Data",
+      "testFocus": "Operational software is controlled; test data is selected and protected, not live data by default.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Project and development records"
+    },
+    {
+      "clauseRef": "T7.5",
+      "section": "T7 Information Systems Acquisition, Development and Maintenance",
+      "title": "Security in Development and Support Processes",
+      "testFocus": "Secure development, change control within development, and outsourced development oversight.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Project and development records"
+    },
+    {
+      "clauseRef": "T8.1",
+      "section": "T8 Information Security Incident Management",
+      "title": "Reporting Events and Weaknesses",
+      "testFocus": "Staff know how to report, and do report; the channel is available and used.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Incident records"
+    },
+    {
+      "clauseRef": "T8.2",
+      "section": "T8 Information Security Incident Management",
+      "title": "Incident Response and Management",
+      "testFocus": "Responsibilities and procedures exist; incidents are classified, escalated and resolved.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Incident records"
+    },
+    {
+      "clauseRef": "T8.3",
+      "section": "T8 Information Security Incident Management",
+      "title": "Learning, Evidence Collection and Improvement",
+      "testFocus": "Evidence is collected in a way that would stand up; lessons change the controls.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "Gap Assessment \u00b7 Incident records"
+    },
+    {
+      "clauseRef": "T9.1",
+      "section": "T9 Information Security Continuity Management",
+      "title": "Continuity Planning and Business Impact Analysis",
+      "testFocus": "BIA identifies critical services and recovery objectives; security is part of the continuity plan.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "BCMS including BIA \u00b7 Continuity test records"
+    },
+    {
+      "clauseRef": "T9.2",
+      "section": "T9 Information Security Continuity Management",
+      "title": "Implementing Continuity for Information Security",
+      "testFocus": "Controls remain effective during disruption, or compensating controls are defined.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "BCMS including BIA \u00b7 Continuity test records"
+    },
+    {
+      "clauseRef": "T9.3",
+      "section": "T9 Information Security Continuity Management",
+      "title": "Testing, Maintenance and Review",
+      "testFocus": "Plans are tested at planned intervals, results recorded and plans updated.",
+      "soaApplicability": "Technical control",
+      "evidenceLives": "BCMS including BIA \u00b7 Continuity test records"
+    }
+  ]
+}

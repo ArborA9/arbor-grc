@@ -1,0 +1,398 @@
+{
+  "key": "ISO_20000",
+  "name": "Checklist ISO 20000",
+  "lines": [
+    {
+      "clauseRef": "4.1",
+      "section": "4 Context",
+      "title": "Understanding the organization and its context",
+      "testFocus": "Internal and external issues affecting the service management system are identified.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "4.2",
+      "section": "4 Context",
+      "title": "Needs and expectations of interested parties",
+      "testFocus": "Customers, users, suppliers and other interested parties and their requirements are identified.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "4.3",
+      "section": "4 Context",
+      "title": "Determining the scope of the SMS",
+      "testFocus": "Scope states the services, the organizational units and the geography; exclusions are justified.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "4.4",
+      "section": "4 Context",
+      "title": "Service management system",
+      "testFocus": "The SMS is established, implemented, maintained and continually improved.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "5.1",
+      "section": "5 Leadership",
+      "title": "Leadership and commitment",
+      "testFocus": "Top management is accountable for the SMS, sets direction and provides resources.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "5.2",
+      "section": "5 Leadership",
+      "title": "Policy",
+      "testFocus": "A service management policy exists, is appropriate to the purpose, and is communicated.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "5.3",
+      "section": "5 Leadership",
+      "title": "Organizational roles, responsibilities and authorities",
+      "testFocus": "Roles for the SMS and for each service management process are assigned and understood.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "6.1",
+      "section": "6 Planning",
+      "title": "Actions to address risks and opportunities",
+      "testFocus": "Risks to the services and to the SMS are determined, and actions planned and evaluated.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "6.2",
+      "section": "6 Planning",
+      "title": "Service management objectives and planning",
+      "testFocus": "Objectives are measurable, consistent with the policy, monitored and communicated.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "6.3",
+      "section": "6 Planning",
+      "title": "Plan the SMS",
+      "testFocus": "A service management plan exists covering services, processes, resources, interfaces and timescales.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.1",
+      "section": "7 Support",
+      "title": "Resources",
+      "testFocus": "Human, technical, information and financial resources for the SMS are determined and provided.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.2",
+      "section": "7 Support",
+      "title": "Competence",
+      "testFocus": "Competence needs are defined, staff are competent, and evidence is retained.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.3",
+      "section": "7 Support",
+      "title": "Awareness",
+      "testFocus": "People are aware of the policy, objectives, their contribution and the consequences of not conforming.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.4",
+      "section": "7 Support",
+      "title": "Communication",
+      "testFocus": "Internal and external communication relevant to the SMS is determined and carried out.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.5.1",
+      "section": "7 Support",
+      "title": "Documented information - general",
+      "testFocus": "The SMS includes the documented information required and that needed for effectiveness.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.5.2",
+      "section": "7 Support",
+      "title": "Creating and updating documented information",
+      "testFocus": "Identification, format, review and approval of documents is controlled.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.5.3",
+      "section": "7 Support",
+      "title": "Control of documented information",
+      "testFocus": "Availability, protection, version control, retention and disposal are controlled.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.5.4",
+      "section": "7 Support",
+      "title": "Service management system documented information",
+      "testFocus": "The specific records the standard requires - plans, catalogue, SLAs, procedures - are present.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "7.6",
+      "section": "7 Support",
+      "title": "Knowledge",
+      "testFocus": "Knowledge needed for the operation of the services and the SMS is determined, maintained and available.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "8.1",
+      "section": "8 Operation",
+      "title": "Operational planning and control",
+      "testFocus": "Processes are planned, implemented, controlled and their criteria defined; outsourced processes controlled.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "8.2.1",
+      "section": "8.2 Service portfolio",
+      "title": "Service delivery",
+      "testFocus": "Services delivered match the agreed scope; the organization retains accountability even where delegated.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Service catalogue \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "8.2.2",
+      "section": "8.2 Service portfolio",
+      "title": "Plan the services",
+      "testFocus": "New or changed services are planned including requirements, resources, timescales and acceptance criteria.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Service catalogue \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "8.2.3",
+      "section": "8.2 Service portfolio",
+      "title": "Control of parties involved in the service lifecycle",
+      "testFocus": "Internal groups, customers acting as suppliers and external suppliers are identified and governed.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Service catalogue \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "8.2.4",
+      "section": "8.2 Service portfolio",
+      "title": "Service catalogue management",
+      "testFocus": "A service catalogue is created, maintained and made available to the relevant parties.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Service catalogue \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "8.2.5",
+      "section": "8.2 Service portfolio",
+      "title": "Asset management",
+      "testFocus": "Assets used to deliver services are managed to meet service requirements and obligations.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Service catalogue \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "8.2.6",
+      "section": "8.2 Service portfolio",
+      "title": "Configuration management",
+      "testFocus": "CIs are defined, recorded, controlled, verified and the CMDB is accurate.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Service catalogue \u00b7 Asset register"
+    },
+    {
+      "clauseRef": "8.3.1",
+      "section": "8.3 Relationship & agreement",
+      "title": "General",
+      "testFocus": "Interested parties, services and the parties delivering them are identified and documented.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier records \u00b7 SLA library"
+    },
+    {
+      "clauseRef": "8.3.2",
+      "section": "8.3 Relationship & agreement",
+      "title": "Business relationship management",
+      "testFocus": "A named contact, a communication mechanism, customer satisfaction measurement and complaints handling.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier records \u00b7 SLA library"
+    },
+    {
+      "clauseRef": "8.3.3",
+      "section": "8.3 Relationship & agreement",
+      "title": "Service level management",
+      "testFocus": "Services have SLAs with targets and workload characteristics; performance is monitored and reviewed.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier records \u00b7 SLA library"
+    },
+    {
+      "clauseRef": "8.3.4.1",
+      "section": "8.3 Relationship & agreement",
+      "title": "Management of external suppliers",
+      "testFocus": "Documented agreements, defined interfaces, performance monitoring and dispute handling.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier records \u00b7 SLA library"
+    },
+    {
+      "clauseRef": "8.3.4.2",
+      "section": "8.3 Relationship & agreement",
+      "title": "Management of internal suppliers and customers acting as suppliers",
+      "testFocus": "Documented agreements with internal groups, and performance monitored on the same basis.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Supplier records \u00b7 SLA library"
+    },
+    {
+      "clauseRef": "8.4.1",
+      "section": "8.4 Supply & demand",
+      "title": "Budgeting and accounting for services",
+      "testFocus": "Costs are budgeted, tracked against budget and reported; cost of services can be evidenced.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Capacity and budget records"
+    },
+    {
+      "clauseRef": "8.4.2",
+      "section": "8.4 Supply & demand",
+      "title": "Demand management",
+      "testFocus": "Current and forecast demand is determined and monitored, and capacity influenced accordingly.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Capacity and budget records"
+    },
+    {
+      "clauseRef": "8.4.3",
+      "section": "8.4 Supply & demand",
+      "title": "Capacity management",
+      "testFocus": "Capacity requirements are determined, resources planned, and capacity monitored against requirements.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Capacity and budget records"
+    },
+    {
+      "clauseRef": "8.5.1",
+      "section": "8.5 Design, build, transition",
+      "title": "Change management",
+      "testFocus": "Change policy, recording, assessment, approval, scheduling and post-implementation review.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Change records"
+    },
+    {
+      "clauseRef": "8.5.2",
+      "section": "8.5 Design, build, transition",
+      "title": "Service design and transition",
+      "testFocus": "New or changed services are designed, built and tested against documented requirements before release.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Change records"
+    },
+    {
+      "clauseRef": "8.5.3",
+      "section": "8.5 Design, build, transition",
+      "title": "Release and deployment management",
+      "testFocus": "Release policy, controlled deployment into live, verification of success and rollback where needed.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Change records"
+    },
+    {
+      "clauseRef": "8.6.1",
+      "section": "8.6 Resolution & fulfilment",
+      "title": "Incident management",
+      "testFocus": "Recording, classification, prioritisation, escalation, resolution and closure; major incidents defined.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Incident and problem records"
+    },
+    {
+      "clauseRef": "8.6.2",
+      "section": "8.6 Resolution & fulfilment",
+      "title": "Service request management",
+      "testFocus": "Requests are recorded, classified, prioritised, fulfilled and closed against documented criteria.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Incident and problem records"
+    },
+    {
+      "clauseRef": "8.6.3",
+      "section": "8.6 Resolution & fulfilment",
+      "title": "Problem management",
+      "testFocus": "Problems identified from incident trends, root cause analysed, known errors recorded, actions tracked.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment \u00b7 Incident and problem records"
+    },
+    {
+      "clauseRef": "8.7.1",
+      "section": "8.7 Service assurance",
+      "title": "Service availability management",
+      "testFocus": "Availability requirements and targets are determined, monitored and results acted on.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "BCMS (continuity) \u00b7 IS Risk Register (security) \u00b7 Availability records"
+    },
+    {
+      "clauseRef": "8.7.2",
+      "section": "8.7 Service assurance",
+      "title": "Service continuity management",
+      "testFocus": "Continuity requirements, plans, and testing at planned intervals with results recorded.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "BCMS (continuity) \u00b7 IS Risk Register (security) \u00b7 Availability records"
+    },
+    {
+      "clauseRef": "8.7.3",
+      "section": "8.7 Service assurance",
+      "title": "Information security management",
+      "testFocus": "Security policy applied to services, controls implemented, incidents managed, external obligations met.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "BCMS (continuity) \u00b7 IS Risk Register (security) \u00b7 Availability records"
+    },
+    {
+      "clauseRef": "9.1",
+      "section": "9 Performance",
+      "title": "Monitoring, measurement, analysis and evaluation",
+      "testFocus": "What is monitored, method, when and by whom; results evaluated and retained.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "9.2",
+      "section": "9 Performance",
+      "title": "Internal audit",
+      "testFocus": "Audit programme at planned intervals; auditors objective and impartial; results reported to management.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "9.3",
+      "section": "9 Performance",
+      "title": "Management review",
+      "testFocus": "Top management review at planned intervals with the required inputs and recorded decisions.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "9.4",
+      "section": "9 Performance",
+      "title": "Service reporting",
+      "testFocus": "Reports are produced on service performance, against agreed description, frequency and audience.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "10.1",
+      "section": "10 Improvement",
+      "title": "Nonconformity and corrective action",
+      "testFocus": "Nonconformities reacted to, root cause established, action taken, effectiveness reviewed, records kept.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    },
+    {
+      "clauseRef": "10.2",
+      "section": "10 Improvement",
+      "title": "Continual improvement",
+      "testFocus": "Improvement opportunities identified, evaluated against criteria, actioned and their results measured.",
+      "soaApplicability": "Mandatory clause",
+      "evidenceLives": "Gap Assessment (ISO 20000) \u00b7 Policy library"
+    }
+  ]
+}

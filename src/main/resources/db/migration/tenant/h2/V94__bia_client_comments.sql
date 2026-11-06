@@ -1,0 +1,12 @@
+-- BIA client comments: structured staff / assets / MOR resources. Old columns kept.
+
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS min_staff_people VARCHAR(8000);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS recovery_strategies VARCHAR(8000);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS internet_yn VARCHAR(8);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS intranet_yn VARCHAR(8);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS vpn_yn VARCHAR(8);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS site_type VARCHAR(32);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS software_apps VARCHAR(8000);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS laptops INT;
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS m365_yn VARCHAR(8);
+ALTER TABLE bia_mor ADD COLUMN IF NOT EXISTS third_party_contacts VARCHAR(8000);
