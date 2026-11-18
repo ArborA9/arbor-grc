@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * In-memory sliding-window rate limiter (single-node). For multi-instance prod, replace with Redis
- * or API-gateway limits.
+ * or API-gateway limits: see {@code SECURITY_ASSESSMENT.md} P2-6.
  */
 @Component
 public class RateLimitService {

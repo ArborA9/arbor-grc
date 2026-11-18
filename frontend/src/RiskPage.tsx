@@ -3288,78 +3288,93 @@ export default function RiskPage({
   )
 
   return (
-    <Stack spacing={1} sx={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
+    <Stack
+      spacing={1}
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        height: '100%',
+        // Short / split windows: KPIs can exceed the pane; allow page scroll so projects stay reachable.
+        overflow: 'auto',
+      }}
+    >
       {!detail && formMode === 'none' && acceptanceView && selectedProjectId == null && listReady && risksReady ? (
-        <KpiCardGrid columns={2} dense>
-          <KpiCard
-            label="Projects"
-            value={acceptanceProjectTotals.projectCount}
-            sub="With at least one accepted risk"
-            accentColor={brand.gold}
-            compact
-          />
-          <KpiCard
-            label="Accepted risks"
-            value={acceptanceProjectTotals.accepted}
-            sub={isErm ? 'Enterprise Risk' : isPrivacy ? 'Privacy Risk' : 'Unified Risk'}
-            accentColor={brand.gold}
-            compact
-          />
-        </KpiCardGrid>
+        <Box sx={{ flexShrink: 0 }}>
+          <KpiCardGrid columns={2} dense>
+            <KpiCard
+              label="Projects"
+              value={acceptanceProjectTotals.projectCount}
+              sub="With at least one accepted risk"
+              accentColor={brand.gold}
+              compact
+            />
+            <KpiCard
+              label="Accepted risks"
+              value={acceptanceProjectTotals.accepted}
+              sub={isErm ? 'Enterprise Risk' : isPrivacy ? 'Privacy Risk' : 'Unified Risk'}
+              accentColor={brand.gold}
+              compact
+            />
+          </KpiCardGrid>
+        </Box>
       ) : null}
       {!detail && formMode === 'none' && !acceptanceView && (
         assignedWorkMode && selectedProjectId == null ? (
           listReady && projects.length > 0 ? (
-            <KpiCardGrid columns={3} dense>
+            <Box sx={{ flexShrink: 0 }}>
+              <KpiCardGrid columns={3} dense>
+                <KpiCard
+                  label="Projects"
+                  value={assignedProjectTotals.projectCount}
+                  sub="With work assigned to you"
+                  accentColor={brand.gold}
+                  compact
+                />
+                <KpiCard
+                  label="Assigned to you"
+                  value={assignedProjectTotals.assignedCount}
+                  sub="Risks across these projects"
+                  accentColor={brand.gold}
+                  compact
+                />
+                <KpiCard
+                  label="Needs action"
+                  value={assignedProjectTotals.needsActionCount}
+                  sub={
+                    assignedProjectTotals.needsActionCount === 0
+                      ? 'Nothing waiting on you'
+                      : 'Waiting on you'
+                  }
+                  accentColor={
+                    assignedProjectTotals.needsActionCount > 0
+                      ? semantic.risk.medium
+                      : semantic.risk.low
+                  }
+                  compact
+                />
+              </KpiCardGrid>
+            </Box>
+          ) : null
+        ) : (
+          <Box sx={{ flexShrink: 0 }}>
+            <KpiCardGrid columns={priorityBandsForGrid(matrixGridSize).length + 1} dense>
+              {priorityBandsForGrid(matrixGridSize).map((band) => (
+                <KpiCard
+                  key={band}
+                  label={formatRiskBand(band)}
+                  value={kpiCountForBand(riskKpis, band)}
+                  accentColor={RATING_TONE_COLOR[apiLevelTone(band) ?? 'medium']}
+                  compact
+                />
+              ))}
               <KpiCard
-                label="Projects"
-                value={assignedProjectTotals.projectCount}
-                sub="With work assigned to you"
+                label="Total open"
+                value={riskKpis.totalOpen}
                 accentColor={brand.gold}
-                compact
-              />
-              <KpiCard
-                label="Assigned to you"
-                value={assignedProjectTotals.assignedCount}
-                sub="Risks across these projects"
-                accentColor={brand.gold}
-                compact
-              />
-              <KpiCard
-                label="Needs action"
-                value={assignedProjectTotals.needsActionCount}
-                sub={
-                  assignedProjectTotals.needsActionCount === 0
-                    ? 'Nothing waiting on you'
-                    : 'Waiting on you'
-                }
-                accentColor={
-                  assignedProjectTotals.needsActionCount > 0
-                    ? semantic.risk.medium
-                    : semantic.risk.low
-                }
                 compact
               />
             </KpiCardGrid>
-          ) : null
-        ) : (
-        <KpiCardGrid columns={priorityBandsForGrid(matrixGridSize).length + 1} dense>
-          {priorityBandsForGrid(matrixGridSize).map((band) => (
-            <KpiCard
-              key={band}
-              label={formatRiskBand(band)}
-              value={kpiCountForBand(riskKpis, band)}
-              accentColor={RATING_TONE_COLOR[apiLevelTone(band) ?? 'medium']}
-              compact
-            />
-          ))}
-          <KpiCard
-            label="Total open"
-            value={riskKpis.totalOpen}
-            accentColor={brand.gold}
-            compact
-          />
-        </KpiCardGrid>
+          </Box>
         )
       )}
 
@@ -3379,7 +3394,16 @@ export default function RiskPage({
         </Alert>
       )}
 
-      <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{
+          flex: 1,
+          // Keep projects / register reachable when stacked KPIs fill a short pane.
+          minHeight: 240,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {formMode !== 'none' ? (
           <RiskFormShell sections={formSections}>
             {isPrivacy && formMode === 'create' && (

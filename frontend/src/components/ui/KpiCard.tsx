@@ -192,7 +192,8 @@ export function KpiCardGrid({
       sx={{
         display: 'grid',
         gridTemplateColumns: {
-          xs: '1fr',
+          // Narrow / split: two columns so KPI strips do not bury content below.
+          xs: `repeat(${Math.min(columns, 2)}, 1fr)`,
           sm: `repeat(${Math.min(columns, 2)}, 1fr)`,
           md: `repeat(${columns}, 1fr)`,
         },

@@ -36,7 +36,7 @@ arbor:
       email: ${ARBOR_SUPERADMIN_EMAIL:superadmin@arborgrc.local}
       password: ${ARBOR_SUPERADMIN_PASSWORD:ChangeMe_SuperAdmin_123}
       full-name: ${ARBOR_SUPERADMIN_NAME:Arbor Platform Admin}
-      # Blank = off.
+      # Emergency reset (infra/prod/reset-superadmin.sh). Blank = off.
       reset-code: ${ARBOR_SUPERADMIN_RESET:}
     # After a successful SSO handshake the backend redirects the browser back to the SPA with a
     # short-lived JWT in the URL fragment. In dev the SPA runs on the Vite server (:5173); in prod
