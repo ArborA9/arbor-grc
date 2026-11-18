@@ -110,6 +110,7 @@ import {
   autoResidualScore,
   ceReductionPercent,
   colRank,
+  rowRank,
   appetiteMaxResidual,
   excelAction,
   excelAutoClosable,
@@ -126,6 +127,13 @@ import {
   type MatrixGridSize,
 } from './components/risk/riskMatrix'
 import { CONTROL_EFFECTIVENESS_LABEL, fmtLevel } from './riskLevelLabels'
+import {
+  ERM_IMPACT_LABEL,
+  ERM_LIKELIHOOD_LABEL,
+  fmtErmLikelihood,
+  fmtErmImpact,
+  fmtErmRating,
+} from './components/risk/ermRiskLabels'
 import {
   CE_EXCEL_LABEL,
   LIKELIHOOD_EXCEL_LABEL,
@@ -190,7 +198,6 @@ const RISK_DETAIL_SECTIONS: RiskDetailSection[] = [
 const VIEW_EXCEL_SECTIONS: RiskDetailSection[] = [...EXCEL_DOSSIER_SECTIONS]
 
 const TREAT: TreatmentOption[] = ['TREAT', 'TOLERATE', 'TERMINATE', 'TRANSFER']
-const IS_RISK_FRAMEWORK_MODULES = ['ISMS', 'ERM', 'ITSM', 'AIMS', 'BCMS'] as const
 const IS_CATS: RiskCategory[] = [
   'STRATEGIC',
   'OPERATIONAL',
@@ -228,15 +235,18 @@ function riskEvidenceStageFor(r: RiskSummary): RiskEvidenceStage {
   return 'TREATMENT'
 }
 
-function priorityFromResidual(r: RiskLevel, gridSize: MatrixGridSize): string {
-  return fmtLevel(foldBandToGrid(r, gridSize))
+function priorityFromResidual(r: RiskLevel, gridSize: MatrixGridSize, isErm: boolean): string {
+  const band = foldBandToGrid(r, gridSize)
+  return isErm ? fmtErmRating(band) : fmtLevel(band)
 }
 
-function drillFilterLabel(d: RiskHeatMapDrill | null): string | null {
+function drillFilterLabel(d: RiskHeatMapDrill | null, isErm: boolean): string | null {
   if (!d) return null
-  const row = d.scoreBasis === 'INHERENT' ? 'Probability' : 'Residual probability'
+  const row = d.scoreBasis === 'INHERENT' ? 'Likelihood' : 'Residual likelihood'
   const col = d.scoreBasis === 'INHERENT' ? 'Impact' : 'Inherent risk'
-  return `${row} ${fmtLevel(d.rowLevel)} × ${col} ${fmtLevel(d.colLevel)}`
+  const rowLabel = isErm ? fmtErmLikelihood(d.rowLevel) : fmtLevel(d.rowLevel)
+  const colLabel = isErm ? fmtErmImpact(d.colLevel) : fmtLevel(d.colLevel)
+  return `${row} ${rowLabel} × ${col} ${colLabel}`
 }
 function fmtWhen(iso: string | null | undefined): string {
   if (!iso) return '-'
@@ -683,6 +693,7 @@ export default function RiskPage({
   const [strategicObjective, setStrategicObjective] = useState('')
   const [financialImpactAed, setFinancialImpactAed] = useState('')
   const [observedGap, setObservedGap] = useState('')
+  const [processingActivity, setProcessingActivity] = useState('')
   const [threats, setThreats] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
   const [probability, setProbability] = useState<RiskLevel>('MEDIUM')
@@ -819,6 +830,22 @@ export default function RiskPage({
     [editRowLevels, editColLevels],
   )
   const scoreLevels = useMemo(() => activeScoreLevels(matrixAxes), [matrixAxes])
+  const formatRiskBand = (band: string | null | undefined) =>
+    isErm ? fmtErmRating(band) : fmtLevel(band)
+  const formatLikelihood = (level: string | null | undefined) =>
+    isErm ? fmtErmLikelihood(level) : fmtLevel(level)
+  const formatImpact = (level: string | null | undefined) =>
+    isErm ? fmtErmImpact(level) : fmtLevel(level)
+  // ERM manual residual: keep residual L/I within Risk Analysis axes.
+  useEffect(() => {
+    if (!isErm) return
+    if (rowRank(matrixAxes, residualProbability) > rowRank(matrixAxes, probability)) {
+      setResidualProbability(probability)
+    }
+    if (colRank(matrixAxes, residualImpact) > colRank(matrixAxes, impact)) {
+      setResidualImpact(impact)
+    }
+  }, [isErm, matrixAxes, probability, impact, residualProbability, residualImpact])
   const axesValid =
     hasDistinctLevels(editRowLevels) &&
     hasDistinctLevels(editColLevels) &&
@@ -836,7 +863,7 @@ export default function RiskPage({
       : calcResidual(residualCeGrid, matrixAxes, controlEff, previewInherent)
   const previewInherentScore = excelScore(matrixAxes, probability, impact)
   const residualManualError =
-    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT'
+    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && !isErm
       ? excelManualScoreError(manualResidualScore, matrixGridSize, {
           required: true,
           max: previewInherentScore,
@@ -846,10 +873,16 @@ export default function RiskPage({
     previewInherentScore,
     ceReductionPercent(matrixGridSize, colRank(matrixAxes, controlEff)),
   )
+  const ermManualResidualScore =
+    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && isErm
+      ? excelScore(matrixAxes, residualProbability, residualImpact)
+      : null
   const previewResidualScore =
-    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && !residualManualError
-      ? Number(manualResidualScore)
-      : autoPreviewResidual
+    ermManualResidualScore != null
+      ? ermManualResidualScore
+      : residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && !residualManualError
+        ? Number(manualResidualScore)
+        : autoPreviewResidual
   const previewInherentBand = excelBandLabel(matrixGridSize, previewInherentScore)
   const previewResidualBand =
     previewResidualScore != null
@@ -860,7 +893,7 @@ export default function RiskPage({
     previewResidualScore != null
       ? excelAction(matrixGridSize, previewResidualScore)
       : `${CONTROL_EFFECTIVENESS_LABEL} × Inherent (auto)`
-  const previewPriority = priorityFromResidual(previewResidual, matrixGridSize)
+  const previewPriority = priorityFromResidual(previewResidual, matrixGridSize, isErm)
   const willAutoClose = excelAutoClosable(matrixGridSize, previewResidualScore)
   const appetiteMax =
     matrixMeta?.appetiteMaxResidual ??
@@ -1026,16 +1059,10 @@ export default function RiskPage({
               setAssets([])
             }),
           api
-            .listActivatedFrameworks()
-            .then((activated) => {
+            .listAvailableFrameworks()
+            .then((licensed) => {
               if (seq !== loadSeq.current) return
-              setFrameworks(
-                activated.filter((f) =>
-                  IS_RISK_FRAMEWORK_MODULES.includes(
-                    f.moduleCode as (typeof IS_RISK_FRAMEWORK_MODULES)[number],
-                  ),
-                ),
-              )
+              setFrameworks(licensed)
             })
             .catch(() => {
               if (seq !== loadSeq.current) return
@@ -1208,6 +1235,7 @@ export default function RiskPage({
     setStrategicObjective('')
     setFinancialImpactAed('')
     setObservedGap('')
+    setProcessingActivity('')
     setThreats('')
     setAdminNotes('')
     setExistingControls('')
@@ -1400,6 +1428,7 @@ export default function RiskPage({
         strategicObjective: isErm ? strategicObjective.trim() : null,
         financialImpactAed: isErm ? fin : null,
         observedGap: observedGap.trim() || null,
+        processingActivity: isPrivacy ? processingActivity.trim() || null : null,
         threats: !isErm ? threats.trim() || null : null,
         probability,
         impact,
@@ -1437,7 +1466,9 @@ export default function RiskPage({
         cause: isErm ? ermCauseFromForm(cause, causeOther) : null,
         targetControlEffectiveness: null,
         residualScore:
-          residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && manualResidualScore.trim()
+          !isErm &&
+          residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' &&
+          manualResidualScore.trim()
             ? Number(manualResidualScore)
             : null,
         assignedContributorId: assignUserId === '' ? null : assignUserId,
@@ -1759,13 +1790,13 @@ export default function RiskPage({
   const isRiskOwner =
     detail?.riskOwnerUserId != null &&
     users.find((u) => u.email === session.email)?.id === detail.riskOwnerUserId
-  const newRiskLabel = isErm ? 'New ERM Risk' : isPrivacy ? 'New Privacy Risk' : 'New Information Security Risk'
-  const newRiskButtonLabel = isErm ? '+ New ERM Risk' : isPrivacy ? '+ New Privacy Risk' : '+ New Information Security Risk'
+  const newRiskLabel = isErm ? 'New ERM Risk' : isPrivacy ? 'New Privacy Risk' : 'New Unified Risk'
+  const newRiskButtonLabel = isErm ? '+ New ERM Risk' : isPrivacy ? '+ New Privacy Risk' : '+ New Unified Risk'
   const emptyMsg = isPrivacy
     ? 'No Privacy Risks yet. Raise one from a DPIA, or add a Privacy Risk here.'
     : isErm
     ? 'No ERM risks yet.'
-    : 'No Information Security Risks yet. Create one or import the template. Import adds rows; it does not replace existing risks.'
+    : 'No Unified Risks yet. Create one or import the template. Import adds rows; it does not replace existing risks.'
   const terminal = ['CLOSED', 'AUTO_CLOSED', 'AVOIDED', 'TRANSFERRED', 'TOLERATED', 'ACCEPTED']
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null
   const detailIndex = detail ? scopedRows.findIndex((r) => r.id === detail.id) : -1
@@ -1920,8 +1951,8 @@ export default function RiskPage({
             strategicObjective: text(p.strategicObjective),
             threats: text(p.threats),
             existingControls: text(p.existingControls),
-            likelihood: level(p.probability, LIKELIHOOD_EXCEL_LABEL),
-            impact: level(p.impact, LIKELIHOOD_EXCEL_LABEL),
+            likelihood: level(p.probability, isErm ? ERM_LIKELIHOOD_LABEL : LIKELIHOOD_EXCEL_LABEL),
+            impact: level(p.impact, isErm ? ERM_IMPACT_LABEL : LIKELIHOOD_EXCEL_LABEL),
             controlEffectiveness: level(p.controlEff, CE_EXCEL_LABEL),
             treatmentDescription: text(p.treatmentJustification),
             evidenceRequired: text(p.planEvidenceRequired),
@@ -2112,7 +2143,7 @@ export default function RiskPage({
       return
     }
     if (!isErm && !isPrivacy && newProjectFrameworkId === '') {
-      onError('Information Security Risk projects need a framework')
+      onError('Unified Risk projects need a framework')
       return
     }
     setProjectCreating(true)
@@ -2199,7 +2230,7 @@ export default function RiskPage({
 
   const openHeatMap = useCallback(() => setHeatMapOpen(true), [])
 
-  const moduleListLabel = isErm ? 'Enterprise Risk' : isPrivacy ? 'Privacy Risk' : 'Information Security Risk'
+  const moduleListLabel = isErm ? 'Enterprise Risk' : isPrivacy ? 'Privacy Risk' : 'Unified Risk'
   const registerTitle = acceptanceView
     ? selectedProject
       ? selectedProject.name
@@ -2212,7 +2243,7 @@ export default function RiskPage({
           ? 'ERM Risk Projects'
           : isPrivacy
             ? 'Privacy Risk Projects'
-            : 'Information Security Risk projects'
+            : 'Unified Risk Project'
   const registerBreadcrumbRoot = acceptanceView
     ? selectedProject
       ? { label: 'Risk Acceptance', onClick: () => selectProject(null, true) }
@@ -2229,7 +2260,7 @@ export default function RiskPage({
         ? 'Risk Management › Enterprise Risk'
         : isPrivacy
           ? 'Privacy › Privacy Risk'
-          : 'Risk Management › Information Security Risk'
+          : 'Risk Management › Unified Risk'
     : selectedProject
       ? assignedWorkMode
         ? selectedProject.name
@@ -2240,7 +2271,7 @@ export default function RiskPage({
           ? 'Risk Management › Enterprise Risk'
           : isPrivacy
             ? 'Privacy › Privacy Risk'
-            : 'Risk Management › Information Security Risk'
+            : 'Risk Management › Unified Risk'
 
   const registerActions = useMemo(
     () => (
@@ -2543,12 +2574,12 @@ export default function RiskPage({
   const detailBreadcrumbTrail = useMemo(() => {
     if (!detail) return ''
     const parts: string[] = []
-    const drillLabel = drillFilterLabel(drill)
+    const drillLabel = drillFilterLabel(drill, isErm)
     if (drillLabel) parts.push(drillLabel)
     parts.push(
       detail.title,
       detail.category,
-      `Residual ${fmtLevel(detail.residualRating ?? detail.residualRisk)}`,
+      `Residual ${formatRiskBand(detail.residualRating ?? detail.residualRisk)}`,
     )
     return parts.join(' · ')
   }, [detail, drill])
@@ -3189,7 +3220,7 @@ export default function RiskPage({
                 ? 'Create ERM Risk'
                 : isPrivacy
                   ? 'Create Privacy Risk'
-                  : 'Create Information Security Risk'}
+                  : 'Create Unified Risk'}
         </BusyButton>
       </>
     ),
@@ -3270,7 +3301,7 @@ export default function RiskPage({
           <KpiCard
             label="Accepted risks"
             value={acceptanceProjectTotals.accepted}
-            sub={isErm ? 'Enterprise Risk' : isPrivacy ? 'Privacy Risk' : 'Information Security Risk'}
+            sub={isErm ? 'Enterprise Risk' : isPrivacy ? 'Privacy Risk' : 'Unified Risk'}
             accentColor={brand.gold}
             compact
           />
@@ -3316,7 +3347,7 @@ export default function RiskPage({
           {priorityBandsForGrid(matrixGridSize).map((band) => (
             <KpiCard
               key={band}
-              label={fmtLevel(band)}
+              label={formatRiskBand(band)}
               value={kpiCountForBand(riskKpis, band)}
               accentColor={RATING_TONE_COLOR[apiLevelTone(band) ?? 'medium']}
               compact
@@ -3384,14 +3415,21 @@ export default function RiskPage({
                       setSourceDpiaAssessmentRowId(id)
                       if (c) {
                         setTitle(c.riskTitle)
+                        if (c.observedGap) setObservedGap(c.observedGap)
+                        if (c.activityName) setProcessingActivity(c.activityName)
                         setDescription(
                           [
-                            c.principle ? `DPIA principle: ${c.principle}` : null,
-                            c.projectName ? `DPIA project: ${c.projectName}` : null,
-                            c.departmentName ? `Department: ${c.departmentName}` : null,
+                            c.principle?.trim() || null,
+                            c.observedGap?.trim()
+                              ? `Gap / Observation: ${c.observedGap.trim()}`
+                              : null,
+                            c.projectName?.trim() ? `DPIA project: ${c.projectName.trim()}` : null,
+                            c.departmentName?.trim()
+                              ? `Department: ${c.departmentName.trim()}`
+                              : null,
                           ]
                             .filter(Boolean)
-                            .join('\n'),
+                            .join('\n\n'),
                         )
                         if (c.orgUnitId) setOrgUnitId(c.orgUnitId)
                       }
@@ -3459,6 +3497,8 @@ export default function RiskPage({
               setDescription={setDescription}
               observedGap={observedGap}
               setObservedGap={setObservedGap}
+              processingActivity={processingActivity}
+              setProcessingActivity={setProcessingActivity}
               threats={threats}
               setThreats={setThreats}
               probability={probability}
@@ -3473,6 +3513,7 @@ export default function RiskPage({
               setResidualProbability={setResidualProbability}
               residualImpact={residualImpact}
               setResidualImpact={setResidualImpact}
+              matrixAxes={matrixAxes}
               overrideAutoClose={overrideAutoClose}
               setOverrideAutoClose={setOverrideAutoClose}
               autoCloseJustification={autoCloseJustification}
@@ -3825,13 +3866,13 @@ export default function RiskPage({
                 <SettingsCard
                   heading
                   autoHeight
-                  title={isErm ? 'ERM projects' : isPrivacy ? 'Privacy Risk projects' : 'Information Security Risk projects'}
+                  title={isErm ? 'ERM projects' : isPrivacy ? 'Privacy Risk projects' : 'Unified Risk Project'}
                   subtitle={
                     isErm
                       ? 'Open a project to work the enterprise risk register'
                       : isPrivacy
                         ? 'Open a project to work the Privacy Risk register. Risks mainly arrive here from a DPIA; you can also add a Privacy Risk in the project.'
-                        : 'Open a project to work the Information Security Risk register'
+                        : 'Open a project to work the Unified Risk register'
                   }
                 >
                   {projects.length === 0 ? (
@@ -3905,7 +3946,7 @@ export default function RiskPage({
                         fullWidth
                         value={newProjectName}
                         onChange={(e) => setNewProjectName(e.target.value)}
-                        placeholder={isErm ? 'ERM 2026' : isPrivacy ? 'Privacy Risk 2026' : 'ISMS 2026'}
+                        placeholder={isErm ? 'ERM 2026' : isPrivacy ? 'Privacy Risk 2026' : 'Unified Risk 2026'}
                         disabled={projectCreating}
                         error={projectNameTaken}
                         helperText={
@@ -3994,6 +4035,7 @@ export default function RiskPage({
               onStatusFilterChange={setStatusFilter}
               onPriorityFilterChange={setPriorityFilter}
               gridSize={matrixGridSize}
+              isErm={isErm}
               onClearFilters={clearRegisterFilters}
               filtersActive={filtersActive}
               waitingMyApproval={waitingApprovalOnly}
@@ -4067,6 +4109,7 @@ export default function RiskPage({
                 rows={riskPaged.paged}
                 totalCount={registerSourceRows.length}
                 selectedId={null}
+                isErm={isErm}
                 emptyMessage={
                   registerSourceRows.length === 0
                     ? acceptanceView
@@ -4120,8 +4163,9 @@ export default function RiskPage({
           <RiskFormShell sections={viewFormSections}>
             {detail.status === 'AUTO_CLOSED' && detail.finalRiskStatus !== 'APPROVE' ? (
               <Alert severity="info" sx={{ py: 0, mb: 1.25 }}>
-                Auto-closed at creation because residual risk was {fmtLevel(detail.residualRisk)} (Very
-                Low or Low).
+                Auto-closed at creation because residual risk was{' '}
+                {formatRiskBand(detail.residualRisk)}
+                {isErm ? ' (Low or Moderate).' : ' (Very Low or Low).'}
                 {excelClick
                   ? ''
                   : ' Re-open with a mandatory reason to enter the 4T workflow.'}
@@ -4265,7 +4309,7 @@ export default function RiskPage({
                         level={apiRiskLevelToBadge(
                           excelRatingToLevel(detail.inherentRating ?? detail.inherentRisk),
                         )}
-                        label={fmtLevel(detail.inherentRating ?? detail.inherentRisk)}
+                        label={formatRiskBand(detail.inherentRating ?? detail.inherentRisk)}
                       />
                     }
                   >
@@ -4273,18 +4317,18 @@ export default function RiskPage({
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                         <DetailField
                           label={scaledExcelField('likelihood', matrixGridSize)}
-                          value={fmtLevel(detail.probability)}
+                          value={formatLikelihood(detail.probability)}
                         />
                         <DetailField
                           label={scaledExcelField('impact', matrixGridSize)}
-                          value={fmtLevel(detail.impact)}
+                          value={formatImpact(detail.impact)}
                         />
                       </Box>
                       <DetailField
                         label={EXCEL_FIELD.inherentScore}
                         value={
                           detail.inherentScore != null
-                            ? `${detail.inherentScore} · ${fmtLevel(detail.inherentRating ?? detail.inherentRisk)}`
+                            ? `${detail.inherentScore} · ${formatRiskBand(detail.inherentRating ?? detail.inherentRisk)}`
                             : null
                         }
                       />
@@ -4320,22 +4364,28 @@ export default function RiskPage({
                         level={apiRiskLevelToBadge(
                           excelRatingToLevel(detail.residualRating ?? detail.residualRisk),
                         )}
-                        label={fmtLevel(detail.residualRating ?? detail.residualRisk)}
+                        label={formatRiskBand(detail.residualRating ?? detail.residualRisk)}
                       />
                     }
                   >
                     <Stack spacing={1}>
                       {detail.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && (
                         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                          <DetailLevelField label="Residual probability" level={detail.residualProbability} />
-                          <DetailLevelField label="Residual impact" level={detail.residualImpact} />
+                          <DetailField
+                            label="Residual likelihood"
+                            value={formatLikelihood(detail.residualProbability)}
+                          />
+                          <DetailField
+                            label="Residual impact"
+                            value={formatImpact(detail.residualImpact)}
+                          />
                         </Box>
                       )}
                       <DetailField
                         label={EXCEL_FIELD.residualScore}
                         value={
                           detail.residualScore != null
-                            ? `${detail.residualScore} · ${fmtLevel(detail.residualRating ?? detail.residualRisk)}`
+                            ? `${detail.residualScore} · ${formatRiskBand(detail.residualRating ?? detail.residualRisk)}`
                             : null
                         }
                       />
@@ -4399,19 +4449,21 @@ export default function RiskPage({
                           {[...scoreHistory].reverse().map((h) => (
                             <TableRow key={h.id}>
                               <TableCell>{fmtWhen(h.recordedAt)}</TableCell>
-                              <TableCell>{fmtLevel(h.probability)}</TableCell>
-                              <TableCell>{fmtLevel(h.impact)}</TableCell>
-                              <TableCell>{fmtLevel(h.controlEffectiveness)}</TableCell>
+                              <TableCell>{formatLikelihood(h.probability)}</TableCell>
+                              <TableCell>{formatImpact(h.impact)}</TableCell>
+                              <TableCell>
+                                {CE_EXCEL_LABEL[h.controlEffectiveness] ?? fmtLevel(h.controlEffectiveness)}
+                              </TableCell>
                               <TableCell>
                                 <RiskLevelBadge
                                   level={apiRiskLevelToBadge(h.inherentRisk)}
-                                  label={fmtLevel(h.inherentRisk)}
+                                  label={formatRiskBand(h.inherentRisk)}
                                 />
                               </TableCell>
                               <TableCell>
                                 <RiskLevelBadge
                                   level={apiRiskLevelToBadge(h.residualRisk)}
-                                  label={fmtLevel(h.residualRisk)}
+                                  label={formatRiskBand(h.residualRisk)}
                                 />
                               </TableCell>
                               <TableCell>{h.reason ?? '-'}</TableCell>
@@ -5325,11 +5377,11 @@ export default function RiskPage({
                     </Typography>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                       <FormSelect
-                        label="Probability"
+                        label="Likelihood"
                         value={closeProbability}
                         options={scoreLevels.map((l) => ({
                           value: l,
-                          label: fmtLevel(l),
+                          label: formatLikelihood(l),
                           tone: apiLevelTone(l),
                         }))}
                         onChange={(v) => setCloseProbability(v as RiskLevel)}
@@ -5340,7 +5392,7 @@ export default function RiskPage({
                         value={closeImpact}
                         options={scoreLevels.map((l) => ({
                           value: l,
-                          label: fmtLevel(l),
+                          label: formatImpact(l),
                           tone: apiLevelTone(l),
                         }))}
                         onChange={(v) => setCloseImpact(v as RiskLevel)}

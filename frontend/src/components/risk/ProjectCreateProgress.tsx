@@ -21,7 +21,7 @@ export default function ProjectCreateProgress({
     ? 'Creating Enterprise Risk project'
     : isPrivacy
       ? 'Creating Privacy Risk project'
-      : 'Creating Information Security Risk project'
+      : 'Creating Unified Risk project'
   const name = projectName.trim()
   const fw = frameworkLabel ?? 'the selected framework'
   const showCount = !isErm && total > 0

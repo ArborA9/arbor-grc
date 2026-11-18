@@ -50,6 +50,9 @@ public record UpdateRopaRequest(
         Long ropaDepartmentId,
         String legalBasesJson,
         String adequacyNote,
-        Boolean draft
+        Boolean draft,
+        @Size(max = 500) String personalDataOther,
+        @Size(max = 500) String sensitiveDataOther,
+        @Size(max = 500) String dataSubjectOther
 ) {
 }

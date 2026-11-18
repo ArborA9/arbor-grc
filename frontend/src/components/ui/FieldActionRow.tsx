@@ -1,10 +1,15 @@
+import { forwardRef } from 'react'
 import { Stack, type StackProps } from '@mui/material'
 import { labeledFieldRowSx } from './formLayout'
 
 /** Horizontal row of caption-above fields plus an action, aligned on the control baseline. */
-export default function FieldActionRow({ children, sx, ...rest }: StackProps) {
+const FieldActionRow = forwardRef<HTMLDivElement, StackProps>(function FieldActionRow(
+  { children, sx, ...rest },
+  ref,
+) {
   return (
     <Stack
+      ref={ref}
       {...rest}
       direction={rest.direction ?? { xs: 'column', sm: 'row' }}
       spacing={rest.spacing ?? 1}
@@ -13,4 +18,6 @@ export default function FieldActionRow({ children, sx, ...rest }: StackProps) {
       {children}
     </Stack>
   )
-}
+})
+
+export default FieldActionRow

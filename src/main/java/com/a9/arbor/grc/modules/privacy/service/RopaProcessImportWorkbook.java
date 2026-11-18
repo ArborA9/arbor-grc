@@ -329,7 +329,7 @@ public class RopaProcessImportWorkbook {
         set(row, style, COL_PERSONAL, "Name; Email");
         set(row, style, COL_SENSITIVE, "Health-related information");
         set(row, style, COL_SUBJECTS, "Employees");
-        set(row, style, COL_VOLUME, "0-1000");
+        set(row, style, COL_VOLUME, "Less than 100");
         set(row, style, COL_FREQUENCY, "Daily");
         set(row, style, COL_SOURCE, "Data Subject");
         set(row, style, COL_METHOD, "Online form");

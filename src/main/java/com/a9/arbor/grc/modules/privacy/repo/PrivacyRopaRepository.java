@@ -12,4 +12,6 @@ public interface PrivacyRopaRepository extends JpaRepository<PrivacyRopa, Long> 
     List<PrivacyRopa> findByRopaDepartmentIdOrderByCreatedAtAsc(Long departmentId);
 
     long countByDisplayIdStartingWith(String prefix);
+
+    List<PrivacyRopa> findByDisplayIdStartingWith(String prefix);
 }

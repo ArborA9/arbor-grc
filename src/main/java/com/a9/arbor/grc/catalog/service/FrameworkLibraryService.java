@@ -139,8 +139,8 @@ public class FrameworkLibraryService {
     }
 
     /**
-     * Catalog types shown under Modules: only frameworks present as importable packs.
-     * PCI DSS and other enum-only stubs are omitted.
+     * Catalog types shown under Modules: only frameworks present as importable packs under
+     * {@code docs/frameworks/} (Doc 02 T-04). PCI DSS and other enum-only stubs are omitted.
      */
     public List<FrameworkTypeResponse> listTypes() {
         Set<FrameworkTypeCode> packTypes = discoverPackBackedTypes();
@@ -645,8 +645,8 @@ public class FrameworkLibraryService {
     }
 
     /**
-     * Creates a framework the Master workbook never carried, from the pack alone.
-     * Hierarchy and routing come from
+     * Creates a framework the Master workbook never carried, from the pack alone -
+     * {@code FRAMEWORK_IMPORT_BUILD.md} §F3b. Hierarchy and routing come from
      * {@link PackFrameworkBuilder}; everything after that is the Master import's persistence path, so
      * a pack-created framework is indistinguishable downstream from an imported one.
      */
@@ -891,7 +891,7 @@ public class FrameworkLibraryService {
             question.setQuestionText(source.questionText());
             // The packs carry no question_type, answer_options or is_mandatory column. Left unset
             // rather than defaulted: inventing a mandatory flag would gate contributors on data the
-            // client never authored.
+            // client never authored. See FRAMEWORK_IMPORT_BUILD.md §F3 "deferred".
             question.setDisplayOrder(++order);
             question.setVersionNumber(nextVersion);
             question.setActive(true);
@@ -1461,8 +1461,8 @@ public class FrameworkLibraryService {
     }
 
     /**
-     * The nodes this module seeds from, per the framework's own import contract.
-     * Framework must be activated for the tenant.
+     * The nodes this module seeds from, per the framework's own import contract
+     * ({@code FRAMEWORK_IMPORT_BUILD.md} §F6–F8). Framework must be activated for the tenant.
      *
      * <p>Replaces the shape heuristic ("definition text, or level ≥ 3") that every consumer shared
      * until F6. That heuristic also disagreed with {@code control_count}, which F2 had already

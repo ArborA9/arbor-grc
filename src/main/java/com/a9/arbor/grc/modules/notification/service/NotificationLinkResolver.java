@@ -42,8 +42,8 @@ public final class NotificationLinkResolver {
                     "BREACH_RECORDED", "BREACH_48H_WARNING", "BREACH_72H_OVERDUE" -> "privacy-dsr";
             case "ROPA_ASSIGNED", "ROPA_SUBMITTED", "ROPA_RETURNED", "ROPA_SEND_TO_HEAD",
                     "ROPA_HEAD_SIGN_OFF", "ROPA_READY_TO_CLOSE" -> "privacy-ropa";
-            case "DPIA_ASSIGNED", "DPIA_SUBMITTED", "DPIA_RETURNED", "DPIA_HEAD_SIGN_OFF",
-                    "DPIA_READY_TO_CLOSE" -> "privacy-dpia-projects";
+            case "DPIA_ASSIGNED", "DPIA_SUBMITTED", "DPIA_RETURNED", "DPIA_HEAD_RETURNED",
+                    "DPIA_HEAD_SIGN_OFF", "DPIA_READY_TO_CLOSE" -> "privacy-dpia-projects";
             case "VENDOR_QUESTIONNAIRE_SENT", "VENDOR_QUESTIONNAIRE_SUBMITTED", "VENDOR_QUESTIONNAIRE_RETURNED",
                     "VENDOR_REVIEW_COMPLETE", "VENDOR_PROJECT_CLOSED", "VENDOR_NOT_COMPLIANT", "VENDOR_CONTRACT_EXPIRY",
                     "VENDOR_REVIEW_DUE", "VENDOR_REVIEW_OVERDUE", "VENDOR_HIGH_RISK" -> "tprm-projects";

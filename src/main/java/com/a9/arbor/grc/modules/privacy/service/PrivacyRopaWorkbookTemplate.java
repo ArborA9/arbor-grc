@@ -80,7 +80,8 @@ public class PrivacyRopaWorkbookTemplate {
             }
             r = 1;
             ref.getRow(0).createCell(3).setCellValue("Volume (per month)");
-            for (String v : Arrays.asList("0-1000", "1000-100000", "100000-1M", "Over 1M")) {
+            for (String v : Arrays.asList(
+                    "Less than 100", "100-1,000", "1,001-10,000", "10,001-100,000", "Over 100,000")) {
                 Row row = ref.getRow(r);
                 if (row == null) {
                     row = ref.createRow(r);

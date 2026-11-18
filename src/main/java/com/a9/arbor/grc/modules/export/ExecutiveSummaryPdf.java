@@ -108,7 +108,7 @@ public final class ExecutiveSummaryPdf {
             kpiRow(
                     tile("Overall compliance", brief.overallCompliance(),
                             "-".equals(brief.overallCompliance()) ? "None scored" : "Scored assessments"),
-                    tile("Open IS risks", brief.openIsRisks(), "Not closed"),
+                    tile("Open Unified Risks", brief.openIsRisks(), "Not closed"),
                     tile("Open ERM risks", brief.openErmRisks(), "Not closed"),
                     tile("BIA approved", brief.biaApproved(), "Verified processes"));
             y -= 10f;

@@ -13,6 +13,7 @@ import {
   treatmentProgressLabel,
   withinAppetiteLabel,
 } from './excelRiskFields'
+import { fmtErmImpact, fmtErmLikelihood, fmtErmRating } from './ermRiskLabels'
 import {
   riskLevelToBadgeLevel,
   riskStatusBadge,
@@ -110,13 +111,19 @@ function TreatmentTag({ option }: { option: RiskSummary['treatmentOption'] }) {
   )
 }
 
-function ScoreBadge({ level }: { level: RiskSummary['inherentRisk'] | null | undefined }) {
+function ScoreBadge({
+  level,
+  isErm,
+}: {
+  level: RiskSummary['inherentRisk'] | null | undefined
+  isErm?: boolean
+}) {
   if (!level) return <Ellipsis value="-" />
   return (
     <DomainBadge
       variant="risk"
       level={riskLevelToBadgeLevel(level)}
-      label={level.replace(/_/g, ' ')}
+      label={isErm ? fmtErmRating(level) : level.replace(/_/g, ' ')}
     />
   )
 }
@@ -181,8 +188,21 @@ function canEditRegisterRow(status: RiskSummary['status']): boolean {
   return status === 'DRAFT' || status === 'RE_OPENED'
 }
 
-function likelihoodLabel(level: RiskSummary['probability'] | null | undefined): string {
+function likelihoodLabel(
+  level: RiskSummary['probability'] | null | undefined,
+  isErm?: boolean,
+): string {
   if (!level) return '-'
+  if (isErm) return fmtErmLikelihood(level)
+  return LIKELIHOOD_EXCEL_LABEL[level] ?? level.replace(/_/g, ' ')
+}
+
+function impactLabel(
+  level: RiskSummary['impact'] | null | undefined,
+  isErm?: boolean,
+): string {
+  if (!level) return '-'
+  if (isErm) return fmtErmImpact(level)
   return LIKELIHOOD_EXCEL_LABEL[level] ?? level.replace(/_/g, ' ')
 }
 
@@ -200,6 +220,7 @@ function renderCell(
   colId: string,
   r: RiskSummary,
   ownerLabel: (userId: number | null | undefined) => string,
+  isErm?: boolean,
 ): ReactNode {
   const plan = r.activeTreatmentPlan
   switch (colId) {
@@ -227,13 +248,13 @@ function renderCell(
     case 'inherent':
       return (
         <Box>
-          <ScoreBadge level={r.inherentRisk} />
+          <ScoreBadge level={r.inherentRisk} isErm={isErm} />
         </Box>
       )
     case 'residual':
       return (
         <Box>
-          <ScoreBadge level={r.residualRisk} />
+          <ScoreBadge level={r.residualRisk} isErm={isErm} />
         </Box>
       )
     case 'treatment':
@@ -273,9 +294,9 @@ function renderCell(
     case 'custodian':
       return <Ellipsis value={dash(r.assignedContributorName)} />
     case 'likelihood':
-      return <Ellipsis value={likelihoodLabel(r.probability)} />
+      return <Ellipsis value={likelihoodLabel(r.probability, isErm)} />
     case 'impact':
-      return <Ellipsis value={likelihoodLabel(r.impact)} />
+      return <Ellipsis value={impactLabel(r.impact, isErm)} />
     case 'existingControls':
       return <Ellipsis value={dash(r.existingControls)} />
     case 'controlEffectiveness':
@@ -283,7 +304,15 @@ function renderCell(
     case 'riskReduction':
       return <Ellipsis value={r.riskReductionPct == null ? '-' : `${r.riskReductionPct}%`} />
     case 'residualRating':
-      return <Ellipsis value={dash(r.residualRating ?? r.residualRisk.replace(/_/g, ' '))} />
+      return (
+        <Ellipsis
+          value={dash(
+            isErm
+              ? fmtErmRating(r.residualRating ?? r.residualRisk)
+              : (r.residualRating ?? r.residualRisk.replace(/_/g, ' ')),
+          )}
+        />
+      )
     case 'withinAppetite':
       return <Ellipsis value={withinAppetiteLabel(r.withinAppetite)} />
     case 'evaluationDecision':
@@ -434,6 +463,7 @@ export default function RiskRegisterTable({
   draftRows = [],
   onDraftOpen,
   onDraftDelete,
+  isErm,
 }: {
   rows: RiskSummary[]
   totalCount: number
@@ -452,6 +482,7 @@ export default function RiskRegisterTable({
   draftRows?: RiskDraftRow[]
   onDraftOpen?: (draftId: number) => void
   onDraftDelete?: (draftId: number) => void
+  isErm?: boolean
 }) {
   const showActions = Boolean(onCopy || onEdit || (draftRows.length > 0 && (onDraftOpen || onDraftDelete)))
   const tableColumns = showActions ? `${gridTemplateColumns} 2.25rem` : gridTemplateColumns
@@ -629,7 +660,7 @@ export default function RiskRegisterTable({
                   }}
                 >
                   {visibleColumns.map((col) => (
-                    <Box key={col.id}>{renderCell(col.id, r, ownerLabel)}</Box>
+                    <Box key={col.id}>{renderCell(col.id, r, ownerLabel, isErm)}</Box>
                   ))}
                   {showActions ? (
                     <Box

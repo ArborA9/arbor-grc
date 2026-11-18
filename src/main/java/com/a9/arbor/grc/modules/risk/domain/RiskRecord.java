@@ -96,6 +96,10 @@ public class RiskRecord {
     @Column(name = "source_ropa_id")
     private Long sourceRopaId;
 
+    /** Processing activity this privacy risk came from (ROPA / DPIA). */
+    @Column(name = "processing_activity", length = 255)
+    private String processingActivity;
+
     @Column(name = "source_gap_assessment_id")
     private Long sourceGapAssessmentId;
 

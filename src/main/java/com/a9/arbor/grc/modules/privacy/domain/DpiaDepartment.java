@@ -32,6 +32,10 @@ public class DpiaDepartment {
     @Column(name = "org_unit_id", nullable = false)
     private Long orgUnitId;
 
+    /** ROPA processing activity this DPIA assesses. Null only for a DPIA not linked to ROPA. */
+    @Column(name = "ropa_process_id")
+    private Long ropaProcessId;
+
     @Column(name = "reason_description", length = 4000)
     private String reasonDescription;
 

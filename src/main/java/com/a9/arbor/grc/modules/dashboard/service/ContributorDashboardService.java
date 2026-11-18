@@ -354,7 +354,7 @@ public class ContributorDashboardService {
             if ("ERM".equalsIgnoreCase(t.riskType())) {
                 return new ModuleSpec("ERM", "Enterprise Risk", "erm-risk");
             }
-            return new ModuleSpec("IS_RISK", "IS Risk", "risk");
+            return new ModuleSpec("IS_RISK", "Unified Risk", "risk");
         }
         if (MyTasksService.MODULE_CAPA.equals(module)) {
             return new ModuleSpec("CAPA", "CAPA", "audit-capa");

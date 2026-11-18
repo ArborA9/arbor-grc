@@ -11,6 +11,8 @@ public interface DpiaDepartmentRepository extends JpaRepository<DpiaDepartment, 
 
     boolean existsByDpiaProjectIdAndOrgUnitId(Long dpiaProjectId, Long orgUnitId);
 
+    boolean existsByDpiaProjectIdAndRopaProcessId(Long dpiaProjectId, Long ropaProcessId);
+
     long countByDpiaProjectIdAndStatusNot(Long dpiaProjectId, DpiaDepartmentStatus status);
 
     long countByDpiaProjectId(Long dpiaProjectId);

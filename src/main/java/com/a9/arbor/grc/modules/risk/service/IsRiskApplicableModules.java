@@ -6,8 +6,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Frameworks that may appear on an Information Security Risk project.
- * Arbor: ISMS (all), ERM, ITSM, AIMS, BCMS. Not Privacy / QMS / OHSMS / SAMA.
+ * Retired fixed module list. Unified Risk project create checks the framework's own
+ * licence and entitlement in {@code RiskProjectService} instead of this set.
  */
 public final class IsRiskApplicableModules {
 

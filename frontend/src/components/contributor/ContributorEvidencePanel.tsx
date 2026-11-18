@@ -186,16 +186,20 @@ export default function ContributorEvidencePanel({
           </Typography>
         ) : null}
         {evidenceFile && !atFileCap ? (
-          <Stack
-            ref={classifyRowRef}
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-            alignItems={{ sm: 'flex-end' }}
-            sx={{ mt: 1.25, scrollMarginBottom: 16 }}
-          >
+          <FieldActionRow ref={classifyRowRef} sx={{ mt: 1.25, scrollMarginBottom: 16 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <FormFieldLabel wrap>Selected file</FormFieldLabel>
-              <Typography noWrap title={evidenceFile.name} sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              <Typography
+                noWrap
+                title={evidenceFile.name}
+                sx={{
+                  height: CONTROL_HEIGHT,
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                }}
+              >
                 {evidenceFile.name}
               </Typography>
             </Box>
@@ -222,7 +226,7 @@ export default function ContributorEvidencePanel({
             >
               {busy ? 'Uploading…' : 'Upload & Link'}
             </Button>
-          </Stack>
+          </FieldActionRow>
         ) : null}
         {busy && !hideInlineProgress ? (
           <LinearProgress sx={{ mt: 1, height: 3, borderRadius: 1 }} aria-label="Upload in progress" />
@@ -297,11 +301,8 @@ export default function ContributorEvidencePanel({
         ) : null}
       </Box>
       {evidenceFile && !atFileCap ? (
-        <Stack
+        <FieldActionRow
           ref={classifyRowRef}
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1}
-          alignItems={{ sm: 'flex-end' }}
           sx={{
             maxWidth: MEDIUM_FORM_MAX_WIDTH,
             position: 'relative',
@@ -351,7 +352,7 @@ export default function ContributorEvidencePanel({
           >
             {busy ? 'Uploading…' : 'Upload & Link'}
           </Button>
-        </Stack>
+        </FieldActionRow>
       ) : null}
       {busy && !hideInlineProgress ? (
         <LinearProgress sx={{ mt: 1, height: 3, borderRadius: 1 }} aria-label="Upload in progress" />

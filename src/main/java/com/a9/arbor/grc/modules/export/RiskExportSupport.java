@@ -93,7 +93,7 @@ public final class RiskExportSupport {
         add(rows, "Type", switch (r.getRiskType()) {
             case ERM -> "ERM";
             case PRIVACY_RISK -> "Data Privacy Risk";
-            case IS_RISK -> "IS Risk";
+            case IS_RISK -> "Unified Risk";
         });
         add(rows, "Risk ID", r.getDisplayId());
         add(rows, "Date Identified", date(r.getDateIdentified()));
@@ -143,7 +143,7 @@ public final class RiskExportSupport {
         return switch (r.getRiskType()) {
             case ERM -> "ERM risk";
             case PRIVACY_RISK -> "Data Privacy Risk";
-            case IS_RISK -> "IS risk";
+            case IS_RISK -> "Unified Risk";
         };
     }
 

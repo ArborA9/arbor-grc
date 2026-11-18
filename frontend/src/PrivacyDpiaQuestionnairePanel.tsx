@@ -717,14 +717,50 @@ export default function PrivacyDpiaQuestionnairePanel({
             searchPlaceholder="Search questions"
             onSearchChange={setSearch}
             trailing={
-              isAdmin ? (
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => guardApi.requestNavigation(() => openAddQuestion())}
-                >
-                  Add Question
-                </Button>
+              isAdmin && detail ? (
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={busy}
+                    onClick={() => void api.downloadDpiaQuestionTemplate(detail.id).catch((e) => onError(e instanceof Error ? e.message : 'Download failed'))}
+                  >
+                    Download template
+                  </Button>
+                  <Button size="small" variant="outlined" component="label" disabled={busy}>
+                    Upload questions
+                    <input
+                      type="file"
+                      hidden
+                      accept=".xlsx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        e.target.value = ''
+                        if (!file) return
+                        void (async () => {
+                          try {
+                            const result = await api.importDpiaQuestions(detail.id, file)
+                            onOk(
+                              `Added ${result.createdCount} question${result.createdCount === 1 ? '' : 's'}` +
+                                (result.failedCount ? `, ${result.failedCount} failed` : '') +
+                                (result.ignoredCount ? `, ${result.ignoredCount} ignored` : ''),
+                            )
+                            await loadDetail(detail.id)
+                          } catch (err) {
+                            onError(err instanceof Error ? err.message : 'Upload failed')
+                          }
+                        })()
+                      }}
+                    />
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => guardApi.requestNavigation(() => openAddQuestion())}
+                  >
+                    Add Question
+                  </Button>
+                </Stack>
               ) : undefined
             }
           />

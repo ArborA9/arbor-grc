@@ -10,7 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Joins reference-pack rows onto the nodes the Master import created.
+ * Joins reference-pack rows onto the nodes the Master import created — see
+ * {@code FRAMEWORK_IMPORT_BUILD.md} §F3.
  *
  * <p>Pure: it takes the node codes and returns what to write, so the join rules live in one place
  * rather than spread through the persistence path.

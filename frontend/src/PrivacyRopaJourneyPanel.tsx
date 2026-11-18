@@ -39,13 +39,14 @@ import {
   ConfirmActionDialog,
   FormSectionShell,
   FormSelect,
+  KitReadOnlyField,
   KpiCard,
   PageLoading,
   RegisterToolbar,
   SettingsCard,
   SimpleFormLayout,
 } from './components/ui'
-import { formFieldGridSx, sectionAnchorSx, twoColFieldSx } from './components/ui/formLayout'
+import { COMPACT_SELECT_MIN_WIDTH, formFieldGridSx, sectionAnchorSx, twoColFieldSx } from './components/ui/formLayout'
 import { useAppShellPage } from './components/AppShellPageContext'
 import {
   useOptionalUnsavedChangesGuardApi,
@@ -67,6 +68,8 @@ const PERSONAL_DATA = [
   'Passport',
   'Visa',
   'Work Permits',
+  'None',
+  'Other',
 ]
 const SENSITIVE_DATA = [
   'Family or ethnic origin',
@@ -76,9 +79,26 @@ const SENSITIVE_DATA = [
   'Biometric data',
   'Health-related information',
   "Data related to the provision of healthcare services that reveals the person's health status",
+  'None',
+  'Other',
 ]
-const SUBJECT_CATEGORIES = ['Employees', 'Customers', 'Other individuals e.g., Third party service providers']
-const VOLUMES = ['0-1000', '1,000-100,000', '100,000-1M', 'over 1M']
+const SUBJECT_CATEGORIES = [
+  'Employees',
+  'Job Applicants / Candidates',
+  'Customers',
+  'Former Employees',
+  'Contractors / Consultants',
+  'Vendors / Supplier Contacts',
+  'Business Partners',
+  'Website Visitors',
+  'Students',
+  'Patients',
+  'Members / Subscribers',
+  'Shareholders',
+  'Public Individuals / Citizens',
+  'Other',
+]
+const VOLUMES = ['Less than 100', '100-1,000', '1,001-10,000', '10,001-100,000', 'Over 100,000']
 
 /** Sheet row 3 labels for the Data Controller or Data Processor dropdown (col C). */
 const DESIGNATION_LABELS: Record<string, string> = {
@@ -177,7 +197,7 @@ const HOVER = {
   sensitiveData:
     "Family or ethnic origin, political/philosophical opinions, religious beliefs, criminal record, biometric data, health-related information, including physical, psychological, mental, genetic, or sexual condition, data related to the provision of healthcare services that reveals the person's health status",
   dataSubjects: 'Employees, customers, other individuals e.g., third party service providers',
-  volume: '0-1000; 1,000-100,000; 100,000-1M; or over 1M. (Per month)',
+  volume: 'Less than 100; 100-1,000; 1,001-10,000; 10,001-100,000; or Over 100,000.',
   frequency:
     'Indicate how often personal data is processed in relation to each activity. Common frequencies include:\n- Daily\n- Weekly\n- Monthly\n- Quarterly\n- Annually\n- Ad hoc\n- One off',
   source: 'Data Subject or other source (e.g. third party)',
@@ -558,7 +578,17 @@ export default function PrivacyRopaJourneyPanel({
   }
 
   const setList = (key: 'dataCategories' | 'sensitiveDataCategories' | 'dataSubjects', next: string[]) => {
-    setField({ [key]: JSON.stringify(next) } as Partial<CreatePrivacyRopaBody>)
+    const prev = parseList(processForm[key])
+    const added = next.filter((v) => !prev.includes(v))
+    const cleaned =
+      key === 'dataSubjects'
+        ? next
+        : added.includes('None')
+          ? ['None']
+          : next.includes('None')
+            ? next.filter((v) => v !== 'None')
+            : next
+    setField({ [key]: JSON.stringify(cleaned) } as Partial<CreatePrivacyRopaBody>)
   }
 
   const selectedLegal = useMemo(() => {
@@ -589,7 +619,18 @@ export default function PrivacyRopaJourneyPanel({
             ? 'Categories of Sensitive Data is required'
             : parseList(processForm.dataSubjects).length === 0
               ? 'Data Subject categories is required'
-              : !processForm.dataSubjectVolume?.trim()
+              : parseList(processForm.dataCategories).includes('Other') && !processForm.personalDataOther?.trim()
+                ? 'Other personal data detail is required'
+                : parseList(processForm.sensitiveDataCategories).includes('Other') && !processForm.sensitiveDataOther?.trim()
+                  ? 'Other sensitive data detail is required'
+                  : parseList(processForm.dataSubjects).includes('Other') && !processForm.dataSubjectOther?.trim()
+                    ? 'Other data subject detail is required'
+                    : parseList(processForm.dataCategories).includes('None') && parseList(processForm.dataCategories).length > 1
+                      ? 'None cannot be combined with other personal data'
+                      : parseList(processForm.sensitiveDataCategories).includes('None') &&
+                          parseList(processForm.sensitiveDataCategories).length > 1
+                        ? 'None cannot be combined with other sensitive data'
+                        : !processForm.dataSubjectVolume?.trim()
                 ? 'No. of data subjects is required'
                 : !processForm.processingFrequency?.trim()
                   ? 'Frequency of processing is required'
@@ -627,6 +668,9 @@ export default function PrivacyRopaJourneyPanel({
         dataCategories: row.dataCategories ?? '',
         sensitiveDataCategories: row.sensitiveDataCategories ?? '',
         dataSubjects: row.dataSubjects ?? '',
+        personalDataOther: row.personalDataOther ?? '',
+        sensitiveDataOther: row.sensitiveDataOther ?? '',
+        dataSubjectOther: row.dataSubjectOther ?? '',
         dataSubjectVolume: row.dataSubjectVolume ?? '',
         processingFrequency: row.processingFrequency ?? '',
         sourceOfPersonalData: row.sourceOfPersonalData ?? '',
@@ -993,9 +1037,11 @@ export default function PrivacyRopaJourneyPanel({
   const shellActions = canWrite ? (
     creatingProject || creatingDepartment || processScreenOpen || department ? undefined : project ? (
       <Stack direction="row" spacing={1}>
-        <Button size="small" variant="contained" onClick={() => setCreatingDepartment(true)}>
-          Add Department
-        </Button>
+        {project.status !== 'COMPLETED' && (
+          <Button size="small" variant="contained" onClick={() => setCreatingDepartment(true)}>
+            Add Department
+          </Button>
+        )}
         {project.status !== 'COMPLETED' && (
           <Tooltip title={completeWhy ?? ''} disableHoverListener={!completeWhy}>
             <span>
@@ -1132,6 +1178,9 @@ export default function PrivacyRopaJourneyPanel({
     [
       pageTitle,
       project?.id,
+      project?.status,
+      busy,
+      completeWhy,
       department?.id,
       department?.status,
       creatingProject,
@@ -1198,7 +1247,7 @@ export default function PrivacyRopaJourneyPanel({
                 return { value: y, label: y }
               })}
               onChange={(v) => setProjectYear(Number(v))}
-              fullWidth
+              minWidth={COMPACT_SELECT_MIN_WIDTH}
             />
             <CompactTextField
               label="Project name"
@@ -1552,7 +1601,7 @@ export default function PrivacyRopaJourneyPanel({
                 title="Data Privacy Officer Review"
                 subtitle={
                   reviewOpen
-                    ? 'Answer the four DPIA criteria. Required is set automatically from your answers.'
+                    ? 'Review the processing activity and answer the DPIA screening questions. The system will automatically identify whether a DPIA is required. A DPIA is required if one or more screening criteria are answered Yes. Complete the review and create a DPIA assessment for this processing activity if required.'
                     : undefined
                 }
               >
@@ -1609,11 +1658,7 @@ export default function PrivacyRopaJourneyPanel({
                       severity={reviewCriteriaComplete && reviewDerivedDpiaRequired ? 'warning' : 'info'}
                       sx={{ py: 0.75, '& .MuiAlert-message': { width: '100%' } }}
                     >
-                      <Typography variant="body2">
-                        If you answered Yes to any of questions 1-4, you must perform a DPIA. After this
-                        review, open Privacy → DPIA → Projects.
-                      </Typography>
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
+                      <Stack direction="row" spacing={1} alignItems="center">
                         <Typography variant="body2" color="text.secondary">
                           DPIA required (from criteria):
                         </Typography>
@@ -1632,14 +1677,6 @@ export default function PrivacyRopaJourneyPanel({
                       </Stack>
                     </Alert>
                     <Box sx={baselineFieldGridSx}>
-                      <HoverField text={HOVER.comments}>
-                        <CompactTextField
-                          label="DPIA comments"
-                          fieldIdPrefix="ropa-review"
-                          value={reviewDraft.dpiaComments}
-                          onChange={(e) => setReviewDraft({ ...reviewDraft, dpiaComments: e.target.value })}
-                        />
-                      </HoverField>
                       <FormSelect
                         label="Review action"
                         value={reviewDraft.action}
@@ -1752,9 +1789,6 @@ export default function PrivacyRopaJourneyPanel({
                       ) : null}
                     </Stack>
                     <Typography variant="body2" color="text.secondary">
-                      DPIA comments: {selectedProcess.dpiaComments ?? '-'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
                       Review comments: {selectedProcess.comments ?? '-'}
                     </Typography>
                     {department.status !== 'UNDER_REVIEW' && (
@@ -1791,16 +1825,20 @@ export default function PrivacyRopaJourneyPanel({
               <Stack spacing={1.25}>
                 <Box sx={baselineFieldGridSx}>
                   <HoverField text={HOVER.activity}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="Processing Activity"
                     required
                     fieldIdPrefix="ropa-process"
                     value={processForm.activityName ?? ''}
                     onChange={(e) => setField({ activityName: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField label="Processing Activity" value={processForm.activityName} />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.designation}>
+                  {canEditProcess ? (
                   <FormSelect
                     label="DATA CONTROLLER OR DATA PROCESSOR?"
                     wrapLabel
@@ -1811,12 +1849,19 @@ export default function PrivacyRopaJourneyPanel({
                       label: DESIGNATION_LABELS[d] ?? d,
                     }))}
                     onChange={(v) => setField({ designation: v as CreatePrivacyRopaBody['designation'] })}
-                    disabled={!canEditProcess}
-                    fullWidth
+                    minWidth={COMPACT_SELECT_MIN_WIDTH}
                   />
+                  ) : (
+                    <KitReadOnlyField
+                      label="DATA CONTROLLER OR DATA PROCESSOR?"
+                      wrapLabel
+                      value={DESIGNATION_LABELS[processForm.designation ?? 'CONTROLLER'] ?? processForm.designation}
+                    />
+                  )}
                   </HoverField>
                 </Box>
                 <HoverField text={HOVER.description}>
+                {canEditProcess ? (
                 <CompactTextField
                   label="Description of processing"
                   required
@@ -1825,8 +1870,14 @@ export default function PrivacyRopaJourneyPanel({
                   fieldIdPrefix="ropa-process"
                   value={processForm.processingDescription ?? ''}
                   onChange={(e) => setField({ processingDescription: e.target.value })}
-                  disabled={!canEditProcess}
                 />
+                ) : (
+                  <KitReadOnlyField
+                    label="Description of processing"
+                    value={processForm.processingDescription}
+                    multiline
+                  />
+                )}
                 </HoverField>
               </Stack>
             </SettingsCard>
@@ -1837,41 +1888,111 @@ export default function PrivacyRopaJourneyPanel({
               <Stack spacing={1.25}>
                 <Box sx={formFieldGridSx}>
                   <HoverField text={HOVER.personalData}>
+                  {canEditProcess ? (
+                    <>
                   <BiaCompactMultiSelect
                     id="ropa-personal-data"
                     label="LIST OF PERSONAL DATA *"
                     options={PERSONAL_DATA}
                     value={parseList(processForm.dataCategories)}
                     onChange={(next) => setList('dataCategories', next)}
-                    disabled={!canEditProcess}
                     noun="personal data types"
                   />
+                  {parseList(processForm.dataCategories).includes('Other') ? (
+                    <CompactTextField
+                      label="Other personal data"
+                      required
+                      fieldIdPrefix="ropa-process"
+                      value={processForm.personalDataOther ?? ''}
+                      onChange={(e) => setField({ personalDataOther: e.target.value })}
+                    />
+                  ) : null}
+                    </>
+                  ) : (
+                    <KitReadOnlyField
+                      label="LIST OF PERSONAL DATA"
+                      wrapLabel
+                      value={[
+                        ...parseList(processForm.dataCategories).filter((v) => v !== 'Other'),
+                        processForm.personalDataOther?.trim() || null,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.sensitiveData}>
+                  {canEditProcess ? (
+                    <>
                   <BiaCompactMultiSelect
                     id="ropa-sensitive-data"
                     label="CATEGORIES OF SENSITIVE DATA *"
                     options={SENSITIVE_DATA}
                     value={parseList(processForm.sensitiveDataCategories)}
                     onChange={(next) => setList('sensitiveDataCategories', next)}
-                    disabled={!canEditProcess}
                     noun="sensitive data categories"
                   />
+                  {parseList(processForm.sensitiveDataCategories).includes('Other') ? (
+                    <CompactTextField
+                      label="Other sensitive data"
+                      required
+                      fieldIdPrefix="ropa-process"
+                      value={processForm.sensitiveDataOther ?? ''}
+                      onChange={(e) => setField({ sensitiveDataOther: e.target.value })}
+                    />
+                  ) : null}
+                    </>
+                  ) : (
+                    <KitReadOnlyField
+                      label="CATEGORIES OF SENSITIVE DATA"
+                      wrapLabel
+                      value={[
+                        ...parseList(processForm.sensitiveDataCategories).filter((v) => v !== 'Other'),
+                        processForm.sensitiveDataOther?.trim() || null,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.dataSubjects}>
+                  {canEditProcess ? (
+                    <>
                   <BiaCompactMultiSelect
                     id="ropa-data-subjects"
                     label="DATA SUBJECT CATEGORIES *"
                     options={SUBJECT_CATEGORIES}
                     value={parseList(processForm.dataSubjects)}
                     onChange={(next) => setList('dataSubjects', next)}
-                    disabled={!canEditProcess}
                     noun="data subject categories"
                   />
+                  {parseList(processForm.dataSubjects).includes('Other') ? (
+                    <CompactTextField
+                      label="Other data subject"
+                      required
+                      fieldIdPrefix="ropa-process"
+                      value={processForm.dataSubjectOther ?? ''}
+                      onChange={(e) => setField({ dataSubjectOther: e.target.value })}
+                    />
+                  ) : null}
+                    </>
+                  ) : (
+                    <KitReadOnlyField
+                      label="DATA SUBJECT CATEGORIES"
+                      wrapLabel
+                      value={[
+                        ...parseList(processForm.dataSubjects).filter((v) => v !== 'Other'),
+                        processForm.dataSubjectOther?.trim() || null,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    />
+                  )}
                   </HoverField>
                 </Box>
                 <Box sx={baselineFieldGridSx}>
                   <HoverField text={HOVER.volume}>
+                  {canEditProcess ? (
                   <FormSelect
                     label="NO. OF DATA SUBJECTS WHOSE PERSONAL DATA IS PROCESSED"
                     wrapLabel
@@ -1879,40 +2000,58 @@ export default function PrivacyRopaJourneyPanel({
                     value={processForm.dataSubjectVolume ?? ''}
                     options={[{ value: '', label: 'Select' }, ...VOLUMES.map((v) => ({ value: v, label: v }))]}
                     onChange={(v) => setField({ dataSubjectVolume: v })}
-                    disabled={!canEditProcess}
-                    fullWidth
+                    minWidth={COMPACT_SELECT_MIN_WIDTH}
                   />
+                  ) : (
+                    <KitReadOnlyField
+                      label="NO. OF DATA SUBJECTS WHOSE PERSONAL DATA IS PROCESSED"
+                      wrapLabel
+                      value={processForm.dataSubjectVolume}
+                    />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.frequency}>
+                  {canEditProcess ? (
                   <FormSelect
                     label="Frequency of processing"
                     required
                     value={processForm.processingFrequency ?? ''}
                     options={[{ value: '', label: 'Select' }, ...ROPA_FREQUENCIES.map((v) => ({ value: v, label: v }))]}
                     onChange={(v) => setField({ processingFrequency: v })}
-                    disabled={!canEditProcess}
-                    fullWidth
+                    minWidth={COMPACT_SELECT_MIN_WIDTH}
                   />
+                  ) : (
+                    <KitReadOnlyField label="Frequency of processing" value={processForm.processingFrequency} />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.source}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="Source of Personal Data"
                     required
                     fieldIdPrefix="ropa-process"
                     value={processForm.sourceOfPersonalData ?? ''}
                     onChange={(e) => setField({ sourceOfPersonalData: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField label="Source of Personal Data" value={processForm.sourceOfPersonalData} />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.method}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="Method of receiving Personal Data"
                     required
                     fieldIdPrefix="ropa-process"
                     value={processForm.methodOfReceiving ?? ''}
                     onChange={(e) => setField({ methodOfReceiving: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField
+                      label="Method of receiving Personal Data"
+                      value={processForm.methodOfReceiving}
+                    />
+                  )}
                   </HoverField>
                 </Box>
               </Stack>
@@ -1922,15 +2061,22 @@ export default function PrivacyRopaJourneyPanel({
           <Box id="ropa-legal" sx={{ ...sectionAnchorSx, mt: 1.5 }}>
             <SettingsCard autoHeight title="Legal Basis">
               <HoverField text={HOVER.legalBasis}>
+              {canEditProcess ? (
               <BiaCompactMultiSelect
                 id="ropa-legal-basis"
                 label="LEGAL BASIS FOR PROCESSING *"
                 options={ROPA_LEGAL_BASES.map((b) => LEGAL_BASIS_LABELS[b] ?? b)}
                 value={selectedLegal.map((b) => LEGAL_BASIS_LABELS[b] ?? b)}
                 onChange={setLegalFromLabels}
-                disabled={!canEditProcess}
                 noun="legal bases"
               />
+              ) : (
+                <KitReadOnlyField
+                  label="LEGAL BASIS FOR PROCESSING"
+                  wrapLabel
+                  value={selectedLegal.map((b) => LEGAL_BASIS_LABELS[b] ?? b).join(', ')}
+                />
+              )}
               </HoverField>
             </SettingsCard>
           </Box>
@@ -1940,6 +2086,7 @@ export default function PrivacyRopaJourneyPanel({
               <Stack spacing={1.25}>
                 <Box sx={baselineFieldGridSx}>
                   <HoverField text={HOVER.internal}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="Internal department"
                     required
@@ -1948,10 +2095,13 @@ export default function PrivacyRopaJourneyPanel({
                     onChange={(e) =>
                       setField({ shareInternalDetails: e.target.value, shareInternal: !!e.target.value })
                     }
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField label="Internal department" value={processForm.shareInternalDetails} />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.external}>
+                  {canEditProcess ? (
                   <FormSelect
                     label="External entities"
                     required
@@ -1961,33 +2111,44 @@ export default function PrivacyRopaJourneyPanel({
                       { value: 'YES', label: 'Yes' },
                     ]}
                     onChange={(v) => setField({ shareExternal: v === 'YES' })}
-                    disabled={!canEditProcess}
-                    fullWidth
+                    minWidth={COMPACT_SELECT_MIN_WIDTH}
                   />
+                  ) : (
+                    <KitReadOnlyField label="External entities" value={processForm.shareExternal ? 'Yes' : 'No'} />
+                  )}
                   </HoverField>
-                  {processForm.shareExternal && (
+                  {processForm.shareExternal &&
+                    (canEditProcess ? (
                     <CompactTextField
                       label="External entity detail"
                       required
                       fieldIdPrefix="ropa-process"
                       value={processForm.shareExternalDetails ?? ''}
                       onChange={(e) => setField({ shareExternalDetails: e.target.value })}
-                      disabled={!canEditProcess}
                     />
-                  )}
+                    ) : (
+                      <KitReadOnlyField
+                        label="External entity detail"
+                        value={processForm.shareExternalDetails}
+                      />
+                    ))}
                   <HoverField text={HOVER.location}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="Location"
                     required
                     fieldIdPrefix="ropa-process"
                     value={processForm.externalEntityLocation ?? ''}
                     onChange={(e) => setField({ externalEntityLocation: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField label="Location" value={processForm.externalEntityLocation} />
+                  )}
                   </HoverField>
                 </Box>
                 <Box sx={{ ...twoColFieldSx, alignItems: 'start' }}>
                   <HoverField text={HOVER.adequacy}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="DOES THE COUNTRY HAVE AN ADEQUATE LEVEL OF DATA PROTECTION? (Y/N)"
                     wrapLabel
@@ -1995,10 +2156,17 @@ export default function PrivacyRopaJourneyPanel({
                     fieldIdPrefix="ropa-process"
                     value={processForm.adequacyNote ?? ''}
                     onChange={(e) => setField({ adequacyNote: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField
+                      label="DOES THE COUNTRY HAVE AN ADEQUATE LEVEL OF DATA PROTECTION? (Y/N)"
+                      wrapLabel
+                      value={processForm.adequacyNote}
+                    />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.safeguards}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="What safeguards have been implemented?"
                     required
@@ -2007,8 +2175,14 @@ export default function PrivacyRopaJourneyPanel({
                     fieldIdPrefix="ropa-process"
                     value={processForm.safeguardsImplemented ?? ''}
                     onChange={(e) => setField({ safeguardsImplemented: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField
+                      label="What safeguards have been implemented?"
+                      value={processForm.safeguardsImplemented}
+                      multiline
+                    />
+                  )}
                   </HoverField>
                 </Box>
               </Stack>
@@ -2020,6 +2194,7 @@ export default function PrivacyRopaJourneyPanel({
               <Stack spacing={1.25}>
                 <Box sx={{ ...twoColFieldSx, alignItems: 'end' }}>
                   <HoverField text={HOVER.storage}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="SYSTEMS / OTHER LOCATION WHERE THE PERSONAL DATA IS STORED"
                     wrapLabel
@@ -2027,21 +2202,31 @@ export default function PrivacyRopaJourneyPanel({
                     fieldIdPrefix="ropa-process"
                     value={processForm.storageSystems ?? ''}
                     onChange={(e) => setField({ storageSystems: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField
+                      label="SYSTEMS / OTHER LOCATION WHERE THE PERSONAL DATA IS STORED"
+                      wrapLabel
+                      value={processForm.storageSystems}
+                    />
+                  )}
                   </HoverField>
                   <HoverField text={HOVER.retention}>
+                  {canEditProcess ? (
                   <CompactTextField
                     label="Retention period"
                     required
                     fieldIdPrefix="ropa-process"
                     value={processForm.retentionPeriod ?? ''}
                     onChange={(e) => setField({ retentionPeriod: e.target.value })}
-                    disabled={!canEditProcess}
                   />
+                  ) : (
+                    <KitReadOnlyField label="Retention period" value={processForm.retentionPeriod} />
+                  )}
                   </HoverField>
                 </Box>
                 <HoverField text={HOVER.security}>
+                {canEditProcess ? (
                 <CompactTextField
                   label="ORGANIZATIONAL, ADMINISTRATIVE, AND TECHNICAL MEASURES FOR PERSONAL DATA SECURITY"
                   wrapLabel
@@ -2051,8 +2236,15 @@ export default function PrivacyRopaJourneyPanel({
                   fieldIdPrefix="ropa-process"
                   value={processForm.securityMeasures ?? ''}
                   onChange={(e) => setField({ securityMeasures: e.target.value })}
-                  disabled={!canEditProcess}
                 />
+                ) : (
+                  <KitReadOnlyField
+                    label="ORGANIZATIONAL, ADMINISTRATIVE, AND TECHNICAL MEASURES FOR PERSONAL DATA SECURITY"
+                    wrapLabel
+                    value={processForm.securityMeasures}
+                    multiline
+                  />
+                )}
                 </HoverField>
               </Stack>
             </SettingsCard>
@@ -2173,6 +2365,11 @@ export default function PrivacyRopaJourneyPanel({
     processes.length > 0 &&
     processes.every((pr) => pr.reviewOutcome === 'REVIEWED' || pr.reviewOutcome === 'RETURNED')
   // Multi-select review scopes (BIA BC Head pattern): only undecided rows get a checkbox.
+  const showDpiaColumn =
+    department.status === 'READY_FOR_HEAD_SIGN_OFF' ||
+    department.status === 'PENDING_HEAD_SIGN_OFF' ||
+    department.status === 'APPROVED' ||
+    department.status === 'CLOSED'
   const dpoReviewOpen = canWrite && department.status === 'UNDER_REVIEW'
   const headReviewOpen = isHeadViewer && department.status === 'PENDING_HEAD_SIGN_OFF'
   const dpoScope = processes.filter((p) => (p.reviewOutcome ?? 'OPEN') === 'OPEN')
@@ -2342,7 +2539,7 @@ export default function PrivacyRopaJourneyPanel({
             {phase === 'champion' && department.status === 'IN_PROGRESS' && (
               <Typography variant="body2" color="text.secondary">
                 {canFill
-                  ? 'Add or open processing activities below and fill the RoPA sheet fields. Submit the department when every business process is captured.'
+                  ? 'Add and maintain all processing activities performed by your department. Complete the RoPA details for each activity and submit the RoPA for review once all business processes involving personal data have been documented.'
                   : 'The assigned Privacy Champion is currently completing this ROPA. On submission it moves to Data Privacy Officer Review.'}
               </Typography>
             )}
@@ -2350,7 +2547,7 @@ export default function PrivacyRopaJourneyPanel({
               <Stack spacing={1.25}>
                 <Typography variant="body2" color="text.secondary">
                   {canWrite
-                    ? 'Open each process: the Data Privacy Officer Review criteria appear first. Answer the four Yes/No questions (DPIA required is set automatically), add comments, and Mark Reviewed or Return. You can also select several processes below to Return them together. When every process is decided, Complete Review sends returned ones back to the Champion, or if all are Reviewed sends the ROPA back to the Champion to forward to the Department Head.'
+                    ? 'Review the processing activities submitted for this department. Verify the RoPA details, determine whether a DPIA is required, and mark each activity as Reviewed or Returned.'
                     : 'The Data Privacy Officer is reviewing each process and checking DPIA eligibility.'}
                 </Typography>
                 {canWrite && nextToReview && (
@@ -2417,13 +2614,6 @@ export default function PrivacyRopaJourneyPanel({
             )}
             {phase === 'await_head' && isHeadViewer && (
               <Stack spacing={1.5}>
-                <Typography variant="body2" color="text.secondary">
-                  Open each process below and Approve or Return it, or select several processes and decide
-                  them together. Approved processes stay locked. Returned processes go back to the Privacy
-                  Champion with your comments when you send the ROPA back. {headDecidedCount} of{' '}
-                  {processes.length} decided ({headApprovedCount} approved,{' '}
-                  {headReturnedCount} to return).
-                </Typography>
                 <CompactTextField
                   label="Head notes (overall, optional)"
                   multiline
@@ -2580,15 +2770,15 @@ export default function PrivacyRopaJourneyPanel({
 
           {showProcessesCard && (
           <SettingsCard autoHeight title="Processes">
+            {headReviewOpen ? null : (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
               {canFill
-                ? 'Open a process from the list, or add a new one. Fill the RoPA sheet fields for every business process in this department.'
-                : headReviewOpen
-                  ? 'Select processes and choose Approve or Return below, or open a process and use the Department Head Review section. Then Approve ROPA or Return to Champion above.'
-                  : dpoReviewOpen
-                    ? 'Select processes and record DPIA required, comments, and Reviewed or Return below, or click a process row to review it on its own.'
-                    : 'Click a process row to view its RoPA sheet fields.'}
+                ? 'Create a new processing activity or update an existing one. Complete all required RoPA fields to document how personal data is processed within this department.'
+                : dpoReviewOpen
+                  ? 'Select processing activities below to review and provide comments, or open an activity to perform a detailed review.'
+                  : 'Click a process row to view its RoPA sheet fields.'}
             </Typography>
+            )}
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -2614,13 +2804,17 @@ export default function PrivacyRopaJourneyPanel({
                   <TableCell>Controller / Processor</TableCell>
                   <TableCell>DPO Review</TableCell>
                   <TableCell>Department Head Review</TableCell>
-                  <TableCell>DPIA</TableCell>
+                  {showDpiaColumn && <TableCell>DPIA</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {processes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={dpoReviewOpen || headReviewOpen ? 7 : 6}>
+                    <TableCell
+                      colSpan={
+                        5 + (dpoReviewOpen || headReviewOpen ? 1 : 0) + (showDpiaColumn ? 1 : 0)
+                      }
+                    >
                       <Typography color="text.secondary" sx={{ py: 1 }}>
                         No processing activities yet.
                       </Typography>
@@ -2669,19 +2863,17 @@ export default function PrivacyRopaJourneyPanel({
                           ? 'PENDING'
                           : '-'}
                     </TableCell>
+                    {showDpiaColumn && (
                     <TableCell>
-                      {row.dpiaRequired ? 'Yes' : 'No'}
-                      {row.linkedDpiaId ? ` (DPIA #${row.linkedDpiaId})` : ''}
+                      {row.reviewOutcome === 'REVIEWED' ? (row.dpiaRequired ? 'Yes' : 'No') : '-'}
                     </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
             {dpoReviewOpen && dpoSelectedIds.length > 0 && (
               <Stack spacing={0.75} sx={{ mt: 1.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Mark Reviewed needs the four DPIA criteria on each process. Bulk select is for Return only.
-                </Typography>
                 <Stack direction="row" spacing={1} alignItems="flex-end" flexWrap="wrap" useFlexGap>
                   <Typography variant="body2" sx={{ pb: 0.75 }}>
                     {dpoSelectedIds.length} selected
@@ -2710,11 +2902,6 @@ export default function PrivacyRopaJourneyPanel({
                   </Typography>
                 )}
               </Stack>
-            )}
-            {dpoReviewOpen && dpoSelectedIds.length === 0 && dpoScope.length > 0 && (
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                Open a process to answer DPIA criteria and Mark Reviewed, or select rows to return several at once.
-              </Typography>
             )}
             {headReviewOpen && headSelectedIds.length > 0 && (
               <Stack spacing={0.75} sx={{ mt: 1.5 }}>
@@ -2754,11 +2941,6 @@ export default function PrivacyRopaJourneyPanel({
                   </Typography>
                 )}
               </Stack>
-            )}
-            {headReviewOpen && headSelectedIds.length === 0 && headScope.length > 0 && (
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                Select processes using the checkboxes to decide several at once.
-              </Typography>
             )}
             {canFill && (
               <Stack spacing={0.75} sx={{ mt: 1.5 }}>

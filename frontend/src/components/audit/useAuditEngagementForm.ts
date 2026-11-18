@@ -35,7 +35,7 @@ export const SCOPE_MODULES: { value: EngagementScopeModule; label: string; note:
   { value: 'DASHBOARD', label: 'Dashboard', note: 'Overview widgets' },
   { value: 'GAP', label: 'Gap Assessment', note: 'Control results' },
   { value: 'SOA', label: 'Statement of Applicability', note: 'SoA with decisions' },
-  { value: 'RISK', label: 'Information Security Risk', note: 'Read only' },
+  { value: 'RISK', label: 'Unified Risk', note: 'Read only' },
   { value: 'ERM', label: 'Enterprise Risk', note: 'Read only' },
   { value: 'BCMS', label: 'BCMS / BIA', note: 'Read only' },
   { value: 'PRIVACY', label: 'Privacy (ROPA, DPIA)', note: 'Read only' },

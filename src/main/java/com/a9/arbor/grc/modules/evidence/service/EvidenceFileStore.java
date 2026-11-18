@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public interface EvidenceFileStore {
 
-    /** Backend id for diagnostics ("local" or "blob"). */
+    /** Backend id for diagnostics / PROGRESS ("local" or "blob"). */
     String backend();
 
     StoredFile store(long evidenceId, int versionNumber, MultipartFile file);

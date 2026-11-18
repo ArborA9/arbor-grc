@@ -59,6 +59,14 @@ public class RiskBulkImportWorkbook {
             RiskLevel.HIGH, "High",
             RiskLevel.VERY_HIGH, "Very High");
 
+    /** ERM Likelihood axis labels (FCA / Arbor P0). Impact still uses {@link #LEVEL_LABEL}. */
+    static final Map<RiskLevel, String> ERM_LIKELIHOOD_LABEL = Map.of(
+            RiskLevel.VERY_LOW, "Extremely Unlikely",
+            RiskLevel.LOW, "Unlikely",
+            RiskLevel.MEDIUM, "Possible",
+            RiskLevel.HIGH, "Likely",
+            RiskLevel.VERY_HIGH, "Almost Certain");
+
     static final Map<RiskLevel, String> CE_LABEL = Map.of(
             RiskLevel.VERY_LOW, "Ineffective",
             RiskLevel.LOW, "Weak",
@@ -172,12 +180,15 @@ public class RiskBulkImportWorkbook {
         String[] headers = java.util.Arrays.stream(erm ? ERM_HEADERS : IS_HEADERS)
                 .map(h -> h.endsWith(" (1-5)") ? scaleHeader(h.substring(0, h.length() - 6), gridSize) : h)
                 .toArray(String[]::new);
-        List<String> levelNames = scale.stream().map(l -> LEVEL_LABEL.get(l)).toList();
-        List<String> ceNames = scale.stream().map(l -> CE_LABEL.get(l)).toList();
+        List<String> likelihoodNames = scale.stream()
+                .map(l -> erm ? ERM_LIKELIHOOD_LABEL.get(l) : LEVEL_LABEL.get(l))
+                .toList();
+        List<String> impactNames = scale.stream().map(LEVEL_LABEL::get).toList();
+        List<String> ceNames = scale.stream().map(CE_LABEL::get).toList();
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet instructions = wb.createSheet("Instructions");
             writeInstructions(instructions, erm, projectName, likelihoodHeader, impactHeader, ceHeader,
-                    levelNames, ceNames);
+                    likelihoodNames, impactNames, ceNames);
 
             Sheet risks = wb.createSheet(SHEET_RISKS);
             Row header = risks.createRow(0);
@@ -188,7 +199,7 @@ public class RiskBulkImportWorkbook {
 
             Sheet ref = wb.createSheet(SHEET_REF);
             writeReference(wb, ref, erm, orgUnitNames, contributorEmails, ownerEmails, frameworkCodes,
-                    vendorNames, controlRefs, associatedThreats, levelNames, ceNames);
+                    vendorNames, controlRefs, associatedThreats, likelihoodNames, impactNames, ceNames);
             addValidations(wb, risks, headers, erm,
                     orgUnitNames.size(), contributorEmails.size(), ownerEmails.size(),
                     associatedThreats.size(), controlRefs.size(), likelihoodHeader, impactHeader, ceHeader);
@@ -212,8 +223,8 @@ public class RiskBulkImportWorkbook {
                 sample.getCell(col(headers, "Risk Owner")).setCellValue(ownerEmails.get(0));
             }
             int mid = scale.size() / 2;
-            sample.getCell(col(headers, likelihoodHeader)).setCellValue(levelNames.get(mid));
-            sample.getCell(col(headers, impactHeader)).setCellValue(levelNames.get(Math.max(0, scale.size() - 2)));
+            sample.getCell(col(headers, likelihoodHeader)).setCellValue(likelihoodNames.get(mid));
+            sample.getCell(col(headers, impactHeader)).setCellValue(impactNames.get(Math.max(0, scale.size() - 2)));
             sample.getCell(col(headers, ceHeader)).setCellValue(ceNames.get(mid));
             sample.getCell(col(headers, "Treatment Option")).setCellValue("Treat (Mitigate)");
             sample.getCell(col(headers, "Treatment Action Plan"))
@@ -338,16 +349,17 @@ public class RiskBulkImportWorkbook {
         if (!missing.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Missing column '" + missing.get(0) + "': use the Arbor "
-                            + (erm ? "ERM" : "IS") + " risk template. Headers must match the portal.");
+                            + (erm ? "ERM" : "Unified") + " risk template. Headers must match the portal.");
         }
     }
 
     private static void writeInstructions(Sheet sheet, boolean erm, String projectName,
                                           String likelihoodHeader, String impactHeader, String ceHeader,
-                                          List<String> levelNames, List<String> ceNames) {
+                                          List<String> likelihoodNames, List<String> impactNames,
+                                          List<String> ceNames) {
         String scored = likelihoodHeader + ", " + impactHeader + ", " + ceHeader;
         List<String> lines = new ArrayList<>();
-        lines.add(erm ? "Arbor GRC: ERM Risk bulk create template" : "Arbor GRC: IS Risk bulk create template");
+        lines.add(erm ? "Arbor GRC: ERM Risk bulk create template" : "Arbor GRC: Unified Risk bulk create template");
         if (projectName != null && !projectName.isBlank()) {
             lines.add("Project: " + projectName + ". Upload adds new rows to this project. Existing risks stay.");
         } else {
@@ -360,15 +372,23 @@ public class RiskBulkImportWorkbook {
         } else {
             lines.add("3. Required: Date Identified, Risk Title, Risk Description, Gap / Observation, Division / Department, Associated Threat, Risk Owner, " + scored + ", Treatment Action Plan.");
         }
-        lines.add("4. Risk ID is optional. Leave blank for the next ERM-YYYY-NNN or ISR-YYYY-NNN. A filled Risk ID must be unique.");
+        lines.add("4. Risk ID is optional. Leave blank for the next ERM-YYYY-NNN or UR-YYYY-NNN. A filled Risk ID must be unique.");
         lines.add("Note: the grey row with Risk ID SAMPLE is an example. Delete it or keep it. Arbor ignores it on upload.");
         lines.add("5. Risk Owner and Risk Custodian: pick the email from the Reference list (same people as the portal).");
         lines.add("6. Risk Custodian assigns after create (skipped if residual auto-closes).");
         lines.add("7. Valid rows are created; failed rows appear in the report. Max " + MAX_ROWS + " data rows.");
-        lines.add("8. Your risk matrix is " + levelNames.size() + "x" + levelNames.size() + ". Likelihood and Impact: "
-                + String.join(", ", levelNames) + " (lowest to highest). Control Effectiveness: "
-                + String.join(", ", ceNames) + ". A number works too: 1 is the lowest, " + levelNames.size()
-                + " the highest.");
+        if (erm) {
+            lines.add("8. Your risk matrix is " + likelihoodNames.size() + "x" + likelihoodNames.size()
+                    + ". Likelihood: " + String.join(", ", likelihoodNames)
+                    + " (lowest to highest). Impact: " + String.join(", ", impactNames)
+                    + ". Control Effectiveness: " + String.join(", ", ceNames)
+                    + ". A number works too: 1 is the lowest, " + likelihoodNames.size() + " the highest.");
+        } else {
+            lines.add("8. Your risk matrix is " + likelihoodNames.size() + "x" + likelihoodNames.size()
+                    + ". Likelihood and Impact: " + String.join(", ", likelihoodNames)
+                    + " (lowest to highest). Control Effectiveness: " + String.join(", ", ceNames)
+                    + ". A number works too: 1 is the lowest, " + likelihoodNames.size() + " the highest.");
+        }
         lines.add("9. Treatment Option: Treat (Mitigate), Tolerate (Accept), Terminate (Avoid), Transfer.");
         if (!erm) {
             lines.add("10. Associated Threat: pick from the Reference list.");
@@ -387,26 +407,31 @@ public class RiskBulkImportWorkbook {
                                        List<String> vendors,
                                        List<String> controlRefs,
                                        List<String> associatedThreats,
-                                       List<String> levelNames,
+                                       List<String> likelihoodNames,
+                                       List<String> impactNames,
                                        List<String> ceNames) {
         String[] headers = {
                 "Division / Department", "Risk Custodian", "Risk Owner",
-                "Risk Category", "Likelihood / Impact", "Treatment Option", "Framework", "Vendor",
-                "Control Ref", "Associated Threat", "Risk Cause / Source", "Control Effectiveness"
+                "Risk Category", erm ? "Likelihood" : "Likelihood / Impact", "Treatment Option", "Framework", "Vendor",
+                "Control Ref", "Associated Threat", "Risk Cause / Source", "Control Effectiveness",
+                erm ? "Impact" : ""
         };
         Row h = ref.createRow(0);
         for (int i = 0; i < headers.length; i++) {
+            if (headers[i].isBlank()) {
+                continue;
+            }
             h.createCell(i).setCellValue(headers[i]);
             ref.setColumnWidth(i, 5500);
         }
         String[] cats = CATEGORIES;
-        String[] levels = levelNames.toArray(String[]::new);
+        String[] levels = likelihoodNames.toArray(String[]::new);
         String[] treatments = new String[]{"Treat (Mitigate)", "Tolerate (Accept)", "Terminate (Avoid)", "Transfer"};
         int max = Math.max(Math.max(orgUnits.size(), contributors.size()),
                 Math.max(owners.size(), Math.max(cats.length, Math.max(levels.length,
-                        Math.max(treatments.length, Math.max(frameworks.size(),
+                        Math.max(impactNames.size(), Math.max(treatments.length, Math.max(frameworks.size(),
                                 Math.max(vendors.size(), Math.max(controlRefs.size(),
-                                        Math.max(associatedThreats.size(), ERM_CAUSES.length)))))))));
+                                        Math.max(associatedThreats.size(), ERM_CAUSES.length))))))))));
         for (int i = 0; i < max; i++) {
             Row r = ref.createRow(i + 1);
             if (i < orgUnits.size()) r.createCell(0).setCellValue(orgUnits.get(i));
@@ -421,6 +446,7 @@ public class RiskBulkImportWorkbook {
             if (i < associatedThreats.size()) r.createCell(9).setCellValue(associatedThreats.get(i));
             if (erm && i < ERM_CAUSES.length) r.createCell(10).setCellValue(ERM_CAUSES[i]);
             if (i < ceNames.size()) r.createCell(11).setCellValue(ceNames.get(i));
+            if (erm && i < impactNames.size()) r.createCell(12).setCellValue(impactNames.get(i));
         }
         defineListName(wb, "OrgUnits", 0, orgUnits.size());
         defineListName(wb, "Contributors", 1, contributors.size());
@@ -433,6 +459,7 @@ public class RiskBulkImportWorkbook {
         defineListName(wb, "AssociatedThreats", 9, associatedThreats.size());
         if (erm) {
             defineListName(wb, "Causes", 10, ERM_CAUSES.length);
+            defineListName(wb, "ImpactLevels", 12, impactNames.size());
         }
     }
 
@@ -457,7 +484,11 @@ public class RiskBulkImportWorkbook {
         DataValidationHelper helper = risks.getDataValidationHelper();
         int lastDataRow = MAX_ROWS;
         addNamedValidation(helper, risks, headers, likelihoodHeader, "Levels", lastDataRow);
-        addNamedValidation(helper, risks, headers, impactHeader, "Levels", lastDataRow);
+        if (erm) {
+            addNamedValidation(helper, risks, headers, impactHeader, "ImpactLevels", lastDataRow);
+        } else {
+            addNamedValidation(helper, risks, headers, impactHeader, "Levels", lastDataRow);
+        }
         addNamedValidation(helper, risks, headers, ceHeader, "CeLevels", lastDataRow);
         addNamedValidation(helper, risks, headers, "Treatment Option", "Treatments", lastDataRow);
         if (orgCount > 0) {
@@ -640,6 +671,7 @@ public class RiskBulkImportWorkbook {
         RiskLevel level = null;
         for (RiskLevel l : RiskLevel.values()) {
             if (n.equals(LEVEL_LABEL.get(l).toUpperCase(Locale.ROOT))
+                    || n.equals(ERM_LIKELIHOOD_LABEL.get(l).toUpperCase(Locale.ROOT))
                     || n.equals(CE_LABEL.get(l).toUpperCase(Locale.ROOT))
                     || n.equals(l.name().replace('_', ' '))) {
                 level = l;
@@ -647,11 +679,11 @@ public class RiskBulkImportWorkbook {
         }
         if (level == null) {
             level = switch (n.replace(" ", "")) {
-                case "VERYLOW", "VL" -> RiskLevel.VERY_LOW;
-                case "L" -> RiskLevel.LOW;
-                case "MED", "M" -> RiskLevel.MEDIUM;
-                case "H" -> RiskLevel.HIGH;
-                case "VERYHIGH", "VH", "VERYSTRONG" -> RiskLevel.VERY_HIGH;
+                case "VERYLOW", "VL", "EXTREMELYUNLIKELY" -> RiskLevel.VERY_LOW;
+                case "L", "UNLIKELY" -> RiskLevel.LOW;
+                case "MED", "M", "POSSIBLE" -> RiskLevel.MEDIUM;
+                case "H", "LIKELY" -> RiskLevel.HIGH;
+                case "VERYHIGH", "VH", "VERYSTRONG", "ALMOSTCERTAIN" -> RiskLevel.VERY_HIGH;
                 default -> null;
             };
         }

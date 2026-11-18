@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Framework pack folder for Super Admin import scopes (one / module / all).
- * Packs are read from the configured directory when it exists. The Azure JAR uses
+ * Default: {@code docs/frameworks} when that folder exists (local). Azure JAR uses
  * packs copied to {@code classpath:framework-packs/} at Maven build.
  */
 @ConfigurationProperties(prefix = "arbor.frameworks")

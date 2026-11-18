@@ -5,7 +5,7 @@ import com.a9.arbor.grc.catalog.domain.FrameworkTypeCode;
 import java.util.List;
 
 /**
- * Parse output for a client reference pack (layout S4).
+ * Parse output for a client reference pack (layout S4) — see {@code FRAMEWORK_IMPORT_BUILD.md} §F3.
  *
  * <p>Purely what the workbook says. Nothing here is resolved against the catalog: matching refs to
  * nodes is {@link ReferencePackMerger}'s job, because it needs the codes the Master import created.

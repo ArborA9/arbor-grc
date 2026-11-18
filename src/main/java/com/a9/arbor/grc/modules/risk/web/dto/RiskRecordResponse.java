@@ -119,7 +119,8 @@ public record RiskRecordResponse(
         boolean targetResidualManual,
         String orgUnitName,
         String riskOwnerName,
-        String assignedContributorName
+        String assignedContributorName,
+        String processingActivity
 ) {
     public static RiskRecordResponse from(RiskRecord risk,
                                           TreatmentPlanResponse plan,
@@ -278,7 +279,8 @@ public record RiskRecordResponse(
                 risk.isTargetResidualManual(),
                 orgUnitName,
                 riskOwnerName,
-                assignedContributorName);
+                assignedContributorName,
+                risk.getProcessingActivity());
     }
 
     public static RiskRecordResponse from(RiskRecord risk) {

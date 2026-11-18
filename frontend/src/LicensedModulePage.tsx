@@ -25,7 +25,7 @@ const MODULE_CAPABILITIES: Record<string, string[]> = {
     'Frameworks (activate ISO / UAE IA libraries)',
     'Compliance Assessment: Projects, SoA, Gap',
     'Asset register',
-    'Information Security Risk register',
+    'Unified Risk register',
   ],
   ERM: ['ERM risk register (enterprise risks)', 'TPRM (vendor questionnaires)'],
   BCMS: ['BIA', 'Recovery plans'],
@@ -49,7 +49,7 @@ const MODULE_WORKSPACE_SHORTCUTS: Record<string, { navId: string; label: string 
     { navId: 'assessments', label: 'Gap Assessments' },
     { navId: 'soa', label: 'Statement of Applicability' },
     { navId: 'assets', label: 'Assets' },
-    { navId: 'risk', label: 'Information Security Risk' },
+    { navId: 'risk', label: 'Unified Risk' },
   ],
   ERM: [
     { navId: 'erm-risk', label: 'Enterprise Risk' },
@@ -63,7 +63,8 @@ const MODULE_WORKSPACE_SHORTCUTS: Record<string, { navId: string; label: string 
     { navId: 'privacy-dsr', label: 'DSR' },
     { navId: 'privacy-dpia-projects', label: 'DPIA Projects' },
     { navId: 'privacy-dpia-questionnaires', label: 'DPIA Questionnaire' },
-    { navId: 'privacy-risk', label: 'Privacy Risk' },
+    { navId: 'privacy-risk', label: 'Privacy Risk Projects' },
+    { navId: 'privacy-risk-acceptance', label: 'Privacy Risk Acceptance' },
   ].filter((item) => !isPrivacyNavPending(item.navId)),
   BCMS: [
     { navId: 'bcms-profiles', label: 'Dept Profiles' },

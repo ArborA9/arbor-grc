@@ -38,19 +38,20 @@ class RopaSheetFieldsTest {
                 draft ? null : "System",
                 draft ? null : "12 months",
                 draft ? null : "Encryption",
+                null, null, null,
                 draft);
     }
 
     @Test
     void sheetValueSetsMatchWorkbookValidations() {
-        assertEquals(10, RopaSheetFields.PERSONAL_DATA.size());
-        assertEquals(7, RopaSheetFields.SENSITIVE_DATA.size());
+        assertEquals(12, RopaSheetFields.PERSONAL_DATA.size());
+        assertEquals(9, RopaSheetFields.SENSITIVE_DATA.size());
         assertTrue(RopaSheetFields.SENSITIVE_DATA.contains(
                 "Data related to the provision of healthcare services that reveals the person's health status"));
-        assertEquals(3, RopaSheetFields.DATA_SUBJECT_CATEGORIES.size());
-        assertEquals(4, RopaSheetFields.DATA_SUBJECT_VOLUMES.size());
+        assertEquals(14, RopaSheetFields.DATA_SUBJECT_CATEGORIES.size());
+        assertEquals(5, RopaSheetFields.DATA_SUBJECT_VOLUMES.size());
         assertTrue(RopaSheetFields.FREQUENCIES.contains("Ad hoc"));
-        assertTrue(RopaSheetFields.FREQUENCIES.contains("One off"));
+        assertTrue(RopaSheetFields.FREQUENCIES.contains("Continuous / Real Time"));
     }
 
     @Test
@@ -58,8 +59,8 @@ class RopaSheetFieldsTest {
         assertDoesNotThrow(() -> validate(false,
                 "[\"Name\",\"Passport\"]",
                 "[\"Biometric data\"]",
-                "[\"Employees\",\"Other individuals e.g., Third party service providers\"]",
-                "1,000-100,000", "Quarterly",
+                "[\"Employees\",\"Customers\"]",
+                "100-1,000", "Quarterly",
                 "[\"CONSENT\",\"CONTRACT_PERFORMANCE\"]",
                 true, "External payroll provider"));
     }
@@ -91,7 +92,7 @@ class RopaSheetFieldsTest {
         assertThrows(ResponseStatusException.class,
                 () -> validate(false,
                         "[\"Name\"]", "[\"Biometric data\"]", "[\"Employees\"]",
-                        "0-1000", "Daily", "[\"CONSENT\"]", true, " "));
+                        "Less than 100", "Daily", "[\"CONSENT\"]", true, " "));
     }
 
     @Test
@@ -104,8 +105,9 @@ class RopaSheetFieldsTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> RopaSheetFields.validateContributorFields(
                         null, "[\"Name\"]", "[\"Biometric data\"]", "[\"Employees\"]",
-                        "0-1000", "Daily", "Source", "Method", "[\"CONSENT\"]",
-                        "Internal", false, null, "UAE", "Yes", "Clauses", "System", "12m", "Sec", false));
+                        "Less than 100", "Daily", "Source", "Method", "[\"CONSENT\"]",
+                        "Internal", false, null, "UAE", "Yes", "Clauses", "System", "12m", "Sec",
+                        null, null, null, false));
         assertTrue(ex.getReason().contains("Description of processing"));
     }
 }

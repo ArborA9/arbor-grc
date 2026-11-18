@@ -77,7 +77,8 @@ class RopaProjectServiceProcessRolesTest {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
-                RopaDesignation.CONTROLLER, null, null, null, null, null, null);
+                RopaDesignation.CONTROLLER, null, null, null, null, null, null,
+                null, null, null);
     }
 
     @Test

@@ -8,7 +8,9 @@ import com.a9.arbor.grc.modules.privacy.domain.DpiaResponseType;
 import com.a9.arbor.grc.modules.privacy.repo.DpiaDepartmentRepository;
 import com.a9.arbor.grc.modules.privacy.repo.DpiaQuestionnaireQuestionRepository;
 import com.a9.arbor.grc.modules.privacy.repo.DpiaQuestionnaireRepository;
+import com.a9.arbor.grc.modules.export.ExportFile;
 import com.a9.arbor.grc.modules.privacy.web.dto.DpiaQuestionnaireDtos;
+import com.a9.arbor.grc.modules.privacy.web.dto.DpiaQuestionnaireImportResultResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -33,17 +36,70 @@ public class DpiaQuestionnaireService {
     private final DpiaDepartmentRepository departmentRepository;
     private final DpiaSeedData seedData;
     private final ObjectMapper objectMapper;
+    private final DpiaQuestionnaireImportWorkbook importWorkbook;
 
     public DpiaQuestionnaireService(DpiaQuestionnaireRepository questionnaireRepository,
                                     DpiaQuestionnaireQuestionRepository questionRepository,
                                     DpiaDepartmentRepository departmentRepository,
                                     DpiaSeedData seedData,
-                                    ObjectMapper objectMapper) {
+                                    ObjectMapper objectMapper,
+                                    DpiaQuestionnaireImportWorkbook importWorkbook) {
         this.questionnaireRepository = questionnaireRepository;
         this.questionRepository = questionRepository;
         this.departmentRepository = departmentRepository;
         this.seedData = seedData;
         this.objectMapper = objectMapper;
+        this.importWorkbook = importWorkbook;
+    }
+
+    public ExportFile downloadQuestionTemplate(User admin) {
+        return importWorkbook.template();
+    }
+
+    @Transactional
+    public DpiaQuestionnaireImportResultResponse importQuestions(User admin, long questionnaireId, byte[] bytes) {
+        require(questionnaireId);
+        DpiaQuestionnaireImportWorkbook.ParsedBook book = importWorkbook.parse(bytes);
+        int created = 0;
+        int failed = 0;
+        int ignored = 0;
+        List<DpiaQuestionnaireImportResultResponse.RowResult> rows = new ArrayList<>();
+        int sort = (int) questionRepository.countByQuestionnaireId(questionnaireId);
+        for (DpiaQuestionnaireImportWorkbook.ParsedQuestion row : book.questions()) {
+            if (row.sample()) {
+                ignored++;
+                rows.add(DpiaQuestionnaireImportResultResponse.RowResult.ignored(
+                        row.excelRow(), row.code(), "Sample row ignored"));
+                continue;
+            }
+            try {
+                if (row.code() == null || row.code().isBlank()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Code is required");
+                }
+                if (row.question() == null || row.question().isBlank()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Question is required");
+                }
+                String section = row.section() == null || row.section().isBlank() ? "General" : row.section();
+                String principle = row.principle() == null || row.principle().isBlank() ? section : row.principle();
+                addQuestion(admin, questionnaireId, new DpiaQuestionnaireDtos.UpsertQuestionRequest(
+                        row.code(),
+                        section,
+                        principle,
+                        row.question(),
+                        row.guidance(),
+                        DpiaQuestionnaireImportWorkbook.parseResponseType(row.responseTypeRaw()),
+                        DpiaQuestionnaireImportWorkbook.parseOptions(row.optionsRaw()),
+                        sort++,
+                        DpiaQuestionnaireImportWorkbook.parseRequired(row.requiredRaw())));
+                created++;
+                rows.add(DpiaQuestionnaireImportResultResponse.RowResult.added(row.excelRow(), row.code()));
+            } catch (ResponseStatusException ex) {
+                failed++;
+                rows.add(DpiaQuestionnaireImportResultResponse.RowResult.failed(
+                        row.excelRow(), row.code(), ex.getReason() != null ? ex.getReason() : "Import failed"));
+            }
+        }
+        return new DpiaQuestionnaireImportResultResponse(created, failed, ignored, rows);
     }
 
     /**

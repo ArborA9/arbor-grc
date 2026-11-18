@@ -12,6 +12,7 @@ import { brand } from '../../theme'
 import { compactInputSx, FilterDropdown, FilterPill } from '../ui'
 import { fmtLevel } from '../../riskLevelLabels'
 import { parseGridSize, priorityBandsForGrid, type MatrixGridSize } from './riskMatrix'
+import { fmtErmRating } from './ermRiskLabels'
 import type { RiskPriorityFilter, RiskStatusFilter } from './riskUi'
 
 const STATUS_OPTIONS: { value: RiskStatusFilter; label: string }[] = [
@@ -27,12 +28,15 @@ const STATUS_OPTIONS: { value: RiskStatusFilter; label: string }[] = [
   { value: 'CANCELLED', label: 'Cancelled' },
 ]
 
-function priorityOptions(gridSize: MatrixGridSize): { value: RiskPriorityFilter; label: string }[] {
+function priorityOptions(
+  gridSize: MatrixGridSize,
+  formatBand: (band: string) => string,
+): { value: RiskPriorityFilter; label: string }[] {
   return [
     { value: 'ALL', label: 'All' },
     ...priorityBandsForGrid(gridSize).map((band) => ({
       value: band as RiskPriorityFilter,
-      label: fmtLevel(band),
+      label: formatBand(band),
     })),
   ]
 }
@@ -65,6 +69,7 @@ export default function RiskRegisterToolbar({
   extraActions,
   hideStatusFilter,
   gridSize,
+  isErm,
 }: {
   search: string
   onSearchChange: (value: string) => void
@@ -84,8 +89,10 @@ export default function RiskRegisterToolbar({
   extraActions?: ReactNode
   hideStatusFilter?: boolean
   gridSize?: MatrixGridSize
+  isErm?: boolean
 }) {
-  const priorityOpts = priorityOptions(parseGridSize(gridSize))
+  const formatBand = (band: string) => (isErm ? fmtErmRating(band) : fmtLevel(band))
+  const priorityOpts = priorityOptions(parseGridSize(gridSize), formatBand)
   return (
     <Box
       sx={{

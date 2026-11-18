@@ -357,6 +357,7 @@ public class AppNotificationMailComposer {
             case "DPIA_ASSIGNED" -> privacyDpiaAssignedMail(vars);
             case "DPIA_SUBMITTED" -> privacyDpiaSubmittedMail(vars);
             case "DPIA_RETURNED" -> privacyDpiaReturnedMail(vars);
+            case "DPIA_HEAD_RETURNED" -> privacyDpiaHeadReturnedMail(vars);
             case "DPIA_HEAD_SIGN_OFF" -> privacyDpiaHeadSignOffMail(vars);
             case "DPIA_READY_TO_CLOSE" -> privacyDpiaReadyToCloseMail(vars);
             case "RISK_OWNER_REJECTED" -> "ACCEPTANCE_REJECTED".equals(first(vars, RISK_MAIL_KIND))
@@ -700,10 +701,11 @@ public class AppNotificationMailComposer {
     private NotificationMailContent privacyRopaHeadSignOffMail(Map<String, String> vars) {
         String dept = privacyDepartment(vars);
         return privacyShell("ROPA_HEAD_SIGN_OFF", "APPROVAL REQUIRED", NotificationMailRenderer.Urgency.ACTION,
-                "The ROPA for " + dept + " is ready for your Department Head review.\n"
-                        + "Please approve or return each processing activity in Arbor GRC.",
+                "The Record of Processing Activities (RoPA) for " + dept
+                        + " has been completed and is ready for your review.\n"
+                        + "Please review the submitted processing activities and either approve them or return them for updates where necessary.",
                 vars, "Open in Arbor GRC")
-                .render("Action Required | ROPA | Department Head Sign-off");
+                .render("Action Required | ROPA | Approve RoPA Submission for " + dept);
     }
 
     private NotificationMailContent privacyRopaReadyToCloseMail(Map<String, String> vars) {
@@ -741,6 +743,15 @@ public class AppNotificationMailComposer {
                         + "Please revise your answers and resubmit in Arbor GRC.",
                 vars, "Open in Arbor GRC")
                 .render("Action Required | DPIA | Returned");
+    }
+
+    private NotificationMailContent privacyDpiaHeadReturnedMail(Map<String, String> vars) {
+        String dept = privacyDepartment(vars);
+        return privacyShell("DPIA_HEAD_RETURNED", "RETURNED", NotificationMailRenderer.Urgency.RETURNED,
+                "The Department Head has returned the DPIA for " + dept + " for further assessment.\n"
+                        + "Please review the findings and update the compliance and risk assessment in Arbor GRC.",
+                vars, "Open in Arbor GRC")
+                .render("Action Required | DPIA | Returned for assessment");
     }
 
     private NotificationMailContent privacyDpiaHeadSignOffMail(Map<String, String> vars) {

@@ -151,7 +151,7 @@ export const MODULE_CODES = [
 ] as const
 
 export const MODULE_LABELS: Record<string, string> = {
-  ISMS: 'ISMS: Frameworks, SoA, Gap, Information Security Risk',
+  ISMS: 'ISMS: Frameworks, SoA, Gap, Unified Risk',
   ERM: 'ERM: Enterprise & third-party risk',
   BCMS: 'BCMS: Business continuity',
   PRIVACY: 'Privacy',
@@ -2619,7 +2619,7 @@ export const api = {
       headers: authHeaders(),
     }).then(handle),
 
-  /** Upload a single framework pack Excel (auto-detect). Prefer the bundle import for many packs. */
+  /** Upload a single framework pack Excel (auto-detect). Prefer import-bundle for docs/frameworks. */
   importFramework: async (
     file: File,
     opts?: { typeCode?: string; version?: string; dryRun?: boolean },
@@ -3741,6 +3741,37 @@ export const api = {
       body: JSON.stringify(body),
     }).then(handle),
 
+  downloadDpiaQuestionTemplate: async (id: number): Promise<void> => {
+    const res = await apiFetch(`/api/privacy/dpia-questionnaires/${id}/questions/template.xlsx`, {
+      headers: authHeaders(),
+    })
+    if (!res.ok) {
+      await handle(res)
+      return
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'dpia-questionnaire-questions-template.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
+  },
+
+  importDpiaQuestions: async (
+    id: number,
+    file: File,
+  ): Promise<{ createdCount: number; failedCount: number; ignoredCount: number }> => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await apiFetch(`/api/privacy/dpia-questionnaires/${id}/questions/import.xlsx`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: form,
+    })
+    return handle(res)
+  },
+
   addDpiaQuestionnaireQuestion: (id: number, body: UpsertDpiaQuestionBody): Promise<DpiaQuestionnaireQuestion> =>
     apiFetch(`/api/privacy/dpia-questionnaires/${id}/questions`, {
       method: 'POST',
@@ -3788,6 +3819,7 @@ export const api = {
     name: string
     year?: number | null
     linkedRopaProjectId?: number | null
+    questionnaireId?: number | null
   }): Promise<DpiaProject> =>
     apiFetch('/api/privacy/dpia-projects', {
       method: 'POST',
@@ -4435,7 +4467,7 @@ export interface FrameworkNode {
   displayOrder: number
   recordType: string | null
   officialRef: string | null
-  /** The client's import set decides which modules each node feeds. */
+  /** The client's import set decides which modules each node feeds; see FRAMEWORK_IMPORT_BUILD.md. */
   inSoa: boolean
   inGapAssessment: boolean
   inAuditChecklist: boolean
@@ -6105,6 +6137,7 @@ export interface RiskSummary {
   sourceDpiaId?: number | null
   sourceDpiaAssessmentRowId?: number | null
   sourceRopaId?: number | null
+  processingActivity?: string | null
   sourceComplianceProjectId?: number | null
   sourceRiskTemplateId?: number | null
   createdByUserId: number
@@ -6231,6 +6264,7 @@ export interface CreateRiskBody {
   sourceDpiaId?: number | null
   sourceRopaId?: number | null
   sourceDpiaAssessmentRowId?: number | null
+  processingActivity?: string | null
   infosecStatusInitial?: string | null
   riskProjectId?: number | null
   dateIdentified?: string | null
@@ -7285,7 +7319,13 @@ export const ROPA_DPIA_STATUSES: RopaDpiaStatus[] = [
   'NOT_REQUIRED',
   'NOT_APPLICABLE',
 ]
-export const ROPA_VOLUME_BUCKETS = ['0-1000', '1000-100000', '100000-1M', 'Over 1M'] as const
+export const ROPA_VOLUME_BUCKETS = [
+  'Less than 100',
+  '100-1,000',
+  '1,001-10,000',
+  '10,001-100,000',
+  'Over 100,000',
+] as const
 export const ROPA_FREQUENCIES = [
   'Daily',
   'Weekly',
@@ -7294,6 +7334,7 @@ export const ROPA_FREQUENCIES = [
   'Annually',
   'Ad hoc',
   'One off',
+  'Continuous / Real Time',
 ] as const
 export const PRIVACY_ROPA_EVIDENCE_STAGES = [
   'WORKBOOK_WORKING',
@@ -7471,6 +7512,7 @@ export interface DpiaAssessmentRow {
   remarks: string | null
   recommendedMeasures: string | null
   riskTitle: string | null
+  createPrivacyRisk?: boolean | null
   raisedRiskId: number | null
   raisedRiskDisplayId: string | null
 }
@@ -7486,6 +7528,8 @@ export interface DpiaRiskTitleCandidate {
   orgUnitId: number
   raisedRiskId: number | null
   raisedRiskDisplayId: string | null
+  activityName?: string | null
+  observedGap?: string | null
 }
 
 export interface DpiaDepartment {
@@ -7515,6 +7559,11 @@ export interface DpiaDepartment {
   updatedAt: string
   questions?: DpiaInstanceQuestion[] | null
   assessmentRows?: DpiaAssessmentRow[] | null
+  ropaProcessId?: number | null
+  activityName?: string | null
+  activityDisplayId?: string | null
+  processingDescription?: string | null
+  designation?: string | null
 }
 
 export interface DpiaProject {
@@ -7544,6 +7593,9 @@ export interface PrivacyRopa {
   dataCategories: string | null
   sensitiveDataCategories: string | null
   dataSubjects: string | null
+  personalDataOther?: string | null
+  sensitiveDataOther?: string | null
+  dataSubjectOther?: string | null
   dataSubjectVolume: string | null
   dataSubjectVolumeNote: string | null
   processingFrequency: string | null
@@ -7613,6 +7665,9 @@ export interface CreatePrivacyRopaBody {
   dataCategories?: string | null
   sensitiveDataCategories?: string | null
   dataSubjects?: string | null
+  personalDataOther?: string | null
+  sensitiveDataOther?: string | null
+  dataSubjectOther?: string | null
   dataSubjectVolume?: string | null
   dataSubjectVolumeNote?: string | null
   processingFrequency?: string | null

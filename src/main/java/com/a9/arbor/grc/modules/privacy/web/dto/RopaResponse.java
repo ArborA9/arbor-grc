@@ -79,7 +79,10 @@ public record RopaResponse(
         Instant headDecidedAt,
         Long createdByUserId,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String personalDataOther,
+        String sensitiveDataOther,
+        String dataSubjectOther
 ) {
     public static RopaResponse from(PrivacyRopa e) {
         return new RopaResponse(
@@ -150,6 +153,9 @@ public record RopaResponse(
                 e.getHeadDecidedAt(),
                 e.getCreatedByUserId(),
                 e.getCreatedAt(),
-                e.getUpdatedAt());
+                e.getUpdatedAt(),
+                e.getPersonalDataOther(),
+                e.getSensitiveDataOther(),
+                e.getDataSubjectOther());
     }
 }

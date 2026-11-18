@@ -2,6 +2,7 @@ import type { SxProps, Theme } from '@mui/material'
 
 /**
  * Locked form layout rules: UI Kit Phase 14.
+ * See UI_BUILD.md Phase 14 before adding new create/edit surfaces.
  */
 
 /** More than this many inputs → full-page form (not dialog). */

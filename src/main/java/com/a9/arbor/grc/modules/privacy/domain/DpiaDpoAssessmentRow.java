@@ -46,4 +46,8 @@ public class DpiaDpoAssessmentRow {
 
     @Column(name = "risk_title", length = 500)
     private String riskTitle;
+
+    /** Yes = this principle should become a Privacy Risk. Null until the DPO chooses. */
+    @Column(name = "create_privacy_risk")
+    private Boolean createPrivacyRisk;
 }

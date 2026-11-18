@@ -107,7 +107,7 @@ interface AppShellProps {
   /** When set, the page title is a button. Used when the title is the way back to a list. */
   onHeaderTitleClick?: () => void
   headerSubtitle?: string
-  /** Kit-style breadcrumb under the page title (e.g. Risk Management › Information Security Risk). */
+  /** Kit-style breadcrumb under the page title (e.g. Risk Management › Unified Risk). */
   headerBreadcrumb?: string
   /** Clickable breadcrumb prefix (e.g. Assessments) before `›` + `headerBreadcrumb` trail. */
   headerBreadcrumbRoot?: { label: string; onClick: () => void }

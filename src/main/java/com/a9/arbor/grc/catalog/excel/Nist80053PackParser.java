@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 /**
  * Parser for NIST SP 800-53 Rev5 (layout S3). Reads the 20 family tabs and skips
- * {@code Withdrawn Controls}.
+ * {@code Withdrawn Controls} — see {@code FRAMEWORK_IMPORT_BUILD.md} §F3c.
  *
  * <p>Hierarchy: L1 family code from the sheet name ({@code AC}, {@code AT}, …), L2 base control
  * {@code XX-N}, L3 enhancement {@code XX-N(n)}. Every active control row is a routed leaf with one

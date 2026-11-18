@@ -219,25 +219,21 @@ const NAV: NavItem[] = [
     id: 'risk-manager',
     label: 'Risk Management',
     icon: <SecurityRoundedIcon fontSize="small" />,
-    anyModules: ['ISMS', 'ERM'],
     children: [
       {
         id: 'is-risk-nav',
-        label: 'Information Security Risk',
+        label: 'Unified Risk',
         icon: <WarningAmberRoundedIcon fontSize="small" />,
-        module: 'ISMS',
         children: [
           {
             id: 'risk',
             label: 'Projects',
             icon: <AssignmentRoundedIcon fontSize="small" />,
-            module: 'ISMS',
           },
           {
             id: 'risk-acceptance',
             label: 'Risk Acceptance',
             icon: <HowToRegRoundedIcon fontSize="small" />,
-            module: 'ISMS',
           },
         ],
       },
@@ -366,10 +362,24 @@ const NAV: NavItem[] = [
         ],
       },
       {
-        id: 'privacy-risk',
+        id: 'privacy-risk-nav',
         label: 'Privacy Risk',
         icon: <FactCheckRoundedIcon fontSize="small" />,
         module: 'PRIVACY',
+        children: [
+          {
+            id: 'privacy-risk',
+            label: 'Projects',
+            icon: <AssignmentRoundedIcon fontSize="small" />,
+            module: 'PRIVACY',
+          },
+          {
+            id: 'privacy-risk-acceptance',
+            label: 'Risk Acceptance',
+            icon: <HowToRegRoundedIcon fontSize="small" />,
+            module: 'PRIVACY',
+          },
+        ],
       },
       {
         id: 'privacy-consent',
@@ -2100,6 +2110,16 @@ function DashboardBody({ session, onLogout }: { session: Session; onLogout: () =
           openFromNotification={
             riskNotifyOpen?.riskType === 'PRIVACY_RISK' ? riskNotifyOpen : null
           }
+        />
+      )}
+
+      {active === 'privacy-risk-acceptance' && (
+        <PrivacyRiskPage
+          key="privacy-risk-acceptance"
+          session={session}
+          startOnAcceptance
+          onError={setError}
+          onOk={setOk}
         />
       )}
 

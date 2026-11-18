@@ -1,6 +1,5 @@
 package com.a9.arbor.grc.modules.risk.web;
 
-import com.a9.arbor.grc.catalog.domain.ModuleCode;
 import com.a9.arbor.grc.modules.iam.domain.Role;
 import com.a9.arbor.grc.modules.iam.domain.User;
 import com.a9.arbor.grc.modules.iam.service.UserService;
@@ -9,7 +8,6 @@ import com.a9.arbor.grc.modules.risk.service.RiskProjectService;
 import com.a9.arbor.grc.modules.risk.web.dto.CreateRiskProjectRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.RiskProjectResponse;
 import com.a9.arbor.grc.modules.risk.web.dto.UpdateRiskProjectStatusRequest;
-import com.a9.arbor.grc.security.RequiresModule;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +26,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/risk-projects")
-@RequiresModule({ModuleCode.ISMS, ModuleCode.ERM, ModuleCode.PRIVACY})
 public class RiskProjectController {
 
     private final RiskProjectService projectService;
