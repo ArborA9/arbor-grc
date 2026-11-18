@@ -49,8 +49,8 @@ public class ArborEvidenceProperties {
     private boolean blockDownloadUnlessClean = false;
 
     /**
-     * Shared secret for {@code POST /api/webhooks/malware-scan?token=}. Empty disables scan updates.
-     * The Event Grid subscription handshake still works.
+     * Shared secret for {@code POST /api/webhooks/malware-scan?token=}. Empty disables scan updates
+     * (Event Grid subscription handshake still works so Terraform can subscribe).
      */
     private String malwareWebhookToken = "";
 }

@@ -176,7 +176,7 @@ import {
 
 /** module / anyModules = commercial licence required; omit for Platform always-on. soon = not built yet.
  * Order: Dashboard → ISMS core → risk/audit/BC/privacy → platform docs → admin (Settings last). */
-/** Generic workflow engine UI: hidden from sidebar until wired to real modules. */
+/** Generic workflow engine UI: hidden from sidebar until wired to real modules (see PROGRESS.md). */
 const SHOW_WORKFLOWS_IN_NAV = false
 const WORKFLOWS_NAV_ID = 'workflows'
 

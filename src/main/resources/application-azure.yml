@@ -24,6 +24,7 @@ arbor:
   tenancy:
     vendor: sqlserver
     # true: app CREATE DATABASE on provision (into elastic pool when elastic-pool-name is set).
+    # Catalog may still be pre-created by Terraform; create is idempotent.
     create-database: ${ARBOR_TENANCY_CREATE_DATABASE:true}
     elastic-pool-name: ${ARBOR_ELASTIC_POOL_NAME:}
     # LOCAL keeps backups in the server region. Blank leaves the Azure default (GEO).
