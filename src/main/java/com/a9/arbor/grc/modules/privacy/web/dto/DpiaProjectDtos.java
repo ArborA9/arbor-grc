@@ -20,7 +20,9 @@ public final class DpiaProjectDtos {
     public record CreateProjectRequest(
             @NotBlank @Size(max = 255) String name,
             Integer year,
-            Long linkedRopaProjectId) {
+            Long linkedRopaProjectId,
+            /** When linking a ROPA, questionnaire used for every auto-pulled DPIA-required process. Null = system default. */
+            Long questionnaireId) {
     }
 
     public record AddDepartmentRequest(
@@ -59,7 +61,8 @@ public final class DpiaProjectDtos {
             String complianceStatus,
             String remarks,
             String recommendedMeasures,
-            String riskTitle) {
+            String riskTitle,
+            Boolean createPrivacyRisk) {
     }
 
     public record SaveAssessmentRequest(List<AssessmentRowUpdate> rows) {
@@ -96,6 +99,7 @@ public final class DpiaProjectDtos {
             String remarks,
             String recommendedMeasures,
             String riskTitle,
+            Boolean createPrivacyRisk,
             Long raisedRiskId,
             String raisedRiskDisplayId) {
     }
@@ -111,7 +115,9 @@ public final class DpiaProjectDtos {
             String projectName,
             Long orgUnitId,
             Long raisedRiskId,
-            String raisedRiskDisplayId) {
+            String raisedRiskDisplayId,
+            String activityName,
+            String observedGap) {
     }
 
     public record DepartmentResponse(
@@ -140,7 +146,12 @@ public final class DpiaProjectDtos {
             Instant createdAt,
             Instant updatedAt,
             List<InstanceQuestionResponse> questions,
-            List<AssessmentRowResponse> assessmentRows) {
+            List<AssessmentRowResponse> assessmentRows,
+            Long ropaProcessId,
+            String activityName,
+            String activityDisplayId,
+            String processingDescription,
+            String designation) {
     }
 
     public record ProjectResponse(

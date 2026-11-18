@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * A whole framework derived from a reference pack — nodes, hierarchy and question bank — ready for
- * the same persistence path the Master import uses.
+ * the same persistence path the Master import uses. See {@code FRAMEWORK_IMPORT_BUILD.md} §F3b.
  *
  * <p>Decided before anything is written, so a pack that cannot produce a routed node fails the
  * import rather than leaving a framework with nothing in it.

@@ -1,6 +1,7 @@
 package com.a9.arbor.grc.modules.risk.service;
 
 import com.a9.arbor.grc.catalog.domain.Framework;
+import com.a9.arbor.grc.catalog.domain.FrameworkStatus;
 import com.a9.arbor.grc.catalog.domain.ModuleCode;
 import com.a9.arbor.grc.catalog.service.FrameworkQueryService;
 import com.a9.arbor.grc.catalog.service.ModuleLicensingService;
@@ -126,14 +127,10 @@ public class RiskProjectService {
         requireWriteForType(type);
         if (type == RiskType.IS_RISK && req.frameworkId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "IS risk project requires a framework");
+                    "Unified Risk projects need a framework");
         }
         if (type == RiskType.IS_RISK) {
-            Framework fw = frameworkQueryService.requireFramework(req.frameworkId());
-            if (!IsRiskApplicableModules.includes(fw.getModuleCode())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "This framework is not used for Information Security Risk. Choose an ISMS, ERM, ITSM, AIMS, or BCMS framework");
-            }
+            assertLicensedFramework(req.frameworkId());
         }
         if (type == RiskType.ERM && req.frameworkId() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -244,7 +241,33 @@ public class RiskProjectService {
                 || status == RiskStatus.DRAFT;
     }
 
+    /**
+     * Published framework whose module is licensed for the tenant and which Super Admin
+     * has entitled. The acting Admin must hold that module.
+     */
+    private void assertLicensedFramework(long frameworkId) {
+        Framework fw = frameworkQueryService.requireFramework(frameworkId);
+        if (fw.getStatus() != FrameworkStatus.PUBLISHED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose a published framework");
+        }
+        String tenantId = TenantContext.getTenantId();
+        if (fw.getModuleCode() == null || tenantId == null || tenantId.isBlank()
+                || !moduleLicensingService.isEnabled(tenantId, fw.getModuleCode())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "This framework's module is not licensed for this tenant");
+        }
+        if (!moduleLicensingService.isFrameworkEntitled(tenantId, frameworkId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "This framework is not entitled for this tenant");
+        }
+        adminModuleAccessService.assertMayUse(fw.getModuleCode(), true);
+        moduleLicensingService.requireWritable(tenantId, fw.getModuleCode());
+    }
+
     private void requireModuleForType(RiskType type) {
+        if (type == RiskType.IS_RISK) {
+            return;
+        }
         ModuleCode code = RiskModuleCodes.forType(type);
         String tenantId = TenantContext.getTenantId();
         if (tenantId == null || tenantId.isBlank() || !moduleLicensingService.isEnabled(tenantId, code)) {
@@ -255,6 +278,9 @@ public class RiskProjectService {
     }
 
     private void requireWriteForType(RiskType type) {
+        if (type == RiskType.IS_RISK) {
+            return;
+        }
         requireModuleForType(type);
         ModuleCode code = RiskModuleCodes.forType(type);
         adminModuleAccessService.assertMayUse(code, true);

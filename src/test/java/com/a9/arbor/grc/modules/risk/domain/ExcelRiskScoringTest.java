@@ -75,4 +75,21 @@ class ExcelRiskScoringTest {
                 () -> ExcelRiskScoring.requireProductScore(17, MatrixGridSize.FIVE, 16, "Residual Risk Score"));
         assertEquals("Residual Risk Score must be a whole number from 1 to 16", ex.getReason());
     }
+
+    @Test
+    void requireResidualAxesWithinAnalysisCapsPerAxis() {
+        MatrixAxes axes = MatrixAxes.defaults(MatrixGridSize.FIVE);
+        assertDoesNotThrow(() -> ExcelRiskScoring.requireResidualAxesWithinAnalysis(
+                axes, RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.MEDIUM, RiskLevel.HIGH));
+        assertDoesNotThrow(() -> ExcelRiskScoring.requireResidualAxesWithinAnalysis(
+                axes, RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.LOW, RiskLevel.MEDIUM));
+        ResponseStatusException likelihood = assertThrows(ResponseStatusException.class,
+                () -> ExcelRiskScoring.requireResidualAxesWithinAnalysis(
+                        axes, RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.HIGH, RiskLevel.LOW));
+        assertEquals("Residual Likelihood cannot exceed Likelihood from Risk Analysis", likelihood.getReason());
+        ResponseStatusException impact = assertThrows(ResponseStatusException.class,
+                () -> ExcelRiskScoring.requireResidualAxesWithinAnalysis(
+                        axes, RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.LOW, RiskLevel.VERY_HIGH));
+        assertEquals("Residual Impact cannot exceed Impact from Risk Analysis", impact.getReason());
+    }
 }

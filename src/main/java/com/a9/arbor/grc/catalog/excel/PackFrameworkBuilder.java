@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 /**
  * Builds a complete framework — hierarchy included — out of a reference pack, for the frameworks the
- * Master workbook never carried.
+ * Master workbook never carried. See {@code FRAMEWORK_IMPORT_BUILD.md} §F3b.
  *
  * <p>The packs have no {@code level1_code..level4_code} columns and no routing flags, so both are
  * derived here:

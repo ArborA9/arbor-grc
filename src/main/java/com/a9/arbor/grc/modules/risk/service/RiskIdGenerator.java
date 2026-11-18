@@ -36,7 +36,7 @@ public class RiskIdGenerator {
                     return seqRepository.save(row);
                 });
         String prefix = switch (type) {
-            case IS_RISK -> "ISR";
+            case IS_RISK -> "UR";
             case ERM -> "ERM";
             case PRIVACY_RISK -> "DPR";
         };

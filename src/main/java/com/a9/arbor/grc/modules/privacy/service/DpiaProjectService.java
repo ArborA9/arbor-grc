@@ -19,7 +19,6 @@ import com.a9.arbor.grc.modules.privacy.domain.DpiaResponseType;
 import com.a9.arbor.grc.modules.privacy.domain.PrivacyRopa;
 import com.a9.arbor.grc.modules.privacy.domain.RopaDepartment;
 import com.a9.arbor.grc.modules.privacy.domain.RopaProject;
-import com.a9.arbor.grc.modules.privacy.domain.RopaProjectStatus;
 import com.a9.arbor.grc.modules.privacy.repo.DpiaDepartmentRepository;
 import com.a9.arbor.grc.modules.privacy.repo.DpiaDpoAssessmentRowRepository;
 import com.a9.arbor.grc.modules.privacy.repo.DpiaInstanceQuestionRepository;
@@ -140,6 +139,7 @@ public class DpiaProjectService {
             DpiaProject p = projects.computeIfAbsent(d.getDpiaProjectId(),
                     id -> projectRepository.findById(id).orElse(null));
             com.a9.arbor.grc.modules.risk.domain.RiskRecord raised = raisedByRow.get(row.getId());
+            PrivacyRopa process = loadProcess(d.getRopaProcessId());
             out.add(new DpiaProjectDtos.RiskTitleCandidate(
                     row.getId(),
                     row.getRiskTitle().trim(),
@@ -150,7 +150,9 @@ public class DpiaProjectService {
                     p != null ? p.getName() : null,
                     d.getOrgUnitId(),
                     raised != null ? raised.getId() : null,
-                    raised != null ? raised.getDisplayId() : null));
+                    raised != null ? raised.getDisplayId() : null,
+                    process != null ? process.getActivityName() : null,
+                    blankToNull(row.getRemarks())));
         }
         return out;
     }
@@ -177,15 +179,11 @@ public class DpiaProjectService {
         if (req.linkedRopaProjectId() != null) {
             RopaProject ropa = ropaProjectRepository.findById(req.linkedRopaProjectId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "ROPA project not found"));
-            if (ropa.getStatus() != RopaProjectStatus.COMPLETED) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Only a Completed ROPA project can be linked to a DPIA project");
-            }
             p.setLinkedRopaProjectId(ropa.getId());
         }
         projectRepository.save(p);
         if (p.getLinkedRopaProjectId() != null) {
-            autoPullDpiaApplicableDepartments(admin, p);
+            autoPullDpiaApplicableDepartments(admin, p, req.questionnaireId());
         }
         return toProject(p, false);
     }
@@ -207,46 +205,30 @@ public class DpiaProjectService {
     }
 
     /**
-     * When a DPIA project is linked to a Completed ROPA, add every ROPA department that has at least
-     * one process with DPIA required. Prefills Head/Champion (and Due date) from that ROPA department;
-     * if a Champion is present, snapshots the questionnaire and assigns immediately.
+     * When a DPIA project is linked to a ROPA project (any status), add one DPIA instance for every
+     * processing activity with DPIA required. Prefills Head/Champion (and Due date) from that ROPA
+     * department; if a Champion is present, snapshots the questionnaire and assigns immediately.
+     * {@code questionnaireId} null uses the system default questionnaire.
      */
-    private void autoPullDpiaApplicableDepartments(User admin, DpiaProject p) {
+    private void autoPullDpiaApplicableDepartments(User admin, DpiaProject p, Long questionnaireId) {
         Long ropaProjectId = p.getLinkedRopaProjectId();
         if (ropaProjectId == null) {
             return;
         }
-        DpiaQuestionnaire template = questionnaireService.defaultOr(null);
+        DpiaQuestionnaire template = questionnaireService.defaultOr(questionnaireId);
         boolean added = false;
         for (RopaDepartment rd : ropaDepartmentRepository.findByRopaProjectIdOrderByCreatedAtAsc(ropaProjectId)) {
-            if (departmentRepository.existsByDpiaProjectIdAndOrgUnitId(p.getId(), rd.getOrgUnitId())) {
-                continue;
+            for (PrivacyRopa process : privacyRopaRepository.findByRopaDepartmentIdOrderByCreatedAtAsc(rd.getId())) {
+                if (!process.isDpiaRequired()) {
+                    continue;
+                }
+                if (departmentRepository.existsByDpiaProjectIdAndRopaProcessId(p.getId(), process.getId())) {
+                    continue;
+                }
+                createProcessInstance(admin, p, rd, process, template,
+                        rd.getDepartmentHeadUserId(), rd.getChampionUserId(), rd.getDueDate(), null);
+                added = true;
             }
-            boolean dpiaApplicable = privacyRopaRepository.findByRopaDepartmentIdOrderByCreatedAtAsc(rd.getId()).stream()
-                    .anyMatch(PrivacyRopa::isDpiaRequired);
-            if (!dpiaApplicable) {
-                continue;
-            }
-            OrgUnit unit = orgUnitRepository.findById(rd.getOrgUnitId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Department not found"));
-            DpiaDepartment d = new DpiaDepartment();
-            d.setDpiaProjectId(p.getId());
-            d.setOrgUnitId(unit.getId());
-            d.setQuestionnaireId(template.getId());
-            d.setDepartmentHeadUserId(rd.getDepartmentHeadUserId());
-            d.setChampionUserId(rd.getChampionUserId());
-            d.setDueDate(rd.getDueDate());
-            d.setHeadOutcome(DpiaHeadOutcome.PENDING);
-            d.setCreatedByUserId(admin.getId());
-            if (rd.getChampionUserId() != null) {
-                d.setStatus(DpiaDepartmentStatus.IN_PROGRESS);
-                departmentRepository.save(d);
-                snapshotAndAssign(admin, d, template);
-            } else {
-                d.setStatus(DpiaDepartmentStatus.NOT_STARTED);
-                departmentRepository.save(d);
-            }
-            added = true;
         }
         if (added) {
             markProjectInProgress(p);
@@ -262,24 +244,55 @@ public class DpiaProjectService {
         }
         OrgUnit unit = orgUnitRepository.findById(req.orgUnitId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Department (org unit) not found"));
+        validateUser(req.departmentHeadUserId(), null);
+        validateUser(req.championUserId(), Role.CONTRIBUTOR);
+        DpiaQuestionnaire template = questionnaireService.defaultOr(req.questionnaireId());
+        if (p.getLinkedRopaProjectId() != null) {
+            RopaDepartment rd = ropaDepartmentRepository.findByRopaProjectIdOrderByCreatedAtAsc(p.getLinkedRopaProjectId())
+                    .stream()
+                    .filter(row -> Objects.equals(row.getOrgUnitId(), unit.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "This department is not on the linked ROPA project"));
+            List<PrivacyRopa> pending = privacyRopaRepository.findByRopaDepartmentIdOrderByCreatedAtAsc(rd.getId()).stream()
+                    .filter(PrivacyRopa::isDpiaRequired)
+                    .filter(process -> !departmentRepository.existsByDpiaProjectIdAndRopaProcessId(projectId, process.getId()))
+                    .toList();
+            if (pending.isEmpty()) {
+                boolean anyRequired = privacyRopaRepository.findByRopaDepartmentIdOrderByCreatedAtAsc(rd.getId()).stream()
+                        .anyMatch(PrivacyRopa::isDpiaRequired);
+                throw new ResponseStatusException(anyRequired ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST,
+                        anyRequired
+                                ? "Every DPIA-required processing activity in this department is already in the project"
+                                : "No processing activity in this department has DPIA required");
+            }
+            DpiaDepartment first = null;
+            for (PrivacyRopa process : pending) {
+                DpiaDepartment created = createProcessInstance(admin, p, rd, process, template,
+                        req.departmentHeadUserId() != null ? req.departmentHeadUserId() : rd.getDepartmentHeadUserId(),
+                        req.championUserId() != null ? req.championUserId() : rd.getChampionUserId(),
+                        req.dueDate() != null ? req.dueDate() : rd.getDueDate(),
+                        blankToNull(req.reasonDescription()));
+                if (first == null) {
+                    first = created;
+                }
+            }
+            markProjectInProgress(p);
+            return toDepartment(first, true);
+        }
         if (departmentRepository.existsByDpiaProjectIdAndOrgUnitId(projectId, unit.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Department \"" + unit.getName() + "\" is already in this project");
         }
-        if (p.getLinkedRopaProjectId() == null) {
-            String reason = blankToNull(req.reasonDescription());
-            if (reason == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Short description and reason for the DPIA is required when not linked to ROPA");
-            }
+        String reason = blankToNull(req.reasonDescription());
+        if (reason == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Short description and reason for the DPIA is required when not linked to ROPA");
         }
-        validateUser(req.departmentHeadUserId(), null);
-        validateUser(req.championUserId(), Role.CONTRIBUTOR);
-        DpiaQuestionnaire template = questionnaireService.defaultOr(req.questionnaireId());
         DpiaDepartment d = new DpiaDepartment();
         d.setDpiaProjectId(projectId);
         d.setOrgUnitId(unit.getId());
-        d.setReasonDescription(blankToNull(req.reasonDescription()));
+        d.setReasonDescription(reason);
         d.setQuestionnaireId(template.getId());
         d.setDepartmentHeadUserId(req.departmentHeadUserId());
         d.setChampionUserId(req.championUserId());
@@ -296,6 +309,33 @@ public class DpiaProjectService {
         }
         markProjectInProgress(p);
         return toDepartment(d, true);
+    }
+
+    private DpiaDepartment createProcessInstance(User admin, DpiaProject p, RopaDepartment rd, PrivacyRopa process,
+                                                 DpiaQuestionnaire template, Long headId, Long championId,
+                                                 LocalDate dueDate, String reasonOverride) {
+        orgUnitRepository.findById(rd.getOrgUnitId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Department not found"));
+        DpiaDepartment d = new DpiaDepartment();
+        d.setDpiaProjectId(p.getId());
+        d.setOrgUnitId(rd.getOrgUnitId());
+        d.setRopaProcessId(process.getId());
+        d.setReasonDescription(reasonOverride != null ? reasonOverride : blankToNull(process.getProcessingDescription()));
+        d.setQuestionnaireId(template.getId());
+        d.setDepartmentHeadUserId(headId);
+        d.setChampionUserId(championId);
+        d.setDueDate(dueDate);
+        d.setHeadOutcome(DpiaHeadOutcome.PENDING);
+        d.setCreatedByUserId(admin.getId());
+        if (championId != null) {
+            d.setStatus(DpiaDepartmentStatus.IN_PROGRESS);
+            departmentRepository.save(d);
+            snapshotAndAssign(admin, d, template);
+        } else {
+            d.setStatus(DpiaDepartmentStatus.NOT_STARTED);
+            departmentRepository.save(d);
+        }
+        return d;
     }
 
     @Transactional
@@ -317,10 +357,29 @@ public class DpiaProjectService {
         if (req.dueDate() != null) {
             d.setDueDate(req.dueDate());
         }
+
+        Long currentQuestionnaireId = d.getQuestionnaireId();
+        Long requestedQuestionnaireId = req.questionnaireId();
+        boolean questionnaireChangeRequested = requestedQuestionnaireId != null
+                && (currentQuestionnaireId == null || !currentQuestionnaireId.equals(requestedQuestionnaireId));
+        if (questionnaireChangeRequested && !canChangeQuestionnaire(d)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Questionnaire can only be changed before the Champion submits for DPO review");
+        }
+
         DpiaQuestionnaire template = questionnaireService.defaultOr(
-                req.questionnaireId() != null ? req.questionnaireId() : d.getQuestionnaireId());
+                requestedQuestionnaireId != null ? requestedQuestionnaireId : currentQuestionnaireId);
+        boolean questionnaireChanged = currentQuestionnaireId == null
+                || !currentQuestionnaireId.equals(template.getId());
+        if (questionnaireChanged && !canChangeQuestionnaire(d)) {
+            // Keep existing template when assign updates people/due date after first submit.
+            template = questionnaireService.defaultOr(currentQuestionnaireId);
+            questionnaireChanged = false;
+        }
         d.setQuestionnaireId(template.getId());
-        boolean needsSnapshot = instanceQuestionRepository.countByDpiaDepartmentId(d.getId()) == 0;
+
+        boolean needsSnapshot = instanceQuestionRepository.countByDpiaDepartmentId(d.getId()) == 0
+                || questionnaireChanged;
         if (d.getStatus() == DpiaDepartmentStatus.NOT_STARTED) {
             d.setStatus(DpiaDepartmentStatus.IN_PROGRESS);
         }
@@ -332,6 +391,18 @@ public class DpiaProjectService {
         }
         markProjectInProgress(requireProject(d.getDpiaProjectId()));
         return toDepartment(d, true);
+    }
+
+    /**
+     * Questionnaire may change only on the first Champion pass (before any submit / return cycle).
+     * After UNDER_REVIEW (or returnFrom set), the snapshotted answers stay locked to that template.
+     */
+    private static boolean canChangeQuestionnaire(DpiaDepartment d) {
+        if (d.getReturnFrom() != null && !d.getReturnFrom().isBlank()) {
+            return false;
+        }
+        return d.getStatus() == DpiaDepartmentStatus.NOT_STARTED
+                || d.getStatus() == DpiaDepartmentStatus.IN_PROGRESS;
     }
 
     @Transactional(readOnly = true)
@@ -427,11 +498,13 @@ public class DpiaProjectService {
                 row.setComplianceStatus(compliance);
                 row.setRemarks(blankToNull(upd.remarks()));
                 row.setRecommendedMeasures(blankToNull(upd.recommendedMeasures()));
-                // Risk Title only applies when Non Compliant (required at finalize) or Partially Compliant (optional).
+                // Risk Title and Create Privacy Risk apply only for Non Compliant and Partially Compliant.
                 if ("NON_COMPLIANT".equals(compliance) || "PARTIALLY_COMPLIANT".equals(compliance)) {
                     row.setRiskTitle(blankToNull(upd.riskTitle()));
+                    row.setCreatePrivacyRisk(upd.createPrivacyRisk());
                 } else {
                     row.setRiskTitle(null);
+                    row.setCreatePrivacyRisk(null);
                 }
                 assessmentRowRepository.save(row);
             }
@@ -451,10 +524,13 @@ public class DpiaProjectService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Compliance status is required for every principle before finalizing");
             }
-            if ("NON_COMPLIANT".equals(row.getComplianceStatus()) && blankToNull(row.getRiskTitle()) == null) {
+            if (("NON_COMPLIANT".equals(row.getComplianceStatus())
+                    || "PARTIALLY_COMPLIANT".equals(row.getComplianceStatus()))
+                    && blankToNull(row.getRiskTitle()) == null) {
                 String label = blankToNull(row.getPrinciple()) != null ? row.getPrinciple() : "a principle";
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Risk Title is required for Non Compliant principles (missing for " + label + ")");
+                        "Risk Title is required for Non Compliant and Partially Compliant principles (missing for "
+                                + label + ")");
             }
         }
         if (d.getDepartmentHeadUserId() == null) {
@@ -513,19 +589,17 @@ public class DpiaProjectService {
         d.setHeadOutcome(DpiaHeadOutcome.RETURNED);
         d.setHeadNotes(notes);
         d.setHeadDecidedAt(Instant.now());
-        d.setStatus(DpiaDepartmentStatus.IN_PROGRESS);
+        // Head return goes back to the DPO assessment, not the Privacy Champion.
+        d.setStatus(DpiaDepartmentStatus.DPO_ASSESSMENT);
         d.setReturnFrom("HEAD");
         d.setReturnReason(notes);
         d.setAssessmentComplete(false);
         departmentRepository.save(d);
         markTaskSubmitted(d.getHeadWorkTaskId());
-        reopenTask(d.getWorkTaskId());
-        if (d.getChampionUserId() != null) {
-            Map<String, String> vars = notificationVars(d);
-            vars.put("returnReason", notes);
-            notificationService.trigger("DPIA_RETURNED", String.valueOf(d.getId()),
-                    List.of(String.valueOf(d.getChampionUserId())), vars);
-        }
+        Map<String, String> vars = notificationVars(d);
+        vars.put("returnReason", notes);
+        notificationService.trigger("DPIA_HEAD_RETURNED", String.valueOf(d.getId()),
+                List.of("OWNER", "ADMIN"), vars);
         return toDepartment(d, true);
     }
 
@@ -598,6 +672,7 @@ public class DpiaProjectService {
             q.setAnswerText(blankToNull(item.answerText()));
             q.setDetailsEvidence(blankToNull(item.detailsEvidence()));
             if (q.getResponseType() == DpiaResponseType.MULTI_SELECT) {
+                assertNoneExclusive(item.answerOptions(), q.getCode());
                 q.setAnswerJson(writeOptions(item.answerOptions()));
             } else {
                 q.setAnswerJson(null);
@@ -613,7 +688,9 @@ public class DpiaProjectService {
             }
             boolean ok;
             if (q.getResponseType() == DpiaResponseType.MULTI_SELECT) {
-                ok = !readOptions(q.getAnswerJson()).isEmpty();
+                List<String> selected = readOptions(q.getAnswerJson());
+                assertNoneExclusive(selected, q.getCode());
+                ok = !selected.isEmpty();
             } else {
                 ok = blankToNull(q.getAnswerText()) != null;
             }
@@ -706,6 +783,13 @@ public class DpiaProjectService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "DPIA project not found"));
     }
 
+    private PrivacyRopa loadProcess(Long ropaProcessId) {
+        if (ropaProcessId == null) {
+            return null;
+        }
+        return privacyRopaRepository.findById(ropaProcessId).orElse(null);
+    }
+
     private DpiaDepartment requireDepartment(long id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "DPIA department not found"));
@@ -756,12 +840,13 @@ public class DpiaProjectService {
                         return new DpiaProjectDtos.AssessmentRowResponse(
                                 r.getId(), r.getSortOrder(), r.getPrinciple(),
                                 r.getDescriptionText(), r.getComplianceStatus(), r.getRemarks(),
-                                r.getRecommendedMeasures(), r.getRiskTitle(),
+                                r.getRecommendedMeasures(), r.getRiskTitle(), r.getCreatePrivacyRisk(),
                                 raised != null ? raised.getId() : null,
                                 raised != null ? raised.getDisplayId() : null);
                     })
                     .toList();
         }
+        PrivacyRopa process = loadProcess(d.getRopaProcessId());
         return new DpiaProjectDtos.DepartmentResponse(
                 d.getId(), d.getDpiaProjectId(), d.getOrgUnitId(), orgUnitName(d.getOrgUnitId()),
                 d.getReasonDescription(), d.getQuestionnaireId(), qName,
@@ -770,7 +855,12 @@ public class DpiaProjectService {
                 d.getDueDate(), d.getStatus(), d.getReturnFrom(), d.getReturnReason(),
                 d.getWorkTaskId(), d.getHeadWorkTaskId(), d.getHeadNotes(), d.getHeadDecidedAt(),
                 d.getHeadOutcome(), d.isAssessmentComplete(), d.getClosedAt(),
-                d.getCreatedAt(), d.getUpdatedAt(), questions, rows);
+                d.getCreatedAt(), d.getUpdatedAt(), questions, rows,
+                d.getRopaProcessId(),
+                process != null ? process.getActivityName() : null,
+                process != null ? process.getDisplayId() : null,
+                process != null ? process.getProcessingDescription() : null,
+                process != null && process.getDesignation() != null ? process.getDesignation().name() : null);
     }
 
     private DpiaProjectDtos.InstanceQuestionResponse toInstanceQuestion(DpiaInstanceQuestion q) {
@@ -804,6 +894,19 @@ public class DpiaProjectService {
         return userRepository.findById(id)
                 .map(u -> u.getFullName() != null ? u.getFullName() : u.getEmail())
                 .orElse(null);
+    }
+
+    /** None is exclusive. A mixed save is rejected, not only blocked in the form. */
+    private void assertNoneExclusive(List<String> options, String code) {
+        if (options == null || options.isEmpty()) {
+            return;
+        }
+        long chosen = options.stream().filter(s -> s != null && !s.isBlank()).count();
+        boolean none = options.stream().anyMatch(s -> s != null && s.trim().equalsIgnoreCase("None"));
+        if (none && chosen > 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "None cannot be combined with other options for question " + code);
+        }
     }
 
     private String writeOptions(List<String> options) {

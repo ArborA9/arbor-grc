@@ -1,6 +1,5 @@
 package com.a9.arbor.grc.modules.risk.web;
 
-import com.a9.arbor.grc.catalog.domain.ModuleCode;
 import com.a9.arbor.grc.modules.iam.domain.Role;
 import com.a9.arbor.grc.modules.iam.domain.User;
 import com.a9.arbor.grc.modules.iam.service.UserService;
@@ -39,7 +38,6 @@ import com.a9.arbor.grc.modules.risk.web.dto.SubmitRiskRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.UpdateRiskRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.UpsertTreatmentPlanRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.ValidateApproveRequest;
-import com.a9.arbor.grc.security.RequiresModule;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -75,7 +73,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/risks")
-@RequiresModule({ModuleCode.ISMS, ModuleCode.ERM, ModuleCode.PRIVACY})
 public class RiskController {
 
     private final RiskService riskService;

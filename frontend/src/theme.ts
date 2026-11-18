@@ -2,6 +2,8 @@ import { alpha, createTheme } from '@mui/material'
 
 /**
  * Arbor GRC: Option A · Warm Sand & Gold (client UI kit).
+ * @see docs/client_suggestions/Arbor GRC UI Kit Option A.html
+ * @see UI_BUILD.md
  */
 export const brand = {
   gold: '#B8860B',

@@ -32,9 +32,32 @@ class RiskBulkImportWorkbookTest {
         assertEquals(RiskLevel.VERY_HIGH, RiskBulkImportWorkbook.parseLevel("Very High", FIVE));
         assertEquals(RiskLevel.VERY_LOW, RiskBulkImportWorkbook.parseLevel("Ineffective", FIVE));
         assertEquals(RiskLevel.VERY_HIGH, RiskBulkImportWorkbook.parseLevel("very strong", FIVE));
+        assertEquals(RiskLevel.VERY_LOW, RiskBulkImportWorkbook.parseLevel("Extremely Unlikely", FIVE));
+        assertEquals(RiskLevel.LOW, RiskBulkImportWorkbook.parseLevel("Unlikely", FIVE));
+        assertEquals(RiskLevel.MEDIUM, RiskBulkImportWorkbook.parseLevel("Possible", FIVE));
+        assertEquals(RiskLevel.HIGH, RiskBulkImportWorkbook.parseLevel("Likely", FIVE));
+        assertEquals(RiskLevel.VERY_HIGH, RiskBulkImportWorkbook.parseLevel("Almost Certain", FIVE));
         assertNull(RiskBulkImportWorkbook.parseLevel("", FIVE));
         assertThrows(IllegalArgumentException.class, () -> RiskBulkImportWorkbook.parseLevel("6", FIVE));
         assertThrows(IllegalArgumentException.class, () -> RiskBulkImportWorkbook.parseLevel("Huge", FIVE));
+    }
+
+    @Test
+    void ermTemplateUsesFcaLikelihoodNamesAndImpactBands() throws Exception {
+        RiskBulkImportWorkbook wb = new RiskBulkImportWorkbook();
+        ExportFile file = wb.buildTemplate(RiskType.ERM, List.of("Strategy"), List.of(), List.of("owner@x.local"),
+                List.of(), List.of(), List.of(), List.of(), "ERM P", 5, FIVE);
+        try (XSSFWorkbook x = new XSSFWorkbook(new ByteArrayInputStream(file.bytes()))) {
+            var ref = x.getSheet("Reference");
+            assertEquals("Likelihood", ref.getRow(0).getCell(4).getStringCellValue());
+            assertEquals("Impact", ref.getRow(0).getCell(12).getStringCellValue());
+            assertEquals("Extremely Unlikely", ref.getRow(1).getCell(4).getStringCellValue());
+            assertEquals("Almost Certain", ref.getRow(5).getCell(4).getStringCellValue());
+            assertEquals("Very Low", ref.getRow(1).getCell(12).getStringCellValue());
+            assertEquals("Very High", ref.getRow(5).getCell(12).getStringCellValue());
+            var sample = x.getSheet("Risks").getRow(1);
+            assertEquals("Possible", sample.getCell(13).getStringCellValue()); // Likelihood mid on 5×5
+        }
     }
 
     @Test

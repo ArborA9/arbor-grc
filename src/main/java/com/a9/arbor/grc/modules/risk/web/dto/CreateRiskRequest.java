@@ -16,7 +16,7 @@ import java.util.List;
 
 public record CreateRiskRequest(
         RiskType riskType,
-        /** Optional Admin override of auto ISR-/ERM-YYYY-NNN (unique, logged). */
+        /** Optional Admin override of auto UR-/ERM-YYYY-NNN (unique, logged). */
         @Size(max = 32) String displayIdOverride,
         @NotBlank @Size(max = 1024) String title,
         @Size(max = 8000) String description,
@@ -68,6 +68,70 @@ public record CreateRiskRequest(
         @Size(max = 8000) String compensatingControls,
         Long sourceDpiaId,
         Long sourceRopaId,
-        Long sourceDpiaAssessmentRowId
+        Long sourceDpiaAssessmentRowId,
+        @Size(max = 255) String processingActivity
 ) {
+    /** Existing call sites omit processing activity. JSON uses the canonical constructor. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public CreateRiskRequest(
+            RiskType riskType,
+            String displayIdOverride,
+            String title,
+            String description,
+            RiskCategory category,
+            String categoryOther,
+            Long orgUnitId,
+            Long assetId,
+            Long frameworkId,
+            String frameworkCode,
+            Long frameworkNodeId,
+            String nodeCode,
+            UaeIaPriority uaeIaPriority,
+            String observedGap,
+            String threats,
+            RiskLevel probability,
+            RiskLevel impact,
+            String existingControls,
+            RiskLevel controlEffectiveness,
+            ResidualScoringMode residualScoringMode,
+            RiskLevel residualProbability,
+            RiskLevel residualImpact,
+            TreatmentOption treatmentOption,
+            String treatmentPlan,
+            TreatmentPlanDraftRequest treatmentPlanDetail,
+            Long riskOwnerUserId,
+            String adminNotes,
+            String strategicObjective,
+            BigDecimal financialImpactAed,
+            Long tprmVendorId,
+            Boolean overrideAutoClose,
+            String autoCloseOverrideJustification,
+            List<RiskFrameworkMappingRequest> additionalFrameworks,
+            Long sourceGapAssessmentId,
+            Long sourceGapItemId,
+            String infosecStatusInitial,
+            Long riskProjectId,
+            java.time.LocalDate dateIdentified,
+            String cause,
+            Integer residualScore,
+            RiskLevel targetControlEffectiveness,
+            Long assignedContributorId,
+            java.time.LocalDate nextReviewDate,
+            String thirdPartyName,
+            String treatmentJustification,
+            String compensatingControls,
+            Long sourceDpiaId,
+            Long sourceRopaId,
+            Long sourceDpiaAssessmentRowId) {
+        this(riskType, displayIdOverride, title, description, category, categoryOther, orgUnitId, assetId,
+                frameworkId, frameworkCode, frameworkNodeId, nodeCode, uaeIaPriority, observedGap, threats,
+                probability, impact, existingControls, controlEffectiveness, residualScoringMode,
+                residualProbability, residualImpact, treatmentOption, treatmentPlan, treatmentPlanDetail,
+                riskOwnerUserId, adminNotes, strategicObjective, financialImpactAed, tprmVendorId,
+                overrideAutoClose, autoCloseOverrideJustification, additionalFrameworks, sourceGapAssessmentId,
+                sourceGapItemId, infosecStatusInitial, riskProjectId, dateIdentified, cause, residualScore,
+                targetControlEffectiveness, assignedContributorId, nextReviewDate, thirdPartyName,
+                treatmentJustification, compensatingControls, sourceDpiaId, sourceRopaId,
+                sourceDpiaAssessmentRowId, null);
+    }
 }

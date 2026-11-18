@@ -3745,8 +3745,8 @@ export default function SuperAdminConsole({ session, onLogout }: { session: Sess
           </Typography>
           {!bundleStatus?.directoryExists && (
             <Alert severity="warning" sx={{ mb: 1.5 }}>
-              No shipped packs found in this build. Include the framework workbooks when packaging
-              the app, or set ARBOR_FRAMEWORKS_DIR.
+              No shipped packs found in this build. Rebuild the JAR so docs/frameworks is copied
+              into the app, or set ARBOR_FRAMEWORKS_DIR.
             </Alert>
           )}
           <Stack spacing={1.5} sx={{ pt: 0.5 }}>

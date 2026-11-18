@@ -86,7 +86,12 @@ export function collectRiskRequiredErrors(input: {
     add(RISK_INPUT_ID.associatedThreat, EXCEL_FIELD.associatedThreat)
   }
   if (input.riskOwnerUserId === '') add(RISK_INPUT_ID.riskOwner, EXCEL_FIELD.riskOwner)
-  if (input.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && !input.manualResidualScore.trim()) {
+  // Unified Risk / IS: typed residual score. ERM manual uses Likelihood + Impact dropdowns.
+  if (
+    !input.isErm &&
+    input.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' &&
+    !input.manualResidualScore.trim()
+  ) {
     add(RISK_INPUT_ID.residualScore, EXCEL_FIELD.residualScore)
   }
   if (input.willAutoClose && input.overrideAutoClose && !input.autoCloseJustification.trim()) {

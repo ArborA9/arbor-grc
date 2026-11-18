@@ -50,7 +50,7 @@ public class ReportWorkbookWriter {
     }
 
     public byte[] writeIsRiskRegister(List<RiskRecord> risks) {
-        return writeRiskRegister("IS Risk Register", risks);
+        return writeRiskRegister("Unified Risk Register", risks);
     }
 
     public byte[] writeErmRiskRegister(List<RiskRecord> risks) {

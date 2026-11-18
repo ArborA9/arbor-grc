@@ -574,7 +574,7 @@ export default function AssessmentsPage({
       resetCreateForm()
       onOk(
         d.seededIsRiskCount && d.seededIsRiskCount > 0
-          ? `Project “${d.project.name}” created: ${d.seededIsRiskCount} Information Security Risk(s) seeded from curated library (review in Risk Management)`
+          ? `Project “${d.project.name}” created: ${d.seededIsRiskCount} Unified Risk(s) seeded from curated library (review in Risk Management)`
           : `Project “${d.project.name}” created`,
       )
       await loadList()

@@ -25,9 +25,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parser for the client's reference packs (layout S4).
+ * Parser for the client's reference packs (layout S4) — see {@code FRAMEWORK_IMPORT_BUILD.md} §F3.
  *
- * <p>Shape notes:
+ * <p>Shape notes, all verified against the six packs under {@code docs/frameworks_updated/}:
  * <ul>
  *   <li>Headers sit on row 3 in the ISO packs and row 4 in the UAE IA pack, so the header row is
  *       found rather than assumed.</li>

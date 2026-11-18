@@ -177,7 +177,7 @@ class RopaProjectServiceHeadReviewTest {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
-                null, null, null, true);
+                null, null, null, true, null, null, null);
         assertDoesNotThrow(() -> service.updateProcess(champion, 7L, 12L, req));
     }
 

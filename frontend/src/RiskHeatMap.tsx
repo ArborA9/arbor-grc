@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { Box, Card, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { api, type HeatMapScoreBasis, type RiskHeatMap, type RiskLevel, type RiskType } from './api'
 import { brand, semantic } from './theme'
+import {
+  ERM_IMPACT_LABEL,
+  ERM_LIKELIHOOD_LABEL,
+  ERM_RATING_LABEL,
+} from './components/risk/ermRiskLabels'
 
 const AXIS: Record<RiskLevel, string> = {
   VERY_LOW: 'Very low',
@@ -9,6 +14,18 @@ const AXIS: Record<RiskLevel, string> = {
   MEDIUM: 'Medium',
   HIGH: 'High',
   VERY_HIGH: 'Very high',
+}
+
+function axisLikelihood(riskType: RiskType, level: RiskLevel): string {
+  return riskType === 'ERM' ? ERM_LIKELIHOOD_LABEL[level] : AXIS[level]
+}
+
+function axisImpact(riskType: RiskType, level: RiskLevel): string {
+  return riskType === 'ERM' ? ERM_IMPACT_LABEL[level] : AXIS[level]
+}
+
+function axisBand(riskType: RiskType, level: RiskLevel): string {
+  return riskType === 'ERM' ? ERM_RATING_LABEL[level] : AXIS[level]
 }
 
 type HeatmapCellStyle = { bg: string; text: string; border: string }
@@ -103,7 +120,7 @@ export function RiskHeatMapPanel({
   const cols = map?.cols ?? (['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'] as RiskLevel[])
   const rowLabel = basis === 'INHERENT' ? 'Probability' : 'CE / Residual P'
   const colLabel = basis === 'INHERENT' ? 'Impact' : 'Inherent / Residual I'
-  const title = riskType === 'ERM' ? 'Enterprise Risk' : 'Information Security Risk'
+  const title = riskType === 'ERM' ? 'Enterprise Risk' : riskType === 'PRIVACY_RISK' ? 'Privacy Risk' : 'Unified Risk'
   const cellHeight = compact || mode === 'dialog' ? 22 : 28
   /** Dashboard/card/dialog: fill width with a square matrix. Inline: fixed square cells. */
   const squareStretch = mode !== 'inline'
@@ -210,7 +227,9 @@ export function RiskHeatMapPanel({
             return (
               <Box key={band.level}>
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.4 }}>
-                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: brand.goldDark }}>{AXIS[band.level]}</Typography>
+                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: brand.goldDark }}>
+                    {axisBand(riskType, band.level)}
+                  </Typography>
                   <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: brand.gold, fontVariantNumeric: 'tabular-nums' }}>
                     {band.count}
                   </Typography>
@@ -259,11 +278,11 @@ export function RiskHeatMapPanel({
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   color: brand.mutedLight,
-                  minWidth: 58,
+                  minWidth: riskType === 'ERM' ? 108 : 58,
                   whiteSpace: 'nowrap',
                 }}
               >
-                {AXIS[r]}
+                {axisLikelihood(riskType, r)}
               </Typography>
             ))}
           </Box>
@@ -291,7 +310,7 @@ export function RiskHeatMapPanel({
                     key={`${r}-${c}`}
                     component="button"
                     type="button"
-                    title={`${rowLabel} ${AXIS[r]} × ${colLabel} ${AXIS[c]} · ${count}`}
+                    title={`${rowLabel} ${axisLikelihood(riskType, r)} × ${colLabel} ${axisImpact(riskType, c)} · ${count}`}
                     onClick={() =>
                       onCellClick({
                         scoreBasis: basis,
@@ -343,7 +362,7 @@ export function RiskHeatMapPanel({
                 lineHeight: 1.2,
               }}
             >
-              {AXIS[c]}
+              {axisImpact(riskType, c)}
             </Typography>
           ))}
         </Box>
@@ -365,7 +384,9 @@ export function RiskHeatMapPanel({
               return (
                 <Stack key={level} direction="row" spacing={0.5} alignItems="center">
                   <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: style.bg }} />
-                  <Typography sx={{ fontSize: '0.6875rem', color: brand.muted }}>{AXIS[level]}</Typography>
+                  <Typography sx={{ fontSize: '0.6875rem', color: brand.muted }}>
+                    {axisBand(riskType, level)}
+                  </Typography>
                 </Stack>
               )
             })}

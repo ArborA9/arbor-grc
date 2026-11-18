@@ -182,6 +182,7 @@ public class DashboardService {
         List<DashboardWidget> widgets = new ArrayList<>();
 
         safely(() -> addPlatformWidgets(widgets, currentUser));
+        safely(() -> addUnifiedRiskWidgets(widgets));
         if (isEnabled(tenantId, ModuleCode.ISMS)) {
             safely(() -> addIsmsWidgets(widgets));
         }
@@ -265,17 +266,20 @@ public class DashboardService {
 
     // ---- ISMS ----
 
-    private void addIsmsWidgets(List<DashboardWidget> widgets) {
-        List<RiskRecord> isRisks = riskRecordRepository.findByRiskTypeOrderByUpdatedAtDesc(RiskType.IS_RISK);
-        long open = isRisks.stream().filter(r -> !RISK_CLOSED.contains(r.getStatus())).count();
-        widgets.add(DashboardWidget.of("open_is_risks", "Open IS Risks", "ISMS", open,
+    /** Unified Risk counts are always on. They are not tied to an ISMS licence. */
+    private void addUnifiedRiskWidgets(List<DashboardWidget> widgets) {
+        List<RiskRecord> unified = riskRecordRepository.findByRiskTypeOrderByUpdatedAtDesc(RiskType.IS_RISK);
+        long open = unified.stream().filter(r -> !RISK_CLOSED.contains(r.getStatus())).count();
+        widgets.add(DashboardWidget.of("open_is_risks", "Open Unified Risks", "UNIFIED_RISK", open,
                 "Not yet closed", open > 0 ? "warning" : "success", "risk", "All good: nothing to action"));
 
-        long overdue = isRisks.stream().filter(r -> r.getStatus() == RiskStatus.OVERDUE).count();
-        widgets.add(DashboardWidget.of("overdue_is_risks", "Overdue IS Risks", "ISMS", overdue,
+        long overdue = unified.stream().filter(r -> r.getStatus() == RiskStatus.OVERDUE).count();
+        widgets.add(DashboardWidget.of("overdue_is_risks", "Overdue Unified Risks", "UNIFIED_RISK", overdue,
                 "Past review or treatment date", overdue > 0 ? "danger" : "success", "risk",
                 "All good: nothing to action"));
+    }
 
+    private void addIsmsWidgets(List<DashboardWidget> widgets) {
         List<Capa> gapCapas = capaRepository.findByRegisterCodeOrderByUpdatedAtDesc(CapaRegister.GAP);
         long openGapCapa = gapCapas.stream().filter(c -> c.getStatus() != CapaStatus.CLOSED).count();
         widgets.add(DashboardWidget.of("open_capa_gap_register", "Open CAPA (Gap Register)", "ISMS", openGapCapa,

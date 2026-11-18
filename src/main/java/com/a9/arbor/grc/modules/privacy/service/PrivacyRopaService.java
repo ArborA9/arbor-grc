@@ -116,6 +116,9 @@ public class PrivacyRopaService {
         row.setDataCategories(blankToNull(req.dataCategories()));
         row.setSensitiveDataCategories(blankToNull(req.sensitiveDataCategories()));
         row.setDataSubjects(blankToNull(req.dataSubjects()));
+        row.setPersonalDataOther(blankToNull(req.personalDataOther()));
+        row.setSensitiveDataOther(blankToNull(req.sensitiveDataOther()));
+        row.setDataSubjectOther(blankToNull(req.dataSubjectOther()));
         row.setDataSubjectVolume(blankToNull(req.dataSubjectVolume()));
         row.setDataSubjectVolumeNote(blankToNull(req.dataSubjectVolumeNote()));
         row.setProcessingFrequency(blankToNull(req.processingFrequency()));
@@ -203,6 +206,15 @@ public class PrivacyRopaService {
         }
         if (req.dataSubjects() != null) {
             row.setDataSubjects(blankToNull(req.dataSubjects()));
+        }
+        if (req.personalDataOther() != null) {
+            row.setPersonalDataOther(blankToNull(req.personalDataOther()));
+        }
+        if (req.sensitiveDataOther() != null) {
+            row.setSensitiveDataOther(blankToNull(req.sensitiveDataOther()));
+        }
+        if (req.dataSubjectOther() != null) {
+            row.setDataSubjectOther(blankToNull(req.dataSubjectOther()));
         }
         if (req.dataSubjectVolume() != null) {
             row.setDataSubjectVolume(blankToNull(req.dataSubjectVolume()));
@@ -574,8 +586,19 @@ public class PrivacyRopaService {
     private String nextDisplayId() {
         int year = Year.now().getValue();
         String prefix = "ROPA-" + year + "-";
-        long count = ropaRepository.countByDisplayIdStartingWith(prefix);
-        return prefix + String.format("%04d", count + 1);
+        int max = 0;
+        for (PrivacyRopa existing : ropaRepository.findByDisplayIdStartingWith(prefix)) {
+            String id = existing.getDisplayId();
+            if (id == null || !id.startsWith(prefix)) {
+                continue;
+            }
+            try {
+                max = Math.max(max, Integer.parseInt(id.substring(prefix.length())));
+            } catch (NumberFormatException ignored) {
+                // Non-numeric suffixes are skipped so the next id stays sequential.
+            }
+        }
+        return prefix + String.format("%04d", max + 1);
     }
 
     private void audit(User user, AuditActionType action, PrivacyRopa row,

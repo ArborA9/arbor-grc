@@ -41,7 +41,7 @@ const REPORT_DESCRIPTIONS: Record<string, string> = {
   gap: 'Gap Assessment scoring and control-level detail for a specific assessment.',
   uae_ia_compliance:
     'UAE IA V2.1 NESA/TDRA pack: Management / Technical / domain layer scores and control detail.',
-  is_risk: 'Full Information Security Risk register: inherent, control effectiveness, residual, treatment.',
+  is_risk: 'Full Unified Risk register: inherent, control effectiveness, residual, treatment.',
   erm_risk: 'Enterprise risk summary: board-level residual and treatment status.',
   tprm_vendor_risk: 'Vendor register: type, tier, criticality, posture, and compliance.',
   tprm_categorisation: 'F1–F6 scores, inherent, assurance credit, adjusted, override.',

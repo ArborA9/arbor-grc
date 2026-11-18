@@ -576,6 +576,7 @@ public class RiskService {
             risk.setSourceDpiaAssessmentRowId(req.sourceDpiaAssessmentRowId());
         }
         risk.setSourceRopaId(req.sourceRopaId());
+        risk.setProcessingActivity(blankToNull(req.processingActivity()));
         if (Boolean.TRUE.equals(req.overrideAutoClose())) {
             risk.setAutoCloseOverride(true);
             risk.setAutoCloseOverrideJustification(req.autoCloseOverrideJustification().trim());
@@ -2381,6 +2382,9 @@ public class RiskService {
     }
 
     private void requireModuleForType(RiskType type) {
+        if (type == RiskType.IS_RISK) {
+            return;
+        }
         ModuleCode code = RiskModuleCodes.forType(type);
         String tenantId = TenantContext.getTenantId();
         if (tenantId == null || tenantId.isBlank() || !moduleLicensingService.isEnabled(tenantId, code)) {
@@ -2391,6 +2395,9 @@ public class RiskService {
     }
 
     private void requireWriteForType(RiskType type) {
+        if (type == RiskType.IS_RISK) {
+            return;
+        }
         requireModuleForType(type);
         ModuleCode code = RiskModuleCodes.forType(type);
         adminModuleAccessService.assertMayUse(code, true);
@@ -2692,7 +2699,10 @@ public class RiskService {
                     : ResidualScoringMode.MANUAL_PROBABILITY_IMPACT;
         }
         risk.setResidualScoringMode(resolved);
-        if (risk.getRiskProjectId() != null && resolved == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT) {
+        // Unified Risk / IS project risks keep typed residual score; ERM uses residual L×I.
+        if (risk.getRiskProjectId() != null
+                && resolved == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT
+                && risk.getRiskType() != RiskType.ERM) {
             return;
         }
         if (resolved == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT) {
@@ -2718,7 +2728,17 @@ public class RiskService {
             }
             if (risk.getResidualProbability() == null || risk.getResidualImpact() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Residual probability and impact are required (Excel P×I residual scoring)");
+                        "Residual Likelihood and Impact are required");
+            }
+            if (risk.getRiskType() == RiskType.ERM
+                    && risk.getProbability() != null
+                    && risk.getImpact() != null) {
+                ExcelRiskScoring.requireResidualAxesWithinAnalysis(
+                        riskMatrixService.currentAxes(),
+                        risk.getProbability(),
+                        risk.getImpact(),
+                        risk.getResidualProbability(),
+                        risk.getResidualImpact());
             }
         } else if (resolved == ResidualScoringMode.CONTROL_EFFECTIVENESS) {
             risk.setResidualProbability(null);
@@ -2787,6 +2807,21 @@ public class RiskService {
             }
             reduction = ExcelRiskScoring.reductionPercent(size, axes, risk.getControlEffectiveness());
             residualScore = ExcelRiskScoring.residualScore(inherentScore, reduction);
+        } else if (risk.getRiskType() == RiskType.ERM) {
+            RiskLevel rp = risk.getResidualProbability();
+            RiskLevel ri = risk.getResidualImpact();
+            if (rp == null) {
+                rp = risk.getProbability();
+                risk.setResidualProbability(rp);
+            }
+            if (ri == null) {
+                ri = risk.getImpact();
+                risk.setResidualImpact(ri);
+            }
+            ExcelRiskScoring.requireResidualAxesWithinAnalysis(
+                    axes, risk.getProbability(), risk.getImpact(), rp, ri);
+            residualScore = ExcelRiskScoring.score(axes, rp, ri);
+            reduction = 0;
         } else if (risk.getResidualScore() != null) {
             residualScore = Math.max(1, risk.getResidualScore());
         } else {

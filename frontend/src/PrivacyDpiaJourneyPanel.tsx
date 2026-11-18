@@ -44,6 +44,7 @@ import {
   ConfirmActionDialog,
   FieldActionRow,
   FormSelect,
+  KitReadOnlyField,
   KpiCard,
   PageLoading,
   RegisterToolbar,
@@ -52,13 +53,36 @@ import {
   controlActionSx,
 } from './components/ui'
 import { sectionLabelSx } from './components/ui/FormFieldLabel'
-import { NARRATIVE_FIELD_MAX_WIDTH, formFieldGridSx, twoColFieldSx } from './components/ui/formLayout'
+import {
+  COMPACT_SELECT_MIN_WIDTH,
+  NARRATIVE_FIELD_MAX_WIDTH,
+  formFieldGridSx,
+  twoColFieldSx,
+} from './components/ui/formLayout'
 import { useAppShellPage } from './components/AppShellPageContext'
 import { useListReady } from './uiQuality/useListReady'
 import { useOptionalUnsavedChangesGuardApi, useRegisterUnsavedChanges } from './uiQuality/UnsavedChangesGuard'
 import { brand, semantic } from './theme'
 
 type ComplianceRating = 'COMPLIANT' | 'PARTIALLY_COMPLIANT' | 'NON_COMPLIANT' | ''
+
+function privacyRiskDescriptionFromDpia(parts: {
+  principle?: string | null
+  remarks?: string | null
+  measures?: string | null
+  projectName?: string | null
+  departmentName?: string | null
+}): string {
+  return [
+    parts.principle?.trim() || null,
+    parts.remarks?.trim() ? `Gap / Observation: ${parts.remarks.trim()}` : null,
+    parts.measures?.trim() ? `Recommended measures: ${parts.measures.trim()}` : null,
+    parts.projectName?.trim() ? `DPIA project: ${parts.projectName.trim()}` : null,
+    parts.departmentName?.trim() ? `Department: ${parts.departmentName.trim()}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+}
 
 const COMPLIANCE_OPTIONS: { value: ComplianceRating; label: string }[] = [
   { value: '', label: '-' },
@@ -100,11 +124,36 @@ function projectTone(s: string): 'success' | 'info' | 'neutral' {
 
 function buildWorkflowSteps(dept: DpiaDepartment): BiaJourneyStep[] {
   const steps: BiaJourneyStep[] = [
-    { id: 'champion', label: 'Champion', state: 'todo' },
-    { id: 'dpo-review', label: 'DPO Review', state: 'todo' },
-    { id: 'dpo-assess', label: 'DPO Assessment', state: 'todo' },
-    { id: 'head', label: 'Head', state: 'todo' },
-    { id: 'close', label: 'Close', state: 'todo' },
+    {
+      id: 'champion',
+      label: 'Privacy Champion Assessment',
+      hover: 'Complete the DPIA questionnaire by providing details of the processing activity, privacy controls, and supporting information.',
+      state: 'todo',
+    },
+    {
+      id: 'dpo-review',
+      label: 'DPO Response Validation',
+      hover: 'Review and validate the responses submitted by the Privacy Champion. Request clarification or updates where information is incomplete or inaccurate.',
+      state: 'todo',
+    },
+    {
+      id: 'dpo-assess',
+      label: 'DPO Compliance & Risk Assessment',
+      hover: 'Assess compliance against privacy requirements, record findings and recommendations, and identify any privacy risks requiring further management.',
+      state: 'todo',
+    },
+    {
+      id: 'head',
+      label: 'Department Head Sign-Off',
+      hover: 'Review the DPIA outcome, including findings and identified risks, and provide final departmental approval or return for further review.',
+      state: 'todo',
+    },
+    {
+      id: 'close',
+      label: 'Closure',
+      hover: 'Finalize the DPIA assessment and maintain the completed record for governance and audit purposes.',
+      state: 'todo',
+    },
   ]
   const s = dept.status
   // Status flow: NOT_STARTED -> IN_PROGRESS -> UNDER_REVIEW -> DPO_ASSESSMENT -> PENDING_HEAD_SIGN_OFF -> APPROVED -> CLOSED
@@ -175,7 +224,14 @@ export default function PrivacyDpiaJourneyPanel({
   const [departmentDetail, setDepartmentDetail] = useState<DpiaDepartment | null>(null)
 
   // Project form
-  const [projectForm, setProjectForm] = useState({ name: '', year: String(new Date().getFullYear()), linkRopa: 'NO', ropaProjectId: '' })
+  const emptyProjectForm = () => ({
+    name: '',
+    year: String(new Date().getFullYear()),
+    linkRopa: 'NO' as 'YES' | 'NO',
+    ropaProjectId: '',
+    questionnaireId: '',
+  })
+  const [projectForm, setProjectForm] = useState(emptyProjectForm)
 
   // Department form
   const [deptForm, setDeptForm] = useState({
@@ -188,7 +244,12 @@ export default function PrivacyDpiaJourneyPanel({
   })
 
   // Assign form (on department detail)
-  const [assignForm, setAssignForm] = useState({ championUserId: '', headUserId: '', dueDate: '' })
+  const [assignForm, setAssignForm] = useState({
+    championUserId: '',
+    headUserId: '',
+    dueDate: '',
+    questionnaireId: '',
+  })
 
   // Answers (on department detail)
   const [answers, setAnswers] = useState<
@@ -200,7 +261,7 @@ export default function PrivacyDpiaJourneyPanel({
 
   // Assessment rows
   const [assessmentEdits, setAssessmentEdits] = useState<
-    Record<number, { complianceStatus: ComplianceRating; remarks: string; recommendedMeasures: string; riskTitle: string }>
+    Record<number, { complianceStatus: ComplianceRating; remarks: string; recommendedMeasures: string; riskTitle: string; createPrivacyRisk: boolean | null }>
   >({})
 
   // DPO review
@@ -208,6 +269,7 @@ export default function PrivacyDpiaJourneyPanel({
   // Head notes
   const [headNotes, setHeadNotes] = useState('')
   const [showEarlierSteps, setShowEarlierSteps] = useState(false)
+  const [historySection, setHistorySection] = useState<string | false>(false)
   const [showAllGuidance, setShowAllGuidance] = useState(false)
 
   // Confirmations
@@ -258,6 +320,7 @@ export default function PrivacyDpiaJourneyPanel({
           championUserId: d.championUserId ? String(d.championUserId) : '',
           headUserId: d.departmentHeadUserId ? String(d.departmentHeadUserId) : '',
           dueDate: d.dueDate ?? '',
+          questionnaireId: d.questionnaireId ? String(d.questionnaireId) : '',
         })
         // Build answers map
         const ansMap: Record<number, { answerText: string; answerOptions: string[]; detailsEvidence: string }> = {}
@@ -272,7 +335,7 @@ export default function PrivacyDpiaJourneyPanel({
         }
         setAnswers(ansMap)
         // Build assessment edits
-        const assMap: Record<number, { complianceStatus: ComplianceRating; remarks: string; recommendedMeasures: string; riskTitle: string }> = {}
+        const assMap: Record<number, { complianceStatus: ComplianceRating; remarks: string; recommendedMeasures: string; riskTitle: string; createPrivacyRisk: boolean | null }> = {}
         if (d.assessmentRows) {
           for (const r of d.assessmentRows) {
             assMap[r.id] = {
@@ -280,6 +343,7 @@ export default function PrivacyDpiaJourneyPanel({
               remarks: r.remarks ?? '',
               recommendedMeasures: r.recommendedMeasures ?? '',
               riskTitle: r.riskTitle ?? '',
+              createPrivacyRisk: r.createPrivacyRisk ?? null,
             }
           }
         }
@@ -442,7 +506,9 @@ export default function PrivacyDpiaJourneyPanel({
     if (creatingProject) return 'DPIA Projects / New Project'
     if (project) {
       if (addingDepartment) return `${project.name} / Add Department`
-      if (departmentDetail) return `${project.name} / ${departmentDetail.orgUnitName ?? 'Department'}`
+      if (departmentDetail) {
+        return `${project.name} / ${departmentDetail.activityName ?? departmentDetail.orgUnitName ?? 'Department'}`
+      }
       return `DPIA Projects / ${project.name}`
     }
     return undefined
@@ -461,7 +527,7 @@ export default function PrivacyDpiaJourneyPanel({
     setDepartmentDetail(null)
     setSelectedDeptId(null)
     setAddingDepartment(false)
-    setProjectForm({ name: '', year: String(new Date().getFullYear()), linkRopa: 'NO', ropaProjectId: '' })
+    setProjectForm(emptyProjectForm())
     setDeptForm({
       orgUnitId: '',
       reasonDescription: '',
@@ -488,7 +554,7 @@ export default function PrivacyDpiaJourneyPanel({
   }
 
   const pageTitle = departmentDetail
-    ? (departmentDetail.orgUnitName ?? 'Department')
+    ? (departmentDetail.activityName ?? departmentDetail.orgUnitName ?? 'Department')
     : addingDepartment
       ? 'Add Department'
       : creatingProject
@@ -543,10 +609,14 @@ export default function PrivacyDpiaJourneyPanel({
     }
   }
 
-  const completedRopaProjects = useMemo(
-    () => ropaProjects.filter((r) => r.status === 'COMPLETED'),
-    [ropaProjects],
-  )
+  const linkableRopaProjects = useMemo(() => ropaProjects, [ropaProjects])
+
+  const ropaStatusLabel = (status: string) => {
+    if (status === 'COMPLETED') return 'Completed'
+    if (status === 'IN_PROGRESS') return 'In Progress'
+    if (status === 'DRAFT') return 'Draft'
+    return status
+  }
 
   // ---------- Create Project ----------
   const projectCreateDisabledReason = !projectForm.name.trim()
@@ -564,10 +634,14 @@ export default function PrivacyDpiaJourneyPanel({
         year: projectForm.year ? Number(projectForm.year) : null,
         linkedRopaProjectId:
           projectForm.linkRopa === 'YES' && projectForm.ropaProjectId ? Number(projectForm.ropaProjectId) : null,
+        questionnaireId:
+          projectForm.linkRopa === 'YES' && projectForm.questionnaireId
+            ? Number(projectForm.questionnaireId)
+            : null,
       })
       const n = created.departments?.length ?? 0
       setCreatingProject(false)
-      setProjectForm({ name: '', year: String(new Date().getFullYear()), linkRopa: 'NO', ropaProjectId: '' })
+      setProjectForm(emptyProjectForm())
       setSelectedProjectId(created.id)
       onOk(n > 0 ? `Project created with ${n} department(s) from ROPA` : 'Project created')
       await load()
@@ -608,7 +682,9 @@ export default function PrivacyDpiaJourneyPanel({
     (assignForm.championUserId !== (departmentDetail.championUserId ? String(departmentDetail.championUserId) : '') ||
       assignForm.headUserId !==
         (departmentDetail.departmentHeadUserId ? String(departmentDetail.departmentHeadUserId) : '') ||
-      assignForm.dueDate !== (departmentDetail.dueDate ?? ''))
+      assignForm.dueDate !== (departmentDetail.dueDate ?? '') ||
+      assignForm.questionnaireId !==
+        (departmentDetail.questionnaireId ? String(departmentDetail.questionnaireId) : ''))
   const assignSaveDisabledReason = !assignForm.championUserId
     ? 'Champion is required'
     : !assignFormDirty
@@ -623,6 +699,7 @@ export default function PrivacyDpiaJourneyPanel({
           championUserId: assignForm.championUserId ? Number(assignForm.championUserId) : null,
           departmentHeadUserId: assignForm.headUserId ? Number(assignForm.headUserId) : null,
           dueDate: assignForm.dueDate || null,
+          questionnaireId: assignForm.questionnaireId ? Number(assignForm.questionnaireId) : null,
         }),
       'Assignment updated',
     )
@@ -695,6 +772,7 @@ export default function PrivacyDpiaJourneyPanel({
       remarks: v.remarks || null,
       recommendedMeasures: v.recommendedMeasures || null,
       riskTitle: assessmentAllowsRiskTitle(v.complianceStatus) ? v.riskTitle || null : null,
+      createPrivacyRisk: assessmentAllowsRiskTitle(v.complianceStatus) ? v.createPrivacyRisk : null,
     }))
     await api.saveDpiaAssessment(departmentDetail.id, { rows: assessRows })
   }
@@ -713,10 +791,10 @@ export default function PrivacyDpiaJourneyPanel({
       const edit = assessmentEdits[r.id]
       const status = (edit?.complianceStatus || r.complianceStatus || '') as string
       if (!status) return 'Compliance status is required for every principle'
-      if (status === 'NON_COMPLIANT') {
+      if (status === 'NON_COMPLIANT' || status === 'PARTIALLY_COMPLIANT') {
         const title = (edit?.riskTitle ?? r.riskTitle ?? '').trim()
         if (!title) {
-          return `Risk Title is required for Non Compliant (${r.principle || 'principle'})`
+          return `Risk Title is required for Non Compliant and Partially Compliant (${r.principle || 'principle'})`
         }
       }
     }
@@ -734,11 +812,11 @@ export default function PrivacyDpiaJourneyPanel({
 
   const ensurePrivacyRiskProject = async (): Promise<number> => {
     const existing = await api.listRiskProjects('PRIVACY_RISK')
-    if (existing.length > 0) return existing[0].id
+    if (existing.length > 0) return existing[existing.length - 1].id
     const year = new Date().getFullYear()
     const created = await api.createRiskProject({
       projectType: 'PRIVACY_RISK',
-      name: `Privacy Risk Register ${year}`,
+      name: project?.name ? `${project.name} risks` : `Privacy Risk ${year}`,
       year,
     })
     return created.id
@@ -774,16 +852,11 @@ export default function PrivacyDpiaJourneyPanel({
       const created = await api.createRisk({
         riskType: 'PRIVACY_RISK',
         title,
-        description: [
-          principle ? `DPIA principle: ${principle}` : null,
-          remarks ? `Remarks: ${remarks}` : null,
-          measures ? `Recommended measures: ${measures}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n') || title,
+        description:
+          privacyRiskDescriptionFromDpia({ principle, remarks, measures }) || title,
         category: 'IT',
         orgUnitId: departmentDetail.orgUnitId,
-        observedGap: remarks || `Raised from DPIA assessment (${departmentDetail.orgUnitName ?? 'department'})`,
+        observedGap: remarks || `Raised from DPIA assessment (${departmentDetail.activityName ?? departmentDetail.orgUnitName ?? 'department'})`,
         threats: 'Privacy breach',
         probability: 'MEDIUM',
         impact: 'MEDIUM',
@@ -791,6 +864,8 @@ export default function PrivacyDpiaJourneyPanel({
         treatmentOption: 'TREAT',
         treatmentJustification: measures || 'Review and treat the privacy risk from the DPIA',
         riskProjectId,
+        processingActivity: departmentDetail.activityName ?? null,
+        sourceRopaId: departmentDetail.ropaProcessId ?? null,
         sourceDpiaAssessmentRowId: rowId,
         dateIdentified: new Date().toISOString().slice(0, 10),
       })
@@ -810,10 +885,11 @@ export default function PrivacyDpiaJourneyPanel({
       const edit = assessmentEdits[r.id]
       const compliance = (edit?.complianceStatus || r.complianceStatus || '') as string
       const title = (edit?.riskTitle ?? r.riskTitle ?? '').trim()
-      return assessmentAllowsRiskTitle(compliance) && Boolean(title) && !r.raisedRiskDisplayId
+      const createRisk = edit?.createPrivacyRisk ?? r.createPrivacyRisk
+      return assessmentAllowsRiskTitle(compliance) && createRisk === true && Boolean(title) && !r.raisedRiskDisplayId
     })
     if (pending.length === 0) {
-      onError('No Risk Titles ready to create Privacy Risks')
+      onError('No principles are marked Create Privacy Risk with a Risk Title')
       return
     }
     setBusy(true)
@@ -829,16 +905,15 @@ export default function PrivacyDpiaJourneyPanel({
         await api.createRisk({
           riskType: 'PRIVACY_RISK',
           title,
-          description: [
-            r.principle ? `DPIA principle: ${r.principle}` : null,
-            remarks ? `Remarks: ${remarks}` : null,
-            measures ? `Recommended measures: ${measures}` : null,
-          ]
-            .filter(Boolean)
-            .join('\n') || title,
+          description:
+            privacyRiskDescriptionFromDpia({
+              principle: r.principle,
+              remarks,
+              measures,
+            }) || title,
           category: 'IT',
           orgUnitId: departmentDetail.orgUnitId,
-          observedGap: remarks || `Raised from DPIA assessment (${departmentDetail.orgUnitName ?? 'department'})`,
+          observedGap: remarks || `Raised from DPIA assessment (${departmentDetail.activityName ?? departmentDetail.orgUnitName ?? 'department'})`,
           threats: 'Privacy breach',
           probability: 'MEDIUM',
           impact: 'MEDIUM',
@@ -846,6 +921,8 @@ export default function PrivacyDpiaJourneyPanel({
           treatmentOption: 'TREAT',
           treatmentJustification: measures || 'Review and treat the privacy risk from the DPIA',
           riskProjectId,
+          processingActivity: departmentDetail.activityName ?? null,
+          sourceRopaId: departmentDetail.ropaProcessId ?? null,
           sourceDpiaAssessmentRowId: r.id,
           dateIdentified: new Date().toISOString().slice(0, 10),
         })
@@ -900,7 +977,8 @@ export default function PrivacyDpiaJourneyPanel({
         e.complianceStatus !== ((r.complianceStatus as ComplianceRating) ?? '') ||
         e.remarks !== (r.remarks ?? '') ||
         e.recommendedMeasures !== (r.recommendedMeasures ?? '') ||
-        e.riskTitle !== (r.riskTitle ?? '')
+        e.riskTitle !== (r.riskTitle ?? '') ||
+        e.createPrivacyRisk !== (r.createPrivacyRisk ?? null)
       )
     })
   const assignDirty =
@@ -923,7 +1001,8 @@ export default function PrivacyDpiaJourneyPanel({
     (projectForm.name.trim() !== '' ||
       projectForm.year !== String(new Date().getFullYear()) ||
       projectForm.linkRopa !== 'NO' ||
-      projectForm.ropaProjectId !== '')
+      projectForm.ropaProjectId !== '' ||
+      projectForm.questionnaireId !== '')
   const deptFormDirty =
     addingDepartment &&
     (deptForm.orgUnitId !== '' ||
@@ -981,12 +1060,7 @@ export default function PrivacyDpiaJourneyPanel({
                 onClick={() =>
                   guardApi.requestNavigation(() => {
                     setCreatingProject(false)
-                    setProjectForm({
-                      name: '',
-                      year: String(new Date().getFullYear()),
-                      linkRopa: 'NO',
-                      ropaProjectId: '',
-                    })
+                    setProjectForm(emptyProjectForm())
                   })
                 }
               >
@@ -1022,7 +1096,7 @@ export default function PrivacyDpiaJourneyPanel({
               value={projectForm.year}
               options={YEARS.map((y) => ({ value: String(y), label: String(y) }))}
               onChange={(v) => setProjectForm({ ...projectForm, year: v })}
-              fullWidth
+              minWidth={COMPACT_SELECT_MIN_WIDTH}
             />
             <FormSelect
               label="Link to ROPA?"
@@ -1031,21 +1105,48 @@ export default function PrivacyDpiaJourneyPanel({
                 { value: 'NO', label: 'No' },
                 { value: 'YES', label: 'Yes' },
               ]}
-              onChange={(v) => setProjectForm({ ...projectForm, linkRopa: v, ropaProjectId: '' })}
-              fullWidth
+              onChange={(v) =>
+                setProjectForm({
+                  ...projectForm,
+                  linkRopa: v as 'YES' | 'NO',
+                  ropaProjectId: '',
+                  questionnaireId: v === 'YES' ? projectForm.questionnaireId : '',
+                })
+              }
+              minWidth={COMPACT_SELECT_MIN_WIDTH}
             />
             {projectForm.linkRopa === 'YES' && (
-              <FormSelect
-                label="ROPA Project"
-                required
-                value={projectForm.ropaProjectId}
-                options={[
-                  { value: '', label: completedRopaProjects.length ? 'Select completed ROPA project' : 'No completed ROPA projects' },
-                  ...completedRopaProjects.map((r) => ({ value: String(r.id), label: r.name })),
-                ]}
-                onChange={(v) => setProjectForm({ ...projectForm, ropaProjectId: v })}
-                fullWidth
-              />
+              <>
+                <FormSelect
+                  label="ROPA Project"
+                  required
+                  fullWidth
+                  value={projectForm.ropaProjectId}
+                  options={[
+                    {
+                      value: '',
+                      label: linkableRopaProjects.length
+                        ? 'Select ROPA project'
+                        : 'No ROPA projects',
+                    },
+                    ...linkableRopaProjects.map((r) => ({
+                      value: String(r.id),
+                      label: `${r.name} (${ropaStatusLabel(r.status)})`,
+                    })),
+                  ]}
+                  onChange={(v) => setProjectForm({ ...projectForm, ropaProjectId: v })}
+                />
+                <FormSelect
+                  label="Questionnaire"
+                  value={projectForm.questionnaireId}
+                  options={[
+                    { value: '', label: 'Default' },
+                    ...questionnaires.map((q) => ({ value: String(q.id), label: q.name })),
+                  ]}
+                  onChange={(v) => setProjectForm({ ...projectForm, questionnaireId: v })}
+                  minWidth={COMPACT_SELECT_MIN_WIDTH}
+                />
+              </>
             )}
           </Box>
         </SettingsCard>
@@ -1149,7 +1250,7 @@ export default function PrivacyDpiaJourneyPanel({
                   ...questionnaires.map((q) => ({ value: String(q.id), label: q.name })),
                 ]}
                 onChange={(v) => setDeptForm({ ...deptForm, questionnaireId: v })}
-                fullWidth
+                minWidth={COMPACT_SELECT_MIN_WIDTH}
               />
             </Box>
             {!project.linkedRopaProjectId && (
@@ -1208,33 +1309,60 @@ export default function PrivacyDpiaJourneyPanel({
     const assessmentHistory = isAdmin && Boolean(departmentDetail.assessmentComplete) && status !== 'DPO_ASSESSMENT'
     const headPrimary = status === 'PENDING_HEAD_SIGN_OFF' && (isHeadViewer || isAdmin)
     const closePrimary = isAdmin && status === 'APPROVED'
+    const historyMode =
+      status === 'PENDING_HEAD_SIGN_OFF' || status === 'APPROVED' || status === 'CLOSED'
     const hasEarlierSteps =
-      (isAdmin && !assignmentPrimary) ||
-      (showQuestionnaire && !questionnairePrimary && sortedQuestions.length > 0) ||
-      assessmentHistory
+      !historyMode &&
+      status !== 'UNDER_REVIEW' &&
+      status !== 'DPO_ASSESSMENT' &&
+      ((isAdmin && !assignmentPrimary) ||
+        (showQuestionnaire && !questionnairePrimary && sortedQuestions.length > 0) ||
+        assessmentHistory)
     const requiredQuestions = sortedQuestions.filter((q) => q.required)
     const answeredRequired = requiredQuestions.filter((q) => questionAnswered(q, answers[q.id])).length
     const pendingRiskRows = sortedAssessment.filter((r) => {
       const edit = assessmentEdits[r.id]
       const compliance = (edit?.complianceStatus || r.complianceStatus || '') as string
       const title = (edit?.riskTitle ?? r.riskTitle ?? '').trim()
-      return assessmentAllowsRiskTitle(compliance) && Boolean(title) && !r.raisedRiskDisplayId
+      const createRisk = edit?.createPrivacyRisk ?? r.createPrivacyRisk
+      return assessmentAllowsRiskTitle(compliance) && createRisk === true && Boolean(title) && !r.raisedRiskDisplayId
     })
     const returnNextAction =
       departmentDetail.returnFrom === 'HEAD'
-        ? canFillChampion
-          ? 'Update the returned answers, then Submit again.'
-          : 'Champion should update answers and submit again.'
+        ? 'The DPO should update the compliance and risk assessment.'
         : departmentDetail.returnFrom === 'ADMIN'
           ? canFillChampion
             ? 'Address the DPO comments, then Submit again.'
             : 'Champion should address DPO comments and submit again.'
           : 'Review the return comments, then continue the workflow.'
 
+    const questionnaireEditable =
+      departmentDetail.status === 'NOT_STARTED' ||
+      (departmentDetail.status === 'IN_PROGRESS' && !departmentDetail.returnFrom)
+    const questionnaireLockedWhy = questionnaireEditable
+      ? null
+      : 'Questionnaire is locked after the Champion submits for DPO review'
+    const assignQuestionnaireOptions = (() => {
+      const opts = [
+        { value: '', label: 'Default' },
+        ...questionnaires.map((q) => ({ value: String(q.id), label: q.name })),
+      ]
+      if (
+        departmentDetail.questionnaireId &&
+        !opts.some((o) => o.value === String(departmentDetail.questionnaireId))
+      ) {
+        opts.push({
+          value: String(departmentDetail.questionnaireId),
+          label: departmentDetail.questionnaireName || `Questionnaire ${departmentDetail.questionnaireId}`,
+        })
+      }
+      return opts
+    })()
+
     const assignmentCard = isAdmin ? (
               <SettingsCard autoHeight compact title="Assignment">
                 <Stack spacing={0.5} alignItems="flex-start">
-                  <FieldActionRow sx={{ flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+                  <FieldActionRow sx={{ flexWrap: 'wrap' }}>
                     <FormSelect
                       label="Champion"
                       value={assignForm.championUserId}
@@ -1243,6 +1371,7 @@ export default function PrivacyDpiaJourneyPanel({
                         ...championUsers.map((u) => ({ value: String(u.id), label: u.fullName || u.email })),
                       ]}
                       onChange={(v) => setAssignForm({ ...assignForm, championUserId: v })}
+                      minWidth={COMPACT_SELECT_MIN_WIDTH}
                     />
                     <FormSelect
                       label="Department Head"
@@ -1252,7 +1381,22 @@ export default function PrivacyDpiaJourneyPanel({
                         ...users.map((u) => ({ value: String(u.id), label: u.fullName || u.email })),
                       ]}
                       onChange={(v) => setAssignForm({ ...assignForm, headUserId: v })}
+                      minWidth={COMPACT_SELECT_MIN_WIDTH}
                     />
+                    {questionnaireEditable ? (
+                      <FormSelect
+                        label="Questionnaire"
+                        value={assignForm.questionnaireId}
+                        options={assignQuestionnaireOptions}
+                        onChange={(v) => setAssignForm({ ...assignForm, questionnaireId: v })}
+                        minWidth={COMPACT_SELECT_MIN_WIDTH}
+                      />
+                    ) : (
+                      <KitReadOnlyField
+                        label="Questionnaire"
+                        value={departmentDetail.questionnaireName || 'Default'}
+                      />
+                    )}
                     <CompactTextField
                       label="Due Date"
                       type="date"
@@ -1277,6 +1421,11 @@ export default function PrivacyDpiaJourneyPanel({
                       {assignSaveDisabledReason}
                     </Typography>
                   )}
+                  {questionnaireLockedWhy && (
+                    <Typography variant="caption" color="text.secondary">
+                      {questionnaireLockedWhy}
+                    </Typography>
+                  )}
                 </Stack>
               </SettingsCard>
     ) : null
@@ -1294,11 +1443,13 @@ export default function PrivacyDpiaJourneyPanel({
       <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, overflow: 'auto', pb: 3 }}>
         {departmentDetail.returnReason && departmentDetail.returnFrom && (
           <Alert severity="warning">
-            <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', mb: 0.25 }}>
-              Returned by {departmentDetail.returnFrom === 'HEAD' ? 'Department Head' : 'DPO'}
-            </Typography>
-            <Typography sx={{ fontSize: '0.8125rem' }}>{departmentDetail.returnReason}</Typography>
-            <Typography sx={{ fontSize: '0.75rem', mt: 0.75 }}>{returnNextAction}</Typography>
+            <Stack spacing={0.5}>
+              <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>
+                Returned by {departmentDetail.returnFrom === 'HEAD' ? 'Department Head' : 'DPO'}
+              </Typography>
+              <Typography sx={{ fontSize: '0.8125rem' }}>{departmentDetail.returnReason}</Typography>
+              <Typography sx={{ fontSize: '0.75rem' }}>{returnNextAction}</Typography>
+            </Stack>
           </Alert>
         )}
 
@@ -1307,7 +1458,30 @@ export default function PrivacyDpiaJourneyPanel({
             {assignmentPrimary && assignmentCard}
             {assignmentPrimary && awaitingNote}
 
-            {(questionnairePrimary || (showEarlierSteps && showQuestionnaire)) && sortedQuestions.length > 0 && (
+            {(departmentDetail.activityName || departmentDetail.processingDescription) && (
+              <SettingsCard autoHeight compact title="Processing activity">
+                <Stack spacing={0.35}>
+                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                    {departmentDetail.activityDisplayId ? `${departmentDetail.activityDisplayId} · ` : ''}
+                    {departmentDetail.activityName}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: brand.muted }}>
+                    {departmentDetail.orgUnitName ?? 'Department'}
+                    {departmentDetail.designation ? ` · ${departmentDetail.designation.replace(/_/g, ' ')}` : ''}
+                  </Typography>
+                  {departmentDetail.processingDescription ? (
+                    <Typography sx={{ fontSize: '0.8125rem', whiteSpace: 'pre-wrap' }}>
+                      {departmentDetail.processingDescription}
+                    </Typography>
+                  ) : null}
+                </Stack>
+              </SettingsCard>
+            )}
+
+            {(questionnairePrimary ||
+              status === 'DPO_ASSESSMENT' ||
+              (!historyMode && showEarlierSteps && showQuestionnaire)) &&
+              sortedQuestions.length > 0 && (
               <SettingsCard autoHeight compact title="Questionnaire">
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
@@ -1344,29 +1518,9 @@ export default function PrivacyDpiaJourneyPanel({
                       q.responseType === 'YES_NO_PARTLY' ||
                       q.responseType === 'CONFIRMATION'
 
-                    const detailsField = answersReadOnly ? (
-                      <Box>
-                        <Typography sx={{ ...sectionLabelSx, mb: 0.35 }}>Details / evidence reference</Typography>
-                        <Typography sx={{ fontSize: '0.8125rem', whiteSpace: 'pre-wrap', color: brand.ink }}>
-                          {(answers[q.id]?.detailsEvidence ?? '').trim() || '-'}
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <CompactTextField
-                        label="Details / evidence reference"
-                        value={answers[q.id]?.detailsEvidence ?? ''}
-                        onChange={(e) => patchAnswer(q.id, { detailsEvidence: e.target.value })}
-                        multiline
-                        minRows={isEnum ? 2 : 3}
-                        disabled={!canFillChampion}
-                        fieldIdPrefix={`qe-${q.id}`}
-                        maxWidth={NARRATIVE_FIELD_MAX_WIDTH}
-                      />
-                    )
-
                     const attachmentBlock =
                       q.responseType === 'FREE_TEXT_ATTACHMENT' ? (
-                        <Box sx={{ mt: 0.75 }}>
+                        <Box>
                           <Typography sx={{ ...sectionLabelSx, mb: 0.5 }}>Attachment</Typography>
                           <EvidenceAttachedList
                             items={questionAttachments[q.id] ?? []}
@@ -1380,30 +1534,40 @@ export default function PrivacyDpiaJourneyPanel({
                             }
                           />
                           {canFillChampion && (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              component="label"
-                              disabled={busy}
-                              sx={{ mt: 1 }}
-                            >
-                              Upload file
-                              <input
-                                type="file"
-                                hidden
-                                onChange={(e) => {
-                                  const f = e.target.files?.[0] ?? null
-                                  e.target.value = ''
-                                  void handleUploadQuestionAttachment(q.id, f)
-                                }}
-                              />
-                            </Button>
+                            <FieldActionRow sx={{ mt: 1 }}>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                component="label"
+                                disabled={busy}
+                                sx={controlActionSx}
+                              >
+                                Upload file
+                                <input
+                                  type="file"
+                                  hidden
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0] ?? null
+                                    e.target.value = ''
+                                    void handleUploadQuestionAttachment(q.id, f)
+                                  }}
+                                />
+                              </Button>
+                            </FieldActionRow>
                           )}
                         </Box>
                       ) : null
 
+                    const enumAnswerLabel = (raw: string) => {
+                      if (raw === 'YES') return 'Yes'
+                      if (raw === 'NO') return 'No'
+                      if (raw === 'PARTLY') return 'Partly'
+                      if (raw === 'CONFIRMED') return 'Confirmed'
+                      return raw || '-'
+                    }
                     const championControl =
                       q.responseType === 'YES_NO' || q.responseType === 'YES_NO_PARTLY' ? (
+                        canFillChampion ? (
                         <FormSelect
                           label="Champion response"
                           value={(answers[q.id]?.answerText as 'YES' | 'NO' | 'PARTLY' | '') ?? ''}
@@ -1422,9 +1586,16 @@ export default function PrivacyDpiaJourneyPanel({
                                 ]
                           }
                           onChange={(v) => patchAnswer(q.id, { answerText: v, answerOptions: [] })}
-                          disabled={!canFillChampion}
+                          minWidth={COMPACT_SELECT_MIN_WIDTH}
                         />
+                        ) : (
+                          <KitReadOnlyField
+                            label="Champion response"
+                            value={enumAnswerLabel(answers[q.id]?.answerText ?? '')}
+                          />
+                        )
                       ) : q.responseType === 'CONFIRMATION' ? (
+                        canFillChampion ? (
                         <FormSelect
                           label="Champion response"
                           value={(answers[q.id]?.answerText as 'CONFIRMED' | '') ?? ''}
@@ -1433,9 +1604,16 @@ export default function PrivacyDpiaJourneyPanel({
                             { value: 'CONFIRMED', label: 'Confirmed' },
                           ]}
                           onChange={(v) => patchAnswer(q.id, { answerText: v, answerOptions: [] })}
-                          disabled={!canFillChampion}
+                          minWidth={COMPACT_SELECT_MIN_WIDTH}
                         />
+                        ) : (
+                          <KitReadOnlyField
+                            label="Champion response"
+                            value={enumAnswerLabel(answers[q.id]?.answerText ?? '')}
+                          />
+                        )
                       ) : q.responseType === 'MULTI_SELECT' ? (
+                        canFillChampion ? (
                         <Box>
                           <Typography
                             component="label"
@@ -1455,15 +1633,20 @@ export default function PrivacyDpiaJourneyPanel({
                               return (
                                 <FormControlLabel
                                   key={opt}
-                                  disabled={!canFillChampion}
                                   control={
                                     <Checkbox
                                       size="small"
                                       checked={checked}
                                       onChange={() => {
-                                        const next = checked
-                                          ? selectedOpts.filter((o) => o !== opt)
-                                          : [...selectedOpts, opt]
+                                        const without = selectedOpts.filter((o) => o !== opt && o !== 'None')
+                                        const next =
+                                          opt === 'None'
+                                            ? checked
+                                              ? []
+                                              : ['None']
+                                            : checked
+                                              ? without
+                                              : [...without, opt]
                                         patchAnswer(q.id, { answerText: '', answerOptions: next })
                                       }}
                                     />
@@ -1474,7 +1657,13 @@ export default function PrivacyDpiaJourneyPanel({
                             })}
                           </Stack>
                         </Box>
-                      ) : (
+                        ) : (
+                          <KitReadOnlyField
+                            label="Champion response"
+                            value={selectedOpts.join(', ')}
+                          />
+                        )
+                      ) : canFillChampion ? (
                         <Box>
                           <CompactTextField
                             label="Champion response"
@@ -1484,12 +1673,16 @@ export default function PrivacyDpiaJourneyPanel({
                             }
                             multiline={isNarrative}
                             minRows={3}
-                            disabled={!canFillChampion}
                             fieldIdPrefix={`qa-${q.id}`}
                             maxWidth={NARRATIVE_FIELD_MAX_WIDTH}
                           />
-                          {attachmentBlock}
                         </Box>
+                      ) : (
+                        <KitReadOnlyField
+                          label="Champion response"
+                          value={answers[q.id]?.answerText}
+                          multiline={isNarrative}
+                        />
                       )
 
                     return (
@@ -1549,20 +1742,12 @@ export default function PrivacyDpiaJourneyPanel({
                             {q.guidance}
                           </Typography>
                         )}
-                        {/* Two columns for all types: enum stays compact in the left cell (align start). */}
                         <Box
-                          sx={{
-                            ...twoColFieldSx,
-                            // Enum + narrative: left cell content-sized so Yes/No does not stretch.
-                            ...(isEnum
-                              ? {
-                                  gridTemplateColumns: {
-                                    xs: '1fr',
-                                    sm: 'minmax(168px, 240px) minmax(0, 1fr)',
-                                  },
-                                }
-                              : {}),
-                          }}
+                          sx={
+                            q.responseType === 'FREE_TEXT_ATTACHMENT'
+                              ? twoColFieldSx
+                              : { maxWidth: isEnum ? 280 : NARRATIVE_FIELD_MAX_WIDTH }
+                          }
                         >
                           {answersReadOnly ? (
                             <Box>
@@ -1578,12 +1763,11 @@ export default function PrivacyDpiaJourneyPanel({
                                   {(answers[q.id]?.answerText ?? '').trim() || '-'}
                                 </Typography>
                               )}
-                              {q.responseType === 'FREE_TEXT_ATTACHMENT' ? attachmentBlock : null}
                             </Box>
                           ) : (
                             championControl
                           )}
-                          {detailsField}
+                          {q.responseType === 'FREE_TEXT_ATTACHMENT' ? attachmentBlock : null}
                         </Box>
                       </Box>
                     )
@@ -1653,18 +1837,31 @@ export default function PrivacyDpiaJourneyPanel({
                   minRows={2}
                   fieldIdPrefix="dr"
                 />
-                <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
                   <Button variant="contained" size="small" disabled={busy} onClick={() => void handleDpoAccept()}>
                     Accept
                   </Button>
-                  <Button variant="outlined" color="warning" size="small" disabled={busy} onClick={() => void handleDpoReturn()}>
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    size="small"
+                    disabled={busy || !reviewComments.trim()}
+                    onClick={() => void handleDpoReturn()}
+                  >
                     Return
                   </Button>
+                  {!reviewComments.trim() && (
+                    <Typography variant="caption" color="text.secondary">
+                      Comments are required to return
+                    </Typography>
+                  )}
                 </Stack>
               </SettingsCard>
             )}
 
-            {(assessmentPrimary || (showEarlierSteps && assessmentHistory)) && sortedAssessment.length > 0 && (
+            {(assessmentPrimary ||
+              (!historyMode && showEarlierSteps && assessmentHistory)) &&
+              sortedAssessment.length > 0 && (
               <SettingsCard autoHeight compact title="Assessment">
                 {pendingRiskRows.length > 0 && isAdmin && (
                   <Stack direction="row" spacing={1} sx={{ mb: 1.25 }} alignItems="center">
@@ -1677,7 +1874,7 @@ export default function PrivacyDpiaJourneyPanel({
                       Create {pendingRiskRows.length} Privacy Risk{pendingRiskRows.length === 1 ? '' : 's'}
                     </Button>
                     <Typography variant="caption" color="text.secondary">
-                      Principles with a Risk Title and no linked Privacy Risk
+                      {pendingRiskRows.length} Privacy Risk{pendingRiskRows.length === 1 ? '' : 's'} identified. The risks must appear in the Privacy Risk module for further treatment.
                     </Typography>
                   </Stack>
                 )}
@@ -1688,7 +1885,7 @@ export default function PrivacyDpiaJourneyPanel({
                       r.complianceStatus ||
                       '') as ComplianceRating
                     const showRiskTitle = assessmentAllowsRiskTitle(complianceNow)
-                    const titleRequired = complianceNow === 'NON_COMPLIANT'
+                    const titleRequired = showRiskTitle
                     const titleNow = showRiskTitle
                       ? (assessmentEdits[r.id]?.riskTitle ?? r.riskTitle ?? '').trim()
                       : ''
@@ -1708,7 +1905,10 @@ export default function PrivacyDpiaJourneyPanel({
                       <Typography sx={{ fontSize: '0.75rem', color: brand.muted, alignSelf: 'center' }}>
                         {raisedId}
                       </Typography>
-                    ) : showRiskTitle && titleNow && isAdmin ? (
+                    ) : showRiskTitle &&
+                      titleNow &&
+                      isAdmin &&
+                      (assessmentEdits[r.id]?.createPrivacyRisk ?? r.createPrivacyRisk) === true ? (
                       <Button
                         size="small"
                         variant="outlined"
@@ -1762,6 +1962,7 @@ export default function PrivacyDpiaJourneyPanel({
                                 required
                                 value={assessmentEdits[r.id]?.complianceStatus ?? ''}
                                 options={COMPLIANCE_OPTIONS}
+                                minWidth={COMPACT_SELECT_MIN_WIDTH}
                                 onChange={(v) => {
                                   const next = v as ComplianceRating
                                   setAssessmentEdits({
@@ -1772,15 +1973,15 @@ export default function PrivacyDpiaJourneyPanel({
                                       riskTitle: assessmentAllowsRiskTitle(next)
                                         ? assessmentEdits[r.id]?.riskTitle ?? ''
                                         : '',
+                                      createPrivacyRisk: assessmentAllowsRiskTitle(next)
+                                        ? assessmentEdits[r.id]?.createPrivacyRisk ?? null
+                                        : null,
                                     },
                                   })
                                 }}
                               />
-                              {riskAction}
-                            </FieldActionRow>
-                            <Box sx={twoColFieldSx}>
                               <CompactTextField
-                                label="Remarks"
+                                label="Gap / Observation"
                                 value={assessmentEdits[r.id]?.remarks ?? ''}
                                 onChange={(e) =>
                                   setAssessmentEdits({
@@ -1788,88 +1989,95 @@ export default function PrivacyDpiaJourneyPanel({
                                     [r.id]: { ...assessmentEdits[r.id], remarks: e.target.value },
                                   })
                                 }
-                                multiline
-                                minRows={2}
                                 fieldIdPrefix={`ar-${r.id}`}
-                                maxWidth={NARRATIVE_FIELD_MAX_WIDTH}
+                                maxWidth={420}
                               />
-                              <CompactTextField
-                                label="Measures"
-                                value={assessmentEdits[r.id]?.recommendedMeasures ?? ''}
-                                onChange={(e) =>
-                                  setAssessmentEdits({
-                                    ...assessmentEdits,
-                                    [r.id]: {
-                                      ...assessmentEdits[r.id],
-                                      recommendedMeasures: e.target.value,
-                                    },
-                                  })
-                                }
-                                multiline
-                                minRows={2}
-                                fieldIdPrefix={`am-${r.id}`}
-                                maxWidth={NARRATIVE_FIELD_MAX_WIDTH}
-                              />
-                            </Box>
+                            </FieldActionRow>
                             {showRiskTitle ? (
-                              <CompactTextField
-                                label="Risk Title"
-                                required={titleRequired}
-                                value={assessmentEdits[r.id]?.riskTitle ?? ''}
-                                onChange={(e) =>
-                                  setAssessmentEdits({
-                                    ...assessmentEdits,
-                                    [r.id]: { ...assessmentEdits[r.id], riskTitle: e.target.value },
-                                  })
-                                }
-                                fieldIdPrefix={`at-${r.id}`}
-                                placeholder={
-                                  titleRequired ? 'Required for Non Compliant' : 'Optional'
-                                }
-                                maxWidth={NARRATIVE_FIELD_MAX_WIDTH}
-                              />
+                              <FieldActionRow>
+                                <FormSelect
+                                  label="Create Privacy Risk"
+                                  value={
+                                    assessmentEdits[r.id]?.createPrivacyRisk == null
+                                      ? ''
+                                      : assessmentEdits[r.id]?.createPrivacyRisk
+                                        ? 'YES'
+                                        : 'NO'
+                                  }
+                                  options={[
+                                    { value: '', label: 'Select' },
+                                    { value: 'YES', label: 'Yes' },
+                                    { value: 'NO', label: 'No' },
+                                  ]}
+                                  minWidth={COMPACT_SELECT_MIN_WIDTH}
+                                  onChange={(v) =>
+                                    setAssessmentEdits({
+                                      ...assessmentEdits,
+                                      [r.id]: {
+                                        ...assessmentEdits[r.id],
+                                        createPrivacyRisk: v === '' ? null : v === 'YES',
+                                      },
+                                    })
+                                  }
+                                />
+                                <CompactTextField
+                                  label="Risk Title"
+                                  required={titleRequired}
+                                  value={assessmentEdits[r.id]?.riskTitle ?? ''}
+                                  onChange={(e) =>
+                                    setAssessmentEdits({
+                                      ...assessmentEdits,
+                                      [r.id]: { ...assessmentEdits[r.id], riskTitle: e.target.value },
+                                    })
+                                  }
+                                  fieldIdPrefix={`at-${r.id}`}
+                                  placeholder="Required for Non Compliant and Partially Compliant"
+                                  maxWidth={NARRATIVE_FIELD_MAX_WIDTH}
+                                />
+                                {riskAction}
+                              </FieldActionRow>
                             ) : null}
                           </Stack>
                         ) : (
                           <Stack spacing={0.75}>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              {complianceNow ? (
-                                <StatusChip
-                                  label={complianceNow.replace(/_/g, ' ')}
-                                  tone={complianceTone}
-                                />
-                              ) : (
-                                <Typography sx={{ fontSize: '0.75rem', color: brand.muted }}>
-                                  Compliance: -
-                                </Typography>
-                              )}
-                              {riskAction}
-                            </Stack>
-                            <Box sx={twoColFieldSx}>
-                              <Box>
-                                <Typography sx={{ ...sectionLabelSx, mb: 0.25 }}>Remarks</Typography>
-                                <Typography
-                                  sx={{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', color: brand.ink }}
-                                >
+                            <Stack
+                              direction={{ xs: 'column', sm: 'row' }}
+                              spacing={1.5}
+                              alignItems={{ sm: 'flex-start' }}
+                            >
+                              <Box sx={{ flex: '0 0 auto' }}>
+                                <Typography sx={{ ...sectionLabelSx, mb: 0.25 }}>Compliance</Typography>
+                                {complianceNow ? (
+                                  <StatusChip
+                                    label={complianceNow.replace(/_/g, ' ')}
+                                    tone={complianceTone}
+                                  />
+                                ) : (
+                                  <Typography sx={{ fontSize: '0.75rem', color: brand.ink }}>-</Typography>
+                                )}
+                              </Box>
+                              <Box sx={{ minWidth: 0, flex: 1 }}>
+                                <Typography sx={{ ...sectionLabelSx, mb: 0.25 }}>Gap / Observation</Typography>
+                                <Typography sx={{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', color: brand.ink }}>
                                   {r.remarks || '-'}
                                 </Typography>
                               </Box>
-                              <Box>
-                                <Typography sx={{ ...sectionLabelSx, mb: 0.25 }}>Measures</Typography>
-                                <Typography
-                                  sx={{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', color: brand.ink }}
-                                >
-                                  {r.recommendedMeasures || '-'}
-                                </Typography>
-                              </Box>
-                            </Box>
+                            </Stack>
                             {showRiskTitle ? (
-                              <Box>
-                                <Typography sx={{ ...sectionLabelSx, mb: 0.25 }}>Risk Title</Typography>
-                                <Typography sx={{ fontSize: '0.75rem', color: brand.ink }}>
-                                  {r.riskTitle || '-'}
-                                </Typography>
-                              </Box>
+                              <Typography sx={{ fontSize: '0.75rem', color: brand.muted }}>
+                                Create Privacy Risk: {r.createPrivacyRisk == null ? '-' : r.createPrivacyRisk ? 'Yes' : 'No'}
+                              </Typography>
+                            ) : null}
+                            {showRiskTitle ? (
+                              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                                <Box>
+                                  <Typography sx={{ ...sectionLabelSx, mb: 0.25 }}>Risk Title</Typography>
+                                  <Typography sx={{ fontSize: '0.75rem', color: brand.ink }}>
+                                    {r.riskTitle || '-'}
+                                  </Typography>
+                                </Box>
+                                {riskAction}
+                              </Stack>
                             ) : null}
                           </Stack>
                         )}
@@ -1922,6 +2130,123 @@ export default function PrivacyDpiaJourneyPanel({
               </SettingsCard>
             )}
 
+            {historyMode && (
+              <Stack spacing={1}>
+                {(
+                  [
+                    ['champion', 'Privacy Champion Assessment'],
+                    ['validation', 'DPO Response Validation'],
+                    ['assessment', 'DPO Compliance & Risk Assessment'],
+                  ] as const
+                ).map(([id, label]) => (
+                  <Accordion
+                    key={id}
+                    disableGutters
+                    elevation={0}
+                    expanded={historySection === id}
+                    onChange={(_, expanded) => setHistorySection(expanded ? id : false)}
+                    sx={{ border: `1px solid ${brand.border}`, borderRadius: 1, '&:before': { display: 'none' } }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>{label}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {id === 'validation' ? (
+                        <Stack spacing={0.75}>
+                          <Typography sx={{ fontSize: '0.8125rem' }}>
+                            The Data Privacy Officer accepted the Privacy Champion responses.
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.8125rem' }}>
+                            {requiredQuestions.length > 0
+                              ? `${answeredRequired} of ${requiredQuestions.length} required questions were answered.`
+                              : `${sortedQuestions.length} questions were answered.`}
+                          </Typography>
+                          {departmentDetail.returnFrom === 'ADMIN' && departmentDetail.returnReason ? (
+                            <Typography sx={{ fontSize: '0.8125rem' }}>
+                              Return comments: {departmentDetail.returnReason}
+                            </Typography>
+                          ) : null}
+                        </Stack>
+                      ) : id === 'champion' ? (
+                        <Stack spacing={1.25}>
+                          {sortedQuestions.map((q) => {
+                            const selected = answers[q.id]?.answerOptions ?? []
+                            const raw = (answers[q.id]?.answerText ?? '').trim()
+                            const text =
+                              raw === 'YES'
+                                ? 'Yes'
+                                : raw === 'NO'
+                                  ? 'No'
+                                  : raw === 'PARTLY'
+                                    ? 'Partly'
+                                    : raw === 'CONFIRMED'
+                                      ? 'Confirmed'
+                                      : raw
+                            const value =
+                              q.responseType === 'MULTI_SELECT'
+                                ? selected.length > 0
+                                  ? selected.join(', ')
+                                  : '-'
+                                : text || '-'
+                            return (
+                              <Box key={q.id}>
+                                <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                                  {q.code}. {q.questionText}
+                                </Typography>
+                                <Typography sx={{ fontSize: '0.8125rem', whiteSpace: 'pre-wrap' }}>{value}</Typography>
+                                {q.responseType === 'FREE_TEXT_ATTACHMENT' ? (
+                                  <Box sx={{ mt: 0.5 }}>
+                                    <EvidenceAttachedList
+                                      items={questionAttachments[q.id] ?? []}
+                                      emptyLabel="No files attached"
+                                      flush
+                                      onError={onError}
+                                    />
+                                  </Box>
+                                ) : null}
+                              </Box>
+                            )
+                          })}
+                        </Stack>
+                      ) : (
+                        <Stack spacing={1.25}>
+                          {sortedAssessment.map((r) => {
+                            const compliance =
+                              r.complianceStatus === 'COMPLIANT'
+                                ? 'Compliant'
+                                : r.complianceStatus === 'PARTIALLY_COMPLIANT'
+                                  ? 'Partially Compliant'
+                                  : r.complianceStatus === 'NON_COMPLIANT'
+                                    ? 'Non-Compliant'
+                                    : '-'
+                            return (
+                              <Box key={r.id}>
+                                <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                                  {r.principle || `Principle ${r.sortOrder}`}
+                                </Typography>
+                                <Typography sx={{ fontSize: '0.8125rem' }}>Compliance: {compliance}</Typography>
+                                <Typography sx={{ fontSize: '0.8125rem', whiteSpace: 'pre-wrap' }}>
+                                  Gap / Observation: {r.remarks?.trim() || '-'}
+                                </Typography>
+                                {r.riskTitle?.trim() ? (
+                                  <Typography sx={{ fontSize: '0.8125rem' }}>Risk Title: {r.riskTitle}</Typography>
+                                ) : null}
+                                {r.createPrivacyRisk != null ? (
+                                  <Typography sx={{ fontSize: '0.8125rem' }}>
+                                    Create Privacy Risk: {r.createPrivacyRisk ? 'Yes' : 'No'}
+                                  </Typography>
+                                ) : null}
+                              </Box>
+                            )
+                          })}
+                        </Stack>
+                      )}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </Stack>
+            )}
+
             {headPrimary && isHeadViewer && (
               <SettingsCard autoHeight compact title="Head Sign-off">
                 <CompactTextField
@@ -1932,13 +2257,24 @@ export default function PrivacyDpiaJourneyPanel({
                   minRows={2}
                   fieldIdPrefix="hn"
                 />
-                <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
                   <Button variant="contained" size="small" disabled={busy} onClick={() => void handleHeadApprove()}>
                     Approve
                   </Button>
-                  <Button variant="outlined" color="warning" size="small" disabled={busy} onClick={() => void handleHeadReturn()}>
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    size="small"
+                    disabled={busy || !headNotes.trim()}
+                    onClick={() => void handleHeadReturn()}
+                  >
                     Return
                   </Button>
+                  {!headNotes.trim() && (
+                    <Typography variant="caption" color="text.secondary">
+                      Notes are required to return
+                    </Typography>
+                  )}
                 </Stack>
               </SettingsCard>
             )}
@@ -2067,6 +2403,7 @@ export default function PrivacyDpiaJourneyPanel({
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
+                  <TableCell>Processing activity</TableCell>
                   <TableCell>Department</TableCell>
                   <TableCell>Champion</TableCell>
                   <TableCell>Head</TableCell>
@@ -2077,17 +2414,21 @@ export default function PrivacyDpiaJourneyPanel({
               <TableBody>
                 {visibleDepartments.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <Typography color="text.secondary" sx={{ py: 2 }}>
                         {project.linkedRopaProjectId
-                          ? 'No DPIA-applicable departments were found on the linked ROPA. Use Add Department to start.'
+                          ? 'No DPIA-required processing activities were found on the linked ROPA. Use Add Department to start.'
                           : 'No departments yet. Use Add Department to start.'}
                       </Typography>
                     </TableCell>
                   </TableRow>
                 )}
                 {visibleDepartments
-                  .filter((d) => !search.trim() || (d.orgUnitName ?? '').toLowerCase().includes(search.trim().toLowerCase()))
+                  .filter((d) => {
+                    const q = search.trim().toLowerCase()
+                    if (!q) return true
+                    return (d.activityName ?? '').toLowerCase().includes(q) || (d.orgUnitName ?? '').toLowerCase().includes(q)
+                  })
                   .map((d) => (
                     <TableRow
                       key={d.id}
@@ -2095,6 +2436,7 @@ export default function PrivacyDpiaJourneyPanel({
                       sx={{ cursor: 'pointer' }}
                       onClick={() => setSelectedDeptId(d.id)}
                     >
+                      <TableCell>{d.activityName ?? d.reasonDescription ?? '-'}</TableCell>
                       <TableCell>{d.orgUnitName ?? `#${d.orgUnitId}`}</TableCell>
                       <TableCell>{d.championName ?? '-'}</TableCell>
                       <TableCell>{d.departmentHeadName ?? '-'}</TableCell>
@@ -2180,7 +2522,7 @@ export default function PrivacyDpiaJourneyPanel({
                 variant="contained"
                 size="small"
                 onClick={() => {
-                  setProjectForm({ name: '', year: String(new Date().getFullYear()), linkRopa: 'NO', ropaProjectId: '' })
+                  setProjectForm(emptyProjectForm())
                   setCreatingProject(true)
                 }}
               >

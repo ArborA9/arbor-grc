@@ -320,7 +320,8 @@ public class RopaProjectService {
                 null,
                 legalJson,
                 RopaProcessImportWorkbook.adequacyNote(row.adequacyRaw()),
-                true);
+                true,
+                null, null, null);
     }
 
     private static String blank(String value) {
@@ -339,7 +340,8 @@ public class RopaProjectService {
                 req.sourceOfPersonalData(), req.methodOfReceiving(), req.legalBasesJson(),
                 req.shareInternalDetails(), req.shareExternal(), req.shareExternalDetails(),
                 req.externalEntityLocation(), req.adequacyNote(), req.safeguardsImplemented(),
-                req.storageSystems(), req.retentionPeriod(), req.securityMeasures(), draft);
+                req.storageSystems(), req.retentionPeriod(), req.securityMeasures(),
+                req.personalDataOther(), req.sensitiveDataOther(), req.dataSubjectOther(), draft);
         CreateRopaRequest body = withDepartment(req, d);
         RopaResponse created = ropaService.create(adminActor(user), body);
         PrivacyRopa row = ropaRepository.findById(created.id()).orElseThrow();
@@ -391,7 +393,11 @@ public class RopaProjectService {
                 mergedDesc, mergedPersonal, mergedSensitive, mergedSubjects, mergedVolume, mergedFreq,
                 mergedSource, mergedMethod, mergedBases, mergedInternal, mergedExternal, mergedDetail,
                 mergedLocation, mergedAdequacy, mergedSafeguards, mergedStorage, mergedRetention,
-                mergedSecurity, draft);
+                mergedSecurity,
+                req.personalDataOther() != null ? req.personalDataOther() : row.getPersonalDataOther(),
+                req.sensitiveDataOther() != null ? req.sensitiveDataOther() : row.getSensitiveDataOther(),
+                req.dataSubjectOther() != null ? req.dataSubjectOther() : row.getDataSubjectOther(),
+                draft);
         RopaResponse updated = ropaService.update(adminActor(user), processId, withoutAdminFields(req));
         PrivacyRopa saved = ropaRepository.findById(processId).orElseThrow();
         saved.setDraft(draft);
@@ -784,7 +790,8 @@ public class RopaProjectService {
                 null, null, req.thirdCountryTransferDetails(), req.retentionPeriod(),
                 req.securityMeasures(), req.storageSystems(), req.representativeName(),
                 req.representativeEmployeeId(), null, req.designation(), req.intakeMode(),
-                d.getOrgUnitId(), d.getId(), req.legalBasesJson(), req.adequacyNote(), req.draft());
+                d.getOrgUnitId(), d.getId(), req.legalBasesJson(), req.adequacyNote(), req.draft(),
+                req.personalDataOther(), req.sensitiveDataOther(), req.dataSubjectOther());
     }
 
     /**
@@ -805,7 +812,8 @@ public class RopaProjectService {
                 null, null, req.thirdCountryTransferDetails(), req.retentionPeriod(),
                 req.securityMeasures(), req.storageSystems(), req.representativeName(),
                 req.representativeEmployeeId(), null, req.designation(), req.orgUnitId(),
-                req.ropaDepartmentId(), req.legalBasesJson(), req.adequacyNote(), req.draft());
+                req.ropaDepartmentId(), req.legalBasesJson(), req.adequacyNote(), req.draft(),
+                req.personalDataOther(), req.sensitiveDataOther(), req.dataSubjectOther());
     }
 
     /** Champion create/update goes through the admin ropa service for field validation; actor check already done. */

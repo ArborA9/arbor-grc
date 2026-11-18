@@ -123,6 +123,31 @@ public final class ExcelRiskScoring {
     }
 
     /**
+     * ERM manual residual: each residual axis may not exceed the matching Risk Analysis axis.
+     */
+    public static void requireResidualAxesWithinAnalysis(
+            MatrixAxes axes,
+            RiskLevel analysisProbability,
+            RiskLevel analysisImpact,
+            RiskLevel residualProbability,
+            RiskLevel residualImpact) {
+        if (residualProbability == null || residualImpact == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Residual Likelihood and Impact are required");
+        }
+        axes.requireActive(residualProbability, "Residual Likelihood");
+        axes.requireActive(residualImpact, "Residual Impact");
+        if (rowRank(axes, residualProbability) > rowRank(axes, analysisProbability)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Residual Likelihood cannot exceed Likelihood from Risk Analysis");
+        }
+        if (colRank(axes, residualImpact) > colRank(axes, analysisImpact)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Residual Impact cannot exceed Impact from Risk Analysis");
+        }
+    }
+
+    /**
      * Rating from the 2026-09-24 band pack (same five names on every grid).
      * 5×5: 1-4 VL, 5-8 Low, 9-12 Medium, 13-19 High, 20-25 VH.
      * 4×4: 1-2 VL, 3-4 Low, 6-8 Medium, 9-12 High, 16 VH (gaps fill to the lower band).

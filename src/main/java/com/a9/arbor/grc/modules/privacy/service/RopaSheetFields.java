@@ -17,23 +17,32 @@ import java.util.Set;
  */
 public final class RopaSheetFields {
 
+    public static final String NONE = "None";
+    public static final String OTHER = "Other";
+
     public static final List<String> PERSONAL_DATA = List.of(
             "Name", "Date of Birth/Age", "Address", "Email", "Telephone",
-            "Bank Account Details", "Photo", "Passport", "Visa", "Work Permits");
+            "Bank Account Details", "Photo", "Passport", "Visa", "Work Permits",
+            NONE, OTHER);
 
     public static final List<String> SENSITIVE_DATA = List.of(
             "Family or ethnic origin", "Political/philosophical opinions", "Religious beliefs",
             "Criminal record", "Biometric data", "Health-related information",
-            "Data related to the provision of healthcare services that reveals the person's health status");
+            "Data related to the provision of healthcare services that reveals the person's health status",
+            NONE, OTHER);
 
     public static final List<String> DATA_SUBJECT_CATEGORIES = List.of(
-            "Employees", "Customers", "Other individuals e.g., Third party service providers");
+            "Employees", "Job Applicants / Candidates", "Customers", "Former Employees",
+            "Contractors / Consultants", "Vendors / Supplier Contacts", "Business Partners",
+            "Website Visitors", "Students", "Patients", "Members / Subscribers", "Shareholders",
+            "Public Individuals / Citizens", OTHER);
 
     public static final List<String> DATA_SUBJECT_VOLUMES = List.of(
-            "0-1000", "1,000-100,000", "100,000-1M", "over 1M");
+            "Less than 100", "100-1,000", "1,001-10,000", "10,001-100,000", "Over 100,000");
 
     public static final List<String> FREQUENCIES = List.of(
-            "Daily", "Weekly", "Monthly", "Quarterly", "Annually", "Ad hoc", "One off");
+            "Daily", "Weekly", "Monthly", "Quarterly", "Annually", "Ad hoc", "One off",
+            "Continuous / Real Time");
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -83,6 +92,9 @@ public final class RopaSheetFields {
                                                  String storageSystems,
                                                  String retentionPeriod,
                                                  String securityMeasures,
+                                                 String personalDataOther,
+                                                 String sensitiveDataOther,
+                                                 String dataSubjectOther,
                                                  boolean draft) {
         List<String> personal = parseList(dataCategories, "List of Personal Data");
         List<String> sensitive = parseList(sensitiveDataCategories, "Categories of Sensitive Data");
@@ -92,6 +104,8 @@ public final class RopaSheetFields {
         requireAllIn(personal, Set.copyOf(PERSONAL_DATA), "List of Personal Data");
         requireAllIn(sensitive, Set.copyOf(SENSITIVE_DATA), "Categories of Sensitive Data");
         requireAllIn(subjects, Set.copyOf(DATA_SUBJECT_CATEGORIES), "Data Subject categories");
+        rejectNoneMixed(personal, "List of Personal Data");
+        rejectNoneMixed(sensitive, "Categories of Sensitive Data");
         if (dataSubjectVolume != null && !dataSubjectVolume.isBlank()
                 && !DATA_SUBJECT_VOLUMES.contains(dataSubjectVolume.trim())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -126,6 +140,15 @@ public final class RopaSheetFields {
         if (subjects.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data Subject categories is required");
         }
+        if (personal.stream().anyMatch(OTHER::equalsIgnoreCase)) {
+            requireText(personalDataOther, "List of Personal Data: other detail");
+        }
+        if (sensitive.stream().anyMatch(OTHER::equalsIgnoreCase)) {
+            requireText(sensitiveDataOther, "Categories of Sensitive Data: other detail");
+        }
+        if (subjects.stream().anyMatch(OTHER::equalsIgnoreCase)) {
+            requireText(dataSubjectOther, "Data Subject categories: other detail");
+        }
         requireText(dataSubjectVolume, "No. of data subjects whose personal data is processed");
         requireText(processingFrequency, "Frequency of processing");
         requireText(sourceOfPersonalData, "Source of Personal Data");
@@ -145,6 +168,13 @@ public final class RopaSheetFields {
         requireText(storageSystems, "Systems / other location where the personal data is stored");
         requireText(retentionPeriod, "Retention period");
         requireText(securityMeasures, "Organizational, administrative, and technical measures for personal data security");
+    }
+
+    private static void rejectNoneMixed(List<String> values, String fieldLabel) {
+        if (values.stream().anyMatch(NONE::equalsIgnoreCase) && values.size() > 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    fieldLabel + ": None cannot be combined with other values");
+        }
     }
 
     private static void requireText(String value, String fieldLabel) {

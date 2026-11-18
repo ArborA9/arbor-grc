@@ -22,6 +22,7 @@ import {
 import { apiRiskLevelToBadge } from '../ui/riskBadgeMappers'
 import { controlEffectivenessTone } from '../ui/ratingTone'
 import { fmtLevel } from '../../riskLevelLabels'
+import { fmtErmImpact, fmtErmLikelihood, fmtErmRating } from './ermRiskLabels'
 import EvidenceAttachedList from '../evidence/EvidenceAttachedList'
 import { brand } from '../../theme'
 import { excelRating, excelRatingToLevel, parseGridSize } from './riskMatrix'
@@ -170,24 +171,29 @@ function LevelField({
   label,
   level,
   keep,
+  isErm,
 }: {
   label: string
   level: RiskLevel | null | undefined
   keep?: boolean
+  isErm?: boolean
 }) {
   if (!level && !keep) return null
   return (
     <Box sx={{ minWidth: 0 }}>
       <FormFieldLabel wrap>{sheetLabel(label)}</FormFieldLabel>
-      <ValueWell text={level ? levelCaption(label, level) : '-'} />
+      <ValueWell text={level ? levelCaption(label, level, isErm) : '-'} />
     </Box>
   )
 }
 
-function levelCaption(label: string, level: RiskLevel): string {
+function levelCaption(label: string, level: RiskLevel, isErm?: boolean): string {
   if (label.includes('Control Effectiveness')) return CE_EXCEL_LABEL[level] ?? fmtLevel(level)
-  if (label.includes('Likelihood') || label.includes('Impact')) {
-    return LIKELIHOOD_EXCEL_LABEL[level] ?? fmtLevel(level)
+  if (label.includes('Likelihood')) {
+    return isErm ? fmtErmLikelihood(level) : (LIKELIHOOD_EXCEL_LABEL[level] ?? fmtLevel(level))
+  }
+  if (label.includes('Impact')) {
+    return isErm ? fmtErmImpact(level) : (LIKELIHOOD_EXCEL_LABEL[level] ?? fmtLevel(level))
   }
   return fmtLevel(level)
 }
@@ -323,8 +329,12 @@ export default function ExcelRiskDossier({
     risk.category === 'OTHER' && risk.categoryOther?.trim()
       ? `Other: ${risk.categoryOther.trim()}`
       : risk.category.replace(/_/g, ' ')
-  const inherentBand = fmtLevel(risk.inherentRating ?? risk.inherentRisk)
-  const residualBand = fmtLevel(risk.residualRating ?? risk.residualRisk)
+  const inherentBand = isErm
+    ? fmtErmRating(risk.inherentRating ?? risk.inherentRisk)
+    : fmtLevel(risk.inherentRating ?? risk.inherentRisk)
+  const residualBand = isErm
+    ? fmtErmRating(risk.residualRating ?? risk.residualRisk)
+    : fmtLevel(risk.residualRating ?? risk.residualRisk)
   const treat = risk.treatmentOption ? EXCEL_TREAT_LABEL[risk.treatmentOption as TreatmentOption] : null
   const planText = risk.activeTreatmentPlan?.actionDescription || risk.treatmentPlan
   const showPlan = showContributor && !emptyVal(planText)
@@ -472,8 +482,8 @@ export default function ExcelRiskDossier({
                   gap: 1,
                 }}
               >
-                <LevelField keep label={scaledExcelField('likelihood', gridSize)} level={risk.probability} />
-                <LevelField keep label={scaledExcelField('impact', gridSize)} level={risk.impact} />
+                <LevelField keep isErm={isErm} label={scaledExcelField('likelihood', gridSize)} level={risk.probability} />
+                <LevelField keep isErm={isErm} label={scaledExcelField('impact', gridSize)} level={risk.impact} />
               </Box>
               <Field
                 keep
@@ -481,8 +491,8 @@ export default function ExcelRiskDossier({
                 label={EXCEL_FIELD.inherentScore}
                 value={
                   risk.inherentScore != null
-                    ? `${risk.inherentScore} · ${risk.inherentRating || inherentBand}`
-                    : risk.inherentRating || inherentBand
+                    ? `${risk.inherentScore} · ${inherentBand}`
+                    : inherentBand
                 }
               />
             </Stack>
@@ -527,15 +537,15 @@ export default function ExcelRiskDossier({
                 label={EXCEL_FIELD.residualScore}
                 value={
                   risk.residualScore != null
-                    ? `${risk.residualScore} · ${risk.residualRating || residualBand}`
-                    : risk.residualRating || residualBand
+                    ? `${risk.residualScore} · ${residualBand}`
+                    : residualBand
                 }
               />
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1 }}>
                 <Field
                   keep
                   label={EXCEL_FIELD.residualRating}
-                  value={risk.residualRating || residualBand}
+                  value={residualBand}
                   tone={apiRiskLevelToBadge(excelRatingToLevel(risk.residualRating ?? risk.residualRisk))}
                 />
                 <Field

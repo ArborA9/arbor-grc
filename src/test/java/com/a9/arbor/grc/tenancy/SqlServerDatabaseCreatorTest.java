@@ -15,15 +15,15 @@ class SqlServerDatabaseCreatorTest {
 
     @Test
     void poolWithoutRedundancyKeepsAzureDefault() {
-        assertEquals("CREATE DATABASE [arbor_tenant_a] ( SERVICE_OBJECTIVE = ELASTIC_POOL ( name = [sql-pool] ) )",
-                SqlServerDatabaseCreator.createStatement("arbor_tenant_a", "sql-pool", ""));
+        assertEquals("CREATE DATABASE [arbor_tenant_a] ( SERVICE_OBJECTIVE = ELASTIC_POOL ( name = [arbor-sqlpool-prod] ) )",
+                SqlServerDatabaseCreator.createStatement("arbor_tenant_a", "arbor-sqlpool-prod", ""));
     }
 
     @Test
     void poolWithLocalBackupStorage() {
-        assertEquals("CREATE DATABASE [arbor_tenant_a] ( SERVICE_OBJECTIVE = ELASTIC_POOL ( name = [sql-pool] ) )"
+        assertEquals("CREATE DATABASE [arbor_tenant_a] ( SERVICE_OBJECTIVE = ELASTIC_POOL ( name = [arbor-sqlpool-prod] ) )"
                         + " WITH BACKUP_STORAGE_REDUNDANCY = 'LOCAL'",
-                SqlServerDatabaseCreator.createStatement("arbor_tenant_a", "sql-pool", " local "));
+                SqlServerDatabaseCreator.createStatement("arbor_tenant_a", "arbor-sqlpool-prod", " local "));
     }
 
     @Test

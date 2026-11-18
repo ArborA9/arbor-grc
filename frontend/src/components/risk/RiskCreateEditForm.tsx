@@ -34,7 +34,7 @@ import { apiRiskLevelToBadge } from '../ui/riskBadgeMappers'
 import { apiLevelTone, controlEffectivenessTone } from '../ui/ratingTone'
 import FormSelect from '../ui/FormSelect'
 import { fmtLevel } from '../../riskLevelLabels'
-import { excelRatingToLevel } from './riskMatrix'
+import { colRank, excelRatingToLevel, rowRank, type MatrixAxes } from './riskMatrix'
 import {
   CE_EXCEL_LABEL,
   ERM_RISK_CAUSES,
@@ -47,6 +47,11 @@ import {
   scaledExcelField,
   excelControlStatusLabel,
 } from './excelRiskFields'
+import {
+  ERM_IMPACT_LABEL,
+  ERM_LIKELIHOOD_LABEL,
+  fmtErmRating,
+} from './ermRiskLabels'
 import ReferenceAttachmentField from './ReferenceAttachmentField'
 import RiskRecordCreateProgress from './RiskRecordCreateProgress'
 import { RISK_INPUT_ID } from './riskFormRequired'
@@ -140,6 +145,8 @@ export type RiskCreateEditFormProps = {
   setDescription: (v: string) => void
   observedGap: string
   setObservedGap: (v: string) => void
+  processingActivity?: string
+  setProcessingActivity?: (v: string) => void
   threats: string
   setThreats: (v: string) => void
   probability: RiskLevel
@@ -154,6 +161,8 @@ export type RiskCreateEditFormProps = {
   setResidualProbability: (v: RiskLevel) => void
   residualImpact: RiskLevel
   setResidualImpact: (v: RiskLevel) => void
+  /** Active matrix axes - used to cap ERM residual L/I by Risk Analysis. */
+  matrixAxes: MatrixAxes
   overrideAutoClose: boolean
   setOverrideAutoClose: (v: boolean) => void
   autoCloseJustification: string
@@ -245,11 +254,37 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
   const err = (id: string) => props.fieldErrors[id] || undefined
   const clear = (id: string) => props.clearFieldError(id)
 
+  const likelihoodLabel = (l: RiskLevel) =>
+    isErm ? ERM_LIKELIHOOD_LABEL[l] : (LIKELIHOOD_EXCEL_LABEL[l] ?? fmtLevel(l))
+  const impactLabel = (l: RiskLevel) =>
+    isErm ? ERM_IMPACT_LABEL[l] : (LIKELIHOOD_EXCEL_LABEL[l] ?? fmtLevel(l))
+  const ratingLabel = (band: string) => (isErm ? fmtErmRating(band) : fmtLevel(band))
   const levelOptions = scoreLevels.map((l) => ({
     value: l,
-    label: LIKELIHOOD_EXCEL_LABEL[l] ?? fmtLevel(l),
+    label: likelihoodLabel(l),
     tone: apiLevelTone(l),
   }))
+  const impactOptions = scoreLevels.map((l) => ({
+    value: l,
+    label: impactLabel(l),
+    tone: apiLevelTone(l),
+  }))
+  const maxResidualLikelihoodRank = rowRank(props.matrixAxes, props.probability)
+  const maxResidualImpactRank = colRank(props.matrixAxes, props.impact)
+  const residualLikelihoodOptions = scoreLevels
+    .filter((l) => rowRank(props.matrixAxes, l) <= maxResidualLikelihoodRank)
+    .map((l) => ({
+      value: l,
+      label: likelihoodLabel(l),
+      tone: apiLevelTone(l),
+    }))
+  const residualImpactOptions = scoreLevels
+    .filter((l) => colRank(props.matrixAxes, l) <= maxResidualImpactRank)
+    .map((l) => ({
+      value: l,
+      label: impactLabel(l),
+      tone: apiLevelTone(l),
+    }))
   const ceOptions = scoreLevels.map((l) => ({
     value: l,
     label: CE_EXCEL_LABEL[l] ?? fmtLevel(l),
@@ -331,7 +366,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   <CompactTextField
                     label={EXCEL_FIELD.riskId}
                     wrapLabel
-                    placeholder={isErm ? 'ERM-2026-001' : isPrivacy ? 'DPR-2026-001' : 'ISR-2026-001'}
+                    placeholder={isErm ? 'ERM-2026-001' : isPrivacy ? 'DPR-2026-001' : 'UR-2026-001'}
                     value={props.displayIdOverride}
                     onChange={(e) => props.setDisplayIdOverride(e.target.value)}
                     maxWidth="100%"
@@ -352,6 +387,15 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   inputProps={{ max: dateMin }}
                   maxWidth={EXCEL_DATE_FIELD_WIDTH}
                 />
+                {isPrivacy ? (
+                  <CompactTextField
+                    label="Processing Activity"
+                    wrapLabel
+                    value={props.processingActivity ?? ''}
+                    onChange={(e) => props.setProcessingActivity?.(e.target.value)}
+                    maxWidth="100%"
+                  />
+                ) : null}
                 <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1', md: editMode ? 'span 3' : 'span 2' } }}>
                   <CompactTextField
                     label={EXCEL_FIELD.riskTitle}
@@ -688,7 +732,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
               action={
                 <RiskLevelBadge
                   level={apiRiskLevelToBadge(excelRatingToLevel(previewInherentBand))}
-                  label={fmtLevel(previewInherentBand)}
+                  label={ratingLabel(previewInherentBand)}
                 />
               }
             >
@@ -704,8 +748,8 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   <FormSelect
                     label={scaledExcelField('likelihood', matrixGridSize)}
                     wrapLabel
-                    minWidth={128}
-                    maxWidth={140}
+                    minWidth={isErm ? 168 : 128}
+                    maxWidth={isErm ? 200 : 140}
                     value={props.probability}
                     options={levelOptions}
                     onChange={(v) => props.setProbability(v as RiskLevel)}
@@ -716,7 +760,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                     minWidth={128}
                     maxWidth={140}
                     value={props.impact}
-                    options={levelOptions}
+                    options={impactOptions}
                     onChange={(v) => props.setImpact(v as RiskLevel)}
                   />
                 </Box>
@@ -724,7 +768,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   <FormFieldLabel wrap>{EXCEL_FIELD.inherentScore}</FormFieldLabel>
                   <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
                     <Typography variant="body2">
-                      {`${props.previewInherentScore} · ${fmtLevel(previewInherentBand)}`}
+                      {`${props.previewInherentScore} · ${ratingLabel(previewInherentBand)}`}
                     </Typography>
                   </Box>
                 </Box>
@@ -778,7 +822,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
               action={
                 <RiskLevelBadge
                   level={apiRiskLevelToBadge(excelRatingToLevel(previewResidualBand))}
-                  label={fmtLevel(previewResidualBand)}
+                  label={ratingLabel(previewResidualBand)}
                 />
               }
             >
@@ -788,11 +832,16 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   control={
                     <Checkbox
                       checked={props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT'}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const manual = e.target.checked
                         props.setResidualScoringMode(
-                          e.target.checked ? 'MANUAL_PROBABILITY_IMPACT' : 'CONTROL_EFFECTIVENESS',
+                          manual ? 'MANUAL_PROBABILITY_IMPACT' : 'CONTROL_EFFECTIVENESS',
                         )
-                      }
+                        if (manual && isErm) {
+                          props.setResidualProbability(props.probability)
+                          props.setResidualImpact(props.impact)
+                        }
+                      }}
                       size="small"
                       sx={{ py: 0 }}
                     />
@@ -804,26 +853,56 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   }
                 />
                 {props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
-                  <CompactTextField
-                    label={EXCEL_FIELD.residualScore}
-                    wrapLabel
-                    required
-                    type="number"
-                    value={props.manualResidualScore}
-                    onChange={(e) => {
-                      clear(RISK_INPUT_ID.residualScore)
-                      props.setManualResidualScore(e.target.value)
-                    }}
-                    error={!!props.residualScoreError || Boolean(err(RISK_INPUT_ID.residualScore))}
-                    helperText={
-                      err(RISK_INPUT_ID.residualScore) ||
-                      props.residualScoreError ||
-                      `Whole number from 1 to ${props.previewInherentScore}`
-                    }
-                    slotProps={{
-                      htmlInput: { min: 1, max: props.previewInherentScore, step: 1 },
-                    }}
-                  />
+                  isErm ? (
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, max-content))',
+                        columnGap: 1.25,
+                        alignItems: 'start',
+                      }}
+                    >
+                      <FormSelect
+                        label={scaledExcelField('likelihood', matrixGridSize)}
+                        wrapLabel
+                        minWidth={168}
+                        maxWidth={200}
+                        value={props.residualProbability}
+                        options={residualLikelihoodOptions}
+                        onChange={(v) => props.setResidualProbability(v as RiskLevel)}
+                      />
+                      <FormSelect
+                        label={scaledExcelField('impact', matrixGridSize)}
+                        wrapLabel
+                        minWidth={128}
+                        maxWidth={140}
+                        value={props.residualImpact}
+                        options={residualImpactOptions}
+                        onChange={(v) => props.setResidualImpact(v as RiskLevel)}
+                      />
+                    </Box>
+                  ) : (
+                    <CompactTextField
+                      label={EXCEL_FIELD.residualScore}
+                      wrapLabel
+                      required
+                      type="number"
+                      value={props.manualResidualScore}
+                      onChange={(e) => {
+                        clear(RISK_INPUT_ID.residualScore)
+                        props.setManualResidualScore(e.target.value)
+                      }}
+                      error={!!props.residualScoreError || Boolean(err(RISK_INPUT_ID.residualScore))}
+                      helperText={
+                        err(RISK_INPUT_ID.residualScore) ||
+                        props.residualScoreError ||
+                        `Whole number from 1 to ${props.previewInherentScore}`
+                      }
+                      slotProps={{
+                        htmlInput: { min: 1, max: props.previewInherentScore, step: 1 },
+                      }}
+                    />
+                  )
                 ) : (
                   <Box>
                     <FormFieldLabel wrap>{EXCEL_FIELD.residualScore}</FormFieldLabel>
@@ -832,13 +911,23 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                     </Box>
                   </Box>
                 )}
+                {isErm && props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
+                  <Box>
+                    <FormFieldLabel wrap>{EXCEL_FIELD.residualScore}</FormFieldLabel>
+                    <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
+                      <Typography variant="body2">
+                        {`${props.previewResidualScore ?? '-'} · ${ratingLabel(previewResidualBand)}`}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ) : null}
                 <Box sx={twoColFieldSx}>
                   <Box>
                     <FormFieldLabel wrap>{EXCEL_FIELD.residualRating}</FormFieldLabel>
                     <Box sx={{ height: 32, display: 'flex', alignItems: 'center' }}>
                       <RiskLevelBadge
                         level={apiRiskLevelToBadge(excelRatingToLevel(previewResidualBand))}
-                        label={fmtLevel(previewResidualBand)}
+                        label={ratingLabel(previewResidualBand)}
                       />
                     </Box>
                   </Box>

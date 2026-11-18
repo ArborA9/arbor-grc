@@ -252,7 +252,7 @@ export default function ExternalAuditPortal() {
       tabs.push({ id: 'controls', label: 'Controls', count: detail?.checklist.length })
     }
     if (scopeModules.includes('SOA')) tabs.push({ id: 'soa', label: 'Statement of Applicability', count: soaItems.length })
-    if (scopeModules.includes('RISK')) tabs.push({ id: 'risk', label: 'Information Security Risk Register', count: riskItems.length })
+    if (scopeModules.includes('RISK')) tabs.push({ id: 'risk', label: 'Unified Risk Register', count: riskItems.length })
     if (scopeModules.includes('EVIDENCE')) tabs.push({ id: 'evidence', label: 'Evidence Library', count: evidenceItems.length })
     tabs.push({ id: 'findings', label: 'My Findings', count: detail?.findings.length })
     return tabs

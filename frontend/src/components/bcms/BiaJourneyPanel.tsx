@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Stack, Tooltip, Typography } from '@mui/material'
 import { brand } from '../../theme'
 import SettingsCard from '../ui/SettingsCard'
 
@@ -12,6 +12,8 @@ export type BiaJourneyStep = {
   hint?: string
   /** Person for this step, shown in gold under the label. */
   person?: string
+  /** Hover text for the step name. */
+  hover?: string
   state: BiaJourneyStepState
 }
 
@@ -103,16 +105,18 @@ export default function BiaJourneyPanel({
                   )}
                 </Stack>
                 <Stack spacing={0.15} sx={{ flex: 1, minWidth: 0, pb: vertical ? (isLast ? 0 : 0.75) : 0 }}>
-                  <Typography
-                    sx={{
-                      fontSize: '0.75rem',
-                      fontWeight: active ? 700 : 600,
-                      color: active ? brand.inkSoft : done ? brand.inkSoft : brand.muted,
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {step.label}
-                  </Typography>
+                  <Tooltip title={step.hover ?? ''} disableHoverListener={!step.hover}>
+                    <Typography
+                      sx={{
+                        fontSize: '0.75rem',
+                        fontWeight: active ? 700 : 600,
+                        color: active ? brand.inkSoft : done ? brand.inkSoft : brand.muted,
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {step.label}
+                    </Typography>
+                  </Tooltip>
                   {step.person ? (
                     <Typography
                       sx={{

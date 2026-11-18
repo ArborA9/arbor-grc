@@ -110,6 +110,7 @@ const WORK_CARD_IDS = new Set(['my_tasks_pending', 'open_work_tasks'])
 const MODULE_LABELS: Record<string, string> = {
   PLATFORM: 'Platform',
   ISMS: 'Information Security',
+  UNIFIED_RISK: 'Unified Risk',
   ERM: 'Enterprise Risk',
   TPRM: 'Third-Party Risk',
   BCMS: 'Business Continuity',

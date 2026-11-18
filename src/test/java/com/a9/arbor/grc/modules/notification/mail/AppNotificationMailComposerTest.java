@@ -615,6 +615,11 @@ class AppNotificationMailComposerTest {
         assertTrue(returned.html().contains("RETURNED"));
         assertTrue(returned.html().contains("Missing retention period"));
 
+        NotificationMailContent head = composer.compose("ROPA_HEAD_SIGN_OFF", "old", "old", vars);
+        assertEquals("Action Required | ROPA | Approve RoPA Submission for Finance", head.subject());
+        assertTrue(head.html().contains("ready for your review"));
+        assertFalse(head.html().contains("\u2014"));
+
         NotificationMailContent ready = composer.compose("ROPA_READY_TO_CLOSE", "old", "old", vars);
         assertEquals("Confirmation | ROPA | Ready to Close", ready.subject());
         assertTrue(ready.html().contains("READY TO CLOSE"));

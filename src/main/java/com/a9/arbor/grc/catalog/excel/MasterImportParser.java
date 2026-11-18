@@ -25,7 +25,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Parser for the client's Master Import workbook (layout S1).
+ * Parser for the client's Master Import workbook (layout S1) — see
+ * {@code FRAMEWORK_IMPORT_BUILD.md} §2.
  *
  * <p>Shape notes, all verified against {@code Arbor_GRC_Framework_Master_Import.xlsx}:
  * <ul>

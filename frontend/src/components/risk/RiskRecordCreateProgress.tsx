@@ -17,12 +17,12 @@ export default function RiskRecordCreateProgress({
         ? 'Submitting ERM Risk'
         : isPrivacy
           ? 'Submitting Privacy Risk'
-          : 'Submitting Information Security Risk'
+          : 'Submitting Unified Risk'
       : isErm
         ? 'Creating ERM Risk'
         : isPrivacy
           ? 'Creating Privacy Risk'
-          : 'Creating Information Security Risk'
+          : 'Creating Unified Risk'
   const copy =
     mode === 'submit' ? 'Saving your action. Stay on this page.' : 'Saving the risk. Stay on this page.'
   return (

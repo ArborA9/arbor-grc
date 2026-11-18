@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * Parser for the PCI DSS 4.0.1 workbook (layout S2). Imports the consolidated
- * {@code All 12 Requirements - Master} sheet only.
+ * {@code All 12 Requirements - Master} sheet only — see {@code FRAMEWORK_IMPORT_BUILD.md} §F3c.
  *
  * <p>Hierarchy: L1 requirement family (1..12), L2 section {@code N.N} synthesised from req IDs,
  * L3+ every master row as a routed leaf (parents that also appear as rows stay assessable).

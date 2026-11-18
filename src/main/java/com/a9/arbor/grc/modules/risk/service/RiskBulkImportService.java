@@ -99,8 +99,6 @@ public class RiskBulkImportService {
                 .toList();
         List<String> frameworks = type == RiskType.IS_RISK
                 ? frameworkLibraryService.listActivatedForTenant(requireTenantId()).stream()
-                .filter(f -> IsRiskApplicableModules.includes(
-                        com.a9.arbor.grc.catalog.domain.ModuleCode.valueOf(f.moduleCode())))
                 .map(FrameworkSummaryResponse::code)
                 .filter(Objects::nonNull)
                 .distinct()
@@ -166,14 +164,6 @@ public class RiskBulkImportService {
                         (a, b) -> a));
         Map<String, FrameworkSummaryResponse> fwByCode = type == RiskType.IS_RISK
                 ? frameworkLibraryService.listActivatedForTenant(requireTenantId()).stream()
-                .filter(f -> {
-                    try {
-                        return IsRiskApplicableModules.includes(
-                                com.a9.arbor.grc.catalog.domain.ModuleCode.valueOf(f.moduleCode()));
-                    } catch (Exception e) {
-                        return false;
-                    }
-                })
                 .collect(Collectors.toMap(
                         f -> f.code().trim().toUpperCase(Locale.ROOT),
                         f -> f,
@@ -261,7 +251,13 @@ public class RiskBulkImportService {
         RiskCategory category = type == RiskType.IS_RISK && blank(row.category())
                 ? RiskCategory.IT
                 : RiskBulkImportWorkbook.parseCategory(row.category());
-        RiskLevel probability = level(row.probability(), "Likelihood", scale, RiskBulkImportWorkbook.LEVEL_LABEL);
+        RiskLevel probability = level(
+                row.probability(),
+                "Likelihood",
+                scale,
+                type == RiskType.ERM
+                        ? RiskBulkImportWorkbook.ERM_LIKELIHOOD_LABEL
+                        : RiskBulkImportWorkbook.LEVEL_LABEL);
         RiskLevel impact = level(row.impact(), "Impact", scale, RiskBulkImportWorkbook.LEVEL_LABEL);
         RiskLevel controlEff = level(row.controlEffectiveness(), "Control Effectiveness", scale,
                 RiskBulkImportWorkbook.CE_LABEL);

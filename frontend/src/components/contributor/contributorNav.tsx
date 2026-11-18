@@ -35,7 +35,7 @@ export const CONTRIBUTOR_NAV_CATALOG: NavItem[] = [
     label: 'Risk Management',
     icon: <SecurityRoundedIcon fontSize="small" />,
     children: [
-      { id: 'risk', label: 'Information Security Risk', icon: <WarningAmberRoundedIcon fontSize="small" /> },
+      { id: 'risk', label: 'Unified Risk', icon: <WarningAmberRoundedIcon fontSize="small" /> },
       { id: 'erm-risk', label: 'Enterprise Risk', icon: <BusinessCenterRoundedIcon fontSize="small" /> },
       { id: 'kri', label: 'KRI', icon: <SpeedRoundedIcon fontSize="small" /> },
       { id: 'incidents', label: 'Incidents', icon: <ReportProblemRoundedIcon fontSize="small" /> },
@@ -154,7 +154,7 @@ export function contributorNavTitle(navId: string): string {
     case 'assessments':
       return 'Assessments'
     case 'risk':
-      return 'Information Security Risk'
+      return 'Unified Risk'
     case 'erm-risk':
       return 'Enterprise Risk'
     case 'kri':
@@ -181,7 +181,7 @@ export function contributorNavTitle(navId: string): string {
 
 export function contributorWorkBackLabel(navId: string): string {
   if (navId === 'contributor-dashboard') return 'Dashboard'
-  if (navId === 'risk') return 'Information Security Risk'
+  if (navId === 'risk') return 'Unified Risk'
   if (navId === 'erm-risk') return 'Enterprise Risk'
   if (navId === 'assessments') return 'Assessments'
   return contributorNavTitle(navId)

@@ -1,7 +1,7 @@
 package com.a9.arbor.grc.catalog.service;
 
 /**
- * Which module a consumer is seeding from the catalog.
+ * Which module a consumer is seeding from the catalog ({@code FRAMEWORK_IMPORT_BUILD.md} F6–F8).
  */
 public enum ModuleRouting {
     SOA,

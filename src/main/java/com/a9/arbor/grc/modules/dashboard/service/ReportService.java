@@ -169,7 +169,7 @@ public class ReportService {
                 xlsxPdf, "ISMS", true));
         map.put("ncema_compliance", new ReportDescriptor("ncema_compliance", "NCEMA V3 Compliance",
                 xlsxPdf, "BCMS", true));
-        map.put("is_risk", ReportDescriptor.of("is_risk", "IS Risk Register", xlsxPdf, "ISMS"));
+        map.put("is_risk", ReportDescriptor.of("is_risk", "Unified Risk Register", xlsxPdf, "PLATFORM"));
         map.put("capa_status", ReportDescriptor.of("capa_status", "CAPA Status", xlsxPdf, "PLATFORM"));
         map.put("audit_trail", ReportDescriptor.of("audit_trail", "Audit Trail", List.of("csv"), "PLATFORM"));
         map.put("erm_risk", ReportDescriptor.of("erm_risk", "ERM Risk Summary", xlsxPdf, "ERM"));
@@ -500,7 +500,7 @@ public class ReportService {
     private ExportFile exportIsRisk(User user, boolean pdf) {
         var risks = riskRecordRepository.findByRiskTypeOrderByUpdatedAtDesc(RiskType.IS_RISK);
         if (pdf) {
-            byte[] bytes = pdfWriter.writeRiskRegister(orgName(), user, "IS Risk Register", risks);
+            byte[] bytes = pdfWriter.writeRiskRegister(orgName(), user, "Unified Risk Register", risks);
             audit(user, "IS_RISK_REGISTER", null, "is-risk-register.pdf", risks.size());
             return new ExportFile(bytes, "is-risk-register-" + tenantOrDefault() + ".pdf", PDF);
         }

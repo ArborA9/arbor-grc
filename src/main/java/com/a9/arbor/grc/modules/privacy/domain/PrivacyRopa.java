@@ -60,8 +60,17 @@ public class PrivacyRopa {
     @Column(name = "sensitive_data_categories", length = 1000)
     private String sensitiveDataCategories;
 
-    @Column(name = "data_subjects", length = 500)
+    @Column(name = "data_subjects", length = 2000)
     private String dataSubjects;
+
+    @Column(name = "personal_data_other", length = 500)
+    private String personalDataOther;
+
+    @Column(name = "sensitive_data_other", length = 500)
+    private String sensitiveDataOther;
+
+    @Column(name = "data_subject_other", length = 500)
+    private String dataSubjectOther;
 
     @Column(name = "data_subject_volume", length = 64)
     private String dataSubjectVolume;

@@ -20,7 +20,7 @@ import java.util.Locale;
 import java.util.stream.Stream;
 
 /**
- * Discovers framework Excel packs from the configured directory when it exists,
+ * Discovers framework Excels under {@code docs/frameworks} when that folder exists,
  * otherwise the packs copied into the JAR at {@code classpath:framework-packs/}.
  */
 @Component
