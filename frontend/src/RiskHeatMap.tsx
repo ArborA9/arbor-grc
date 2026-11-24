@@ -122,7 +122,7 @@ export function RiskHeatMapPanel({
   const rows = map?.rows ?? (['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'] as RiskLevel[])
   const cols = map?.cols ?? (['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'] as RiskLevel[])
   const rowLabel = basis === 'INHERENT' ? 'Probability' : 'CE / Residual P'
-  const colLabel = basis === 'INHERENT' ? 'Impact' : 'Inherent / Residual I'
+  const colLabel = basis === 'INHERENT' ? 'Impact' : 'Residual impact'
   const title = riskType === 'ERM' ? 'Enterprise Risk' : riskType === 'PRIVACY_RISK' ? 'Privacy Risk' : 'Unified Risk'
   const cellHeight = compact || mode === 'dialog' ? 22 : 28
   /** Dashboard/card/dialog: fill width with a square matrix. Inline: fixed square cells. */
@@ -132,7 +132,8 @@ export function RiskHeatMapPanel({
   const mapMaxWidth = refined ? 460 : compact ? 260 : mode === 'dialog' ? 320 : 360
   const cellGap = refined ? '4px' : '2px'
   /** Likelihood label column; the impact labels are offset by the same width so they sit under their cells. */
-  const yLabelWidth = riskType === 'ERM' ? 124 : 72
+  // Refined (dashboard pair / dialog): one label width for every register so side-by-side maps match.
+  const yLabelWidth = refined || riskType === 'ERM' ? 124 : 72
   const showBands = refined && picture === 'bands'
   const bandTotals = useMemo(() => {
     const totals = new Map<RiskLevel, number>()

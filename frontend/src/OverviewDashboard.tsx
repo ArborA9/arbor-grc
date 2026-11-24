@@ -525,7 +525,10 @@ export default function OverviewDashboard({
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <SectionHeader title="Decide today" hint={attention.length > 5 ? 'First 5' : attention.length === 0 ? 'Clear' : undefined} />
+            <SectionHeader
+              title="Decide today"
+              hint={attention.length > 5 ? `First 5 of ${attention.length}` : attention.length === 0 ? 'Clear' : `${attention.length} to review`}
+            />
             {decide.length === 0 ? (
               <Card sx={{ borderRadius: '12px', px: 2, py: 2 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -533,7 +536,7 @@ export default function OverviewDashboard({
                 </Typography>
               </Card>
             ) : (
-          <Card sx={{ overflow: 'hidden', borderRadius: '12px', boxShadow: '0 1px 2px rgba(23,23,23,0.04)', borderTop: `2px solid ${brand.gold}` }}>
+          <Card sx={{ overflow: 'hidden', borderRadius: '12px', boxShadow: '0 1px 2px rgba(23,23,23,0.04)', borderTop: `2px solid ${brand.gold}`, flex: decide.length >= 3 ? 1 : undefined }}>
               {decide.map((w, i) => {
                 const clickable = Boolean(w.navTarget)
                 return (
@@ -585,7 +588,7 @@ export default function OverviewDashboard({
             )}
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <SectionHeader title="Work" />
+            <SectionHeader title="Work" hint="Assigned to you and your organisation" />
             <Stack spacing={1.5} sx={{ flex: 1 }}>
               {myTasks && (
                 <WorkCard kicker="My work" label="Pending for me" icon={<AssignmentIndRoundedIcon />} widget={myTasks} onNavigate={onNavigate} />

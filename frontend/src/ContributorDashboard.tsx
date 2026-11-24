@@ -542,7 +542,7 @@ export default function ContributorDashboard({
         <Box>
           <SectionHeader
             title="Decide today"
-            hint={decideRows.length > 5 ? 'First 5' : decideRows.length === 0 ? 'Clear' : undefined}
+            hint={decideRows.length > 5 ? `First 5 of ${decideRows.length}` : decideRows.length === 0 ? 'Clear' : `${decideRows.length} to review`}
             actionLabel="View queue"
             onAction={() => focusQueue(decideRows.length > 0 ? 'attention' : 'open')}
           />
@@ -574,7 +574,7 @@ export default function ContributorDashboard({
           )}
         </Box>
         <Box>
-          <SectionHeader title="Work" />
+          <SectionHeader title="Work" hint="Your assigned items" />
           <Stack spacing={1.5}>
             <WorkCard
               kicker="My work"
