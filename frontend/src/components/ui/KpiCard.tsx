@@ -68,7 +68,7 @@ export default function KpiCard({
     : null
 
   const clickable = Boolean(onClick)
-  const valueInk = valueColor ?? accentColor
+  const valueInk = valueColor ?? brand.ink
   const valueText = fitText && typeof value === 'string' ? value : null
   const fitted = valueText != null ? fittedValueSx(valueText, compact) : null
 
@@ -118,11 +118,9 @@ export default function KpiCard({
       >
         <Typography
           sx={{
-            fontSize: compact ? '0.5625rem' : '0.59375rem',
-            fontWeight: 600,
-            letterSpacing: '0.07em',
-            textTransform: 'uppercase',
-            color: brand.ink,
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: brand.muted,
             lineHeight: 1.25,
             display: compact ? '-webkit-box' : undefined,
             WebkitLineClamp: compact ? 2 : undefined,
@@ -130,6 +128,13 @@ export default function KpiCard({
             overflow: compact ? 'hidden' : undefined,
           }}
         >
+          {accentColor !== brand.gold && (
+            <Box
+              component="span"
+              aria-hidden
+              sx={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', bgcolor: accentColor, mr: 0.75, verticalAlign: 'middle' }}
+            />
+          )}
           {label}
         </Typography>
       </Box>
@@ -138,7 +143,7 @@ export default function KpiCard({
         title={valueText && valueText.length > 36 ? valueText : undefined}
         sx={{
           fontSize: fitted?.fontSize ?? (compact ? '1.375rem' : '1.875rem'),
-          fontWeight: 700,
+          fontWeight: 600,
           lineHeight: fitted?.lineHeight ?? 1,
           color: valueInk,
           mb: sub ? 0.35 : 0,

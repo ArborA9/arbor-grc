@@ -2658,7 +2658,8 @@ export default function RiskPage({
               Edit
             </Button>
           )}
-          <Button variant="outlined" size="small" disabled={busy} onClick={requestCloseDetail}>
+          {/* Phones: the back arrow next to the title already closes the risk. */}
+          <Button variant="outlined" size="small" disabled={busy} onClick={requestCloseDetail} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
             Close
           </Button>
         </Stack>
@@ -4204,9 +4205,8 @@ export default function RiskPage({
                       canUploadDetailEvidence || linkedEvidence.length > 0 ? (
                         <Box id="risk-section-evidence" sx={sectionAnchorSx}>
                           <SettingsCard
-                            compact
+                            section
                             autoHeight
-                            titleCaps
                             title="Evidence"
                             subtitle="Browse a file, then set classification and stage, then upload"
                           >
@@ -5612,12 +5612,13 @@ export default function RiskPage({
         onClose={() => setHeatMapOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { maxWidth: 420 } }}
+        PaperProps={{ sx: { maxWidth: 640 } }}
       >
         <DialogContent sx={{ p: 2 }}>
           <RiskHeatMapPanel
             riskType={riskType}
-            compact
+            refined
+            initialPicture="matrix"
             presentation="dialog"
             onError={onError}
             onCellClick={(d) => {

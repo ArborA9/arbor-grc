@@ -5,8 +5,7 @@ import {
 } from '../../api'
 import ContributorEvidencePanel from '../contributor/ContributorEvidencePanel'
 import { Box } from '@mui/material'
-import SettingsCard from '../ui/SettingsCard'
-import { MEDIUM_FORM_MAX_WIDTH } from '../ui/formLayout'
+import FormFieldLabel from '../ui/FormFieldLabel'
 import { EXCEL_FIELD } from './excelRiskFields'
 import { RISK_EVIDENCE_MAX_BYTES, RISK_EVIDENCE_MAX_FILES } from './riskEvidenceLimits'
 
@@ -44,14 +43,12 @@ export default function ReferenceAttachmentField({
   const selected = pendingFiles[0] ?? null
 
   return (
-    <Box sx={{ minWidth: 0, my: 1.5, maxWidth: MEDIUM_FORM_MAX_WIDTH }}>
-      <SettingsCard
-        compact
-        autoHeight
-        titleCaps
-        title={EXCEL_FIELD.referenceAttachment}
-        subtitle="Optional supporting files"
-      >
+    <Box sx={{ minWidth: 0 }}>
+      {/* Plain labelled field: no nested card, full width of its grid cell. */}
+      <FormFieldLabel hint="Optional" hintPlacement="inline">
+        {EXCEL_FIELD.referenceAttachment}
+      </FormFieldLabel>
+      <Box>
         <ContributorEvidencePanel
           showHeading={false}
           framed
@@ -73,7 +70,7 @@ export default function ReferenceAttachmentField({
           onDownload={() => {}}
           onRemove={onRemoveSaved}
         />
-      </SettingsCard>
+      </Box>
     </Box>
   )
 }

@@ -2212,7 +2212,8 @@ function ContributorHomeBody({
       headerTabs={gapChrome ? undefined : appShellPage?.tabs}
       headerMeta={gapChrome ? undefined : appShellPage?.headerMeta}
       workspaceName={locale.displayName || session.tenantId || 'Workspace'}
-      flushContent={appShellPage?.flushContent ?? true}
+      // Risk registers render edge to edge unless the shell pads them (owners get the padding too).
+      flushContent={appShellPage?.flushContent ?? !(active === 'risk' || active === 'erm-risk')}
       pageActions={gapChrome ? undefined : appShellPage?.actions}
       actions={
         <NotificationBell

@@ -257,7 +257,7 @@ function PostureCell({
         border: `1px solid ${brand.border}`,
         borderLeft: `3px solid ${color}`,
         borderRadius: '12px',
-        bgcolor: alpha(color, 0.06),
+        bgcolor: brand.paper,
         px: 1.75,
         py: 1.5,
         boxShadow: 'none',
@@ -275,14 +275,13 @@ function PostureCell({
       <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="space-between">
         <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
           <Box sx={{ display: 'flex', color: brand.muted, '& .MuiSvgIcon-root': { fontSize: 16 } }}>{icon}</Box>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', letterSpacing: '0.02em', color: brand.goldDark }}>{label}</Typography>
+          <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: brand.ink }}>{label}</Typography>
         </Stack>
         <Typography
           sx={{
-            fontSize: '0.6875rem',
-            fontWeight: 650,
+            fontSize: '0.75rem',
+            fontWeight: 500,
             color,
-            letterSpacing: '0.04em',
             px: 0.75,
             py: 0.25,
             borderRadius: '99px',
@@ -292,10 +291,10 @@ function PostureCell({
           {word}
         </Typography>
       </Stack>
-      <Typography sx={{ fontWeight: 650, fontSize: '1.65rem', letterSpacing: '-0.03em', color: brand.gold, lineHeight: 1.1, mt: 1 }}>
+      <Typography sx={{ fontWeight: 600, fontSize: '1.5rem', letterSpacing: '-0.02em', color: brand.ink, lineHeight: 1.2, mt: 1 }}>
         {widget.value}
       </Typography>
-      <Typography variant="caption" color="text.secondary" noWrap display="block" sx={{ mt: 0.35 }}>
+      <Typography color="text.secondary" noWrap display="block" sx={{ mt: 0.35, fontSize: '0.8125rem' }}>
         {widget.title}
       </Typography>
       {pct != null && (
@@ -347,16 +346,16 @@ function WorkCard({
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Stack direction="row" spacing={0.75} alignItems="center">
           <Box sx={{ color: brand.goldDark, display: 'flex', '& .MuiSvgIcon-root': { fontSize: 16 } }}>{icon}</Box>
-          <Typography sx={{ fontSize: '0.6875rem', fontWeight: 650, letterSpacing: '0.08em', color: brand.muted }}>
+          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: brand.ink }}>
             {kicker}
           </Typography>
         </Stack>
         {clickable && <ChevronRightRoundedIcon sx={{ fontSize: 18, color: brand.muted }} />}
       </Stack>
-      <Typography sx={{ fontWeight: 700, fontSize: '1.75rem', letterSpacing: '-0.03em', mt: 1.25, lineHeight: 1, color: brand.gold }}>
+      <Typography sx={{ fontWeight: 600, fontSize: '1.5rem', letterSpacing: '-0.02em', mt: 1.25, lineHeight: 1, color: brand.ink }}>
         {widget.value}
       </Typography>
-      <Typography sx={{ fontSize: '0.8125rem', color: '#5F6368', mt: 0.5 }}>{label}</Typography>
+      <Typography sx={{ fontSize: '0.8125rem', color: brand.muted, mt: 0.5 }}>{label}</Typography>
     </Box>
   )
 }
@@ -445,7 +444,7 @@ export default function OverviewDashboard({
 
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
         <Box>
-          <Typography sx={{ fontWeight: 650, fontSize: { xs: '1.2rem', md: '1.35rem' }, letterSpacing: '-0.03em', lineHeight: 1.25, color: brand.goldDark }}>
+          <Typography sx={{ fontWeight: 600, fontSize: { xs: '1.0625rem', md: '1.25rem' }, letterSpacing: '-0.01em', lineHeight: 1.3, color: brand.ink }}>
             {when ? `${when}, ${decisionLine.charAt(0).toLowerCase()}${decisionLine.slice(1)}` : decisionLine}
           </Typography>
           {loading && !summary && (
@@ -495,7 +494,7 @@ export default function OverviewDashboard({
 
       {posture.length > 0 && (
         <Box>
-          <SectionHeader title="Module posture" hint="Licensed Modules" />
+          <SectionHeader title="Module posture" hint="Licensed modules" />
           <Box
             sx={{
               display: 'grid',
@@ -522,10 +521,10 @@ export default function OverviewDashboard({
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.4fr) minmax(260px, 0.8fr)' },
             gap: 2.5,
-            alignItems: 'start',
+            alignItems: 'stretch',
           }}
         >
-          <Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <SectionHeader title="Decide today" hint={attention.length > 5 ? 'First 5' : attention.length === 0 ? 'Clear' : undefined} />
             {decide.length === 0 ? (
               <Card sx={{ borderRadius: '12px', px: 2, py: 2 }}>
@@ -569,32 +568,32 @@ export default function OverviewDashboard({
                         flexShrink: 0,
                       }}
                     />
-                    <Typography sx={{ flex: 1, fontSize: '0.875rem', fontWeight: 600, minWidth: 0, color: brand.goldDark }} noWrap>
+                    <Typography sx={{ flex: 1, fontSize: '0.875rem', fontWeight: 500, minWidth: 0, color: brand.ink }} noWrap>
                       {w.title}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
                       {moduleLabel(w.module)}
                     </Typography>
-                    <Typography sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'right', color: brand.gold }}>
+                    <Typography sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'right', color: brand.ink }}>
                       {w.value}
                     </Typography>
-                    {clickable && <ChevronRightRoundedIcon sx={{ fontSize: 18, color: brand.goldDark }} />}
+                    {clickable && <ChevronRightRoundedIcon sx={{ fontSize: 18, color: brand.muted }} />}
                   </Box>
                 )
               })}
           </Card>
             )}
           </Box>
-          <Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <SectionHeader title="Work" />
-            <Stack spacing={1.5}>
+            <Stack spacing={1.5} sx={{ flex: 1 }}>
               {myTasks && (
-                <WorkCard kicker="My work" label="Pending for Me" icon={<AssignmentIndRoundedIcon />} widget={myTasks} onNavigate={onNavigate} />
+                <WorkCard kicker="My work" label="Pending for me" icon={<AssignmentIndRoundedIcon />} widget={myTasks} onNavigate={onNavigate} />
               )}
               {openOrgTasks && (
                 <WorkCard
                   kicker="Organisation"
-                  label="Open in the Organisation"
+                  label="Open in the organisation"
                   icon={<ApartmentRoundedIcon />}
                   widget={openOrgTasks}
                   onNavigate={onNavigate}
@@ -614,10 +613,9 @@ export default function OverviewDashboard({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            xl: showRiskPicture && showActivity ? 'minmax(420px, 1fr) minmax(420px, 1.15fr)' : '1fr',
-          },
+          // Always stacked: side by side, each heat map card got ~340px on wide screens and the
+          // matrix cells and axis labels were crushed.
+          gridTemplateColumns: '1fr',
           gap: 2.5,
           alignItems: 'start',
         }}
@@ -626,8 +624,8 @@ export default function OverviewDashboard({
         <Box>
           <SectionHeader
             title="Risk picture"
-            hint="Open Risks Across the Organisation"
-            actionLabel="View Risk Register"
+            hint="Open risks across the organisation"
+            actionLabel="View risk register"
             onAction={() => onNavigate(byId.has('open_erm_risks') ? 'erm-risk' : 'risk')}
           />
           <DashboardRiskHeatMaps
@@ -644,7 +642,7 @@ export default function OverviewDashboard({
             <SectionHeader
               title="Recent activity"
               hint={activity.length ? `Last ${activity.length}` : undefined}
-              actionLabel="Audit Trail"
+              actionLabel="Audit trail"
               onAction={() => onNavigate('audit-trail')}
             />
             <Card sx={{ px: 2, py: 0.5 }}>
@@ -663,7 +661,7 @@ export default function OverviewDashboard({
                     <Typography
                       noWrap
                       title={activityAction(row)}
-                      sx={{ fontSize: '0.875rem', fontWeight: 600, lineHeight: 1.4, color: brand.goldDark, minWidth: 0 }}
+                      sx={{ fontSize: '0.875rem', fontWeight: 500, lineHeight: 1.4, color: brand.ink, minWidth: 0 }}
                     >
                       {activityAction(row)}
                     </Typography>
@@ -699,7 +697,7 @@ export default function OverviewDashboard({
             onClick={() => setHealthyOpen((v) => !v)}
           >
             <CheckCircleOutlineRoundedIcon sx={{ fontSize: 18, color: semantic.risk.low }} />
-            <Typography variant="body2" sx={{ fontWeight: 650, flex: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, flex: 1 }}>
               Healthy metrics ({healthy.length})
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -745,7 +743,7 @@ export default function OverviewDashboard({
                       width: '100%',
                     }}
                   >
-                    <Typography component="span" sx={{ fontWeight: 650, fontSize: 'inherit', display: 'block' }}>
+                    <Typography component="span" sx={{ fontWeight: 500, fontSize: 'inherit', display: 'block' }}>
                       {w.title}
                     </Typography>
                     {w.emptyMessage && (

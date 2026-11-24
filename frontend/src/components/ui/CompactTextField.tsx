@@ -35,6 +35,7 @@ export default function CompactTextField({
   showPasswordToggle,
   hint,
   hintPlacement,
+  fill,
   onFocus,
   onBlur,
   ...tfProps
@@ -51,6 +52,8 @@ export default function CompactTextField({
   /** `false` disables the cap. Omit to infer from label / multiline. */
   maxLength?: number | false
   showPasswordToggle?: boolean
+  /** Fill the grid cell (dates included). Default keeps dates at their fixed width. */
+  fill?: boolean
 }) {
   const [focused, setFocused] = useState(false)
   const [revealPassword, setRevealPassword] = useState(false)
@@ -58,8 +61,9 @@ export default function CompactTextField({
   const raw = tfProps.value
   const text = raw == null ? '' : String(raw)
   const inputType = showPasswordToggle ? (revealPassword ? 'text' : 'password') : tfProps.type
-  const dateFieldWidth =
-    inputType === 'date' ? DATE_FIELD_WIDTH : inputType === 'datetime-local' ? DATETIME_FIELD_WIDTH : undefined
+  const dateFieldWidth = fill
+    ? undefined
+    : inputType === 'date' ? DATE_FIELD_WIDTH : inputType === 'datetime-local' ? DATETIME_FIELD_WIDTH : undefined
   const unboundedType = inputType != null && UNBOUNDED_TYPES.has(inputType)
   const limit =
     maxLengthProp === false || unboundedType

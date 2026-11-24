@@ -20,6 +20,8 @@ export interface SettingsCardProps {
   headerBg?: string
   /** Primary form section: all caps, slightly larger than field captions. */
   titleCaps?: boolean
+  /** Long-form page section: 16px semibold sentence-case title, 13px purpose line. */
+  section?: boolean
 }
 
 /** Kit Screen 5: settings panel (`.kpi-card` with titled header rule). */
@@ -35,8 +37,9 @@ export default function SettingsCard({
   accentColor,
   headerBg,
   titleCaps,
+  section,
 }: SettingsCardProps) {
-  const pad = compact ? 1 : 2.5
+  const pad = compact && !section ? 1 : 2.5
   const accentInset = accentColor ? 0.375 : 0
   return (
     <Box
@@ -79,8 +82,8 @@ export default function SettingsCard({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 1,
-          pb: compact ? 0.5 : 1.25,
-          mb: compact ? 0.75 : 2,
+          pb: compact && !section ? 0.5 : 1.25,
+          mb: compact && !section ? 0.75 : 2,
           borderBottom: `1px solid ${brand.border}`,
           flexShrink: 0,
           ...(headerBg
@@ -100,7 +103,9 @@ export default function SettingsCard({
         <Box sx={{ minWidth: 0 }}>
           <Typography
             sx={{
-              fontSize: titleCaps
+              fontSize: section
+                ? '1rem'
+                : titleCaps
                 ? compact
                   ? '0.75rem'
                   : '0.9375rem'
@@ -111,11 +116,11 @@ export default function SettingsCard({
                   : compact
                     ? '0.6875rem'
                     : '0.75rem',
-              fontWeight: titleCaps || !heading ? 700 : 600,
+              fontWeight: section ? 600 : titleCaps || !heading ? 700 : 600,
               color: brand.ink,
               lineHeight: 1.3,
-              letterSpacing: titleCaps ? '0.04em' : heading ? '-0.01em' : undefined,
-              textTransform: titleCaps ? 'uppercase' : undefined,
+              letterSpacing: section ? '-0.01em' : titleCaps ? '0.04em' : heading ? '-0.01em' : undefined,
+              textTransform: titleCaps && !section ? 'uppercase' : undefined,
             }}
           >
             {title}
@@ -123,8 +128,8 @@ export default function SettingsCard({
           {subtitle ? (
             <Typography
               sx={{
-                fontSize: heading ? (compact ? '0.6875rem' : '0.75rem') : '0.5625rem',
-                color: heading ? brand.muted : brand.mutedLight,
+                fontSize: section ? '0.8125rem' : heading ? (compact ? '0.6875rem' : '0.75rem') : '0.5625rem',
+                color: section || heading ? brand.muted : brand.mutedLight,
                 mt: 0.15,
                 lineHeight: 1.3,
               }}

@@ -115,11 +115,10 @@ export default function FormFieldLabel({
             ? {
                 display: 'block',
                 minWidth: 0,
-                fontSize: '0.6875rem',
-                fontWeight: 600,
+                fontSize: '0.75rem',
+                fontWeight: 500,
                 color: brand.muted,
-                letterSpacing: '0.02em',
-                lineHeight: 1.3,
+                lineHeight: 1.35,
               }
             : {
                 ...sectionLabelSx,
@@ -128,7 +127,12 @@ export default function FormFieldLabel({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                ...(color ? { color, fontWeight: 700 } : {}),
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                color: brand.inkSoft,
+                textTransform: 'none',
+                letterSpacing: 0,
+                ...(color ? { color, fontWeight: 600 } : {}),
               }
         }
       >
@@ -136,7 +140,7 @@ export default function FormFieldLabel({
         {required ? (
           <Typography
             component="span"
-            sx={{ color: brand.goldDark, ml: 0.25, fontSize: 'inherit', fontWeight: 700, lineHeight: 'inherit' }}
+            sx={{ color: brand.goldDark, ml: 0.25, fontSize: 'inherit', fontWeight: 600, lineHeight: 'inherit' }}
           >
             *
           </Typography>

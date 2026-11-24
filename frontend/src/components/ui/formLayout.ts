@@ -103,3 +103,26 @@ export function shouldUseFullPageForm(fieldCount: number): boolean {
 export function shouldUseDialogForm(fieldCount: number): boolean {
   return fieldCount <= FULL_PAGE_FIELD_THRESHOLD
 }
+
+/**
+ * One 12-column grid for long record forms (risk create/edit/view). Fields fill their cell;
+ * width comes from the span, never from a per-field maxWidth.
+ */
+export const formGrid12Sx: SxProps<Theme> = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
+  columnGap: 2,
+  rowGap: 2,
+  alignItems: 'start',
+}
+
+/** Column span: phone 12, tablet (<1200px) spans of 3-4 become 6, desktop as given. */
+export function span(n: 3 | 4 | 6 | 8 | 12): SxProps<Theme> {
+  return { gridColumn: { xs: 'span 12', md: `span ${n <= 4 ? 6 : n}`, lg: `span ${n}` }, minWidth: 0 }
+}
+
+/** Rating readout next to two selects: own full row below 1200px. */
+export const spanReadoutSx: SxProps<Theme> = {
+  gridColumn: { xs: 'span 12', lg: 'span 4' },
+  minWidth: 0,
+}

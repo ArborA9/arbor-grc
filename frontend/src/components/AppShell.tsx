@@ -23,7 +23,9 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded'
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import { brand, layout } from '../theme'
+import LogoMark from './ui/LogoMark'
 import { api } from '../api'
 import ChangePasswordDialog from './ChangePasswordDialog'
 import {
@@ -142,28 +144,6 @@ const SIDEBAR_COLLAPSED = layout.sidebarCollapsedWidth
 const NAV_ROW = layout.sidebarNavRow
 const NAV_MOTION = 'width 200ms cubic-bezier(0.2, 0, 0, 1)'
 
-function LogoMark({ size = 30 }: { size?: number }) {
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: 1,
-        display: 'grid',
-        placeItems: 'center',
-        bgcolor: brand.gold,
-        color: '#fff',
-        fontSize: size * 0.47,
-        fontWeight: 800,
-        letterSpacing: '-0.5px',
-        flexShrink: 0,
-      }}
-    >
-      A
-    </Box>
-  )
-}
-
 function navContainsActive(item: NavItem, active: string): boolean {
   if (item.id === active) return true
   return !!item.children?.some((c) => navContainsActive(c, active))
@@ -218,7 +198,7 @@ function NavButton({
         color: disabled ? brand.navMuted : selected ? brand.accentHover : brand.nav,
         opacity: disabled ? 0.55 : 1,
         bgcolor: selected ? brand.sidebarSelected : 'transparent',
-        fontWeight: selected ? 650 : 500,
+        fontWeight: selected ? 600 : nested ? 400 : 500,
         transition: 'background-color .12s ease, color .12s ease',
         '&::before': selected
           ? {
@@ -247,7 +227,7 @@ function NavButton({
           display: 'flex',
           color: selected ? brand.accent : 'inherit',
           opacity: selected ? 1 : 0.72,
-          '& .MuiSvgIcon-root': { fontSize: collapsed ? 20 : 16 },
+          '& .MuiSvgIcon-root': { fontSize: collapsed ? 20 : nested ? 16 : 18 },
         }}
       >
         {icon}
@@ -256,11 +236,13 @@ function NavButton({
         <>
           <Typography
             variant="body2"
+            noWrap
+            title={label}
             sx={{
-              fontWeight: selected ? 650 : 500,
+              fontWeight: selected ? 600 : nested ? 400 : 500,
               flexGrow: 1,
-              fontSize: nested ? '0.75rem' : '0.8125rem',
-              letterSpacing: '-0.01em',
+              minWidth: 0,
+              fontSize: nested ? '0.8125rem' : '0.875rem',
               color: 'inherit',
             }}
           >
@@ -354,12 +336,14 @@ function NestedNavGroup({
           '&:hover': { bgcolor: brand.sidebarHover, color: brand.ink },
         }}
       >
-        <Box sx={{ display: 'flex', color: selfActive || childActive ? brand.accent : 'inherit', opacity: 0.85, '& .MuiSvgIcon-root': { fontSize: 14 } }}>
+        <Box sx={{ display: 'flex', color: selfActive || childActive ? brand.accent : 'inherit', opacity: 0.85, '& .MuiSvgIcon-root': { fontSize: 16 } }}>
           {item.icon}
         </Box>
         <Typography
           variant="body2"
-          sx={{ fontWeight: 650, flexGrow: 1, fontSize: '0.75rem', letterSpacing: '-0.01em' }}
+          noWrap
+          title={item.label}
+          sx={{ fontWeight: 400, flexGrow: 1, minWidth: 0, fontSize: '0.8125rem' }}
         >
           {item.label}
         </Typography>
@@ -438,7 +422,21 @@ export default function AppShell({
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [modulesOpen, setModulesOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
-  const [navCollapsed, setNavCollapsed] = useState(readNavCollapsed)
+  const [storedNavCollapsed, setNavCollapsed] = useState(readNavCollapsed)
+  /** Phones/tablets (<900px): the sidebar opens as a slide-over from the top-bar menu button. */
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const navCollapsed = storedNavCollapsed && !mobileNavOpen
+  useEffect(() => {
+    setMobileNavOpen(false)
+  }, [active])
+  useEffect(() => {
+    if (!mobileNavOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileNavOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileNavOpen])
   const [fullName, setFullName] = useState<string | null>(null)
   useEffect(() => {
     if (superAdmin) return
@@ -460,8 +458,13 @@ export default function AppShell({
   }, [])
 
   const toggleCollapsed = useCallback(() => {
+    // In the phone slide-over the « button closes the menu instead of shrinking it to icons.
+    if (mobileNavOpen) {
+      setMobileNavOpen(false)
+      return
+    }
     setCollapsed(!navCollapsed)
-  }, [navCollapsed, setCollapsed])
+  }, [mobileNavOpen, navCollapsed, setCollapsed])
 
   useEffect(() => {
     if (hideSidebar) return
@@ -518,6 +521,13 @@ export default function AppShell({
       >
         Skip to content
       </Box>
+      {!hideSidebar && mobileNavOpen && (
+        <Box
+          aria-hidden
+          onClick={() => setMobileNavOpen(false)}
+          sx={{ display: { md: 'none' }, position: 'fixed', inset: 0, bgcolor: 'rgba(28, 25, 23, 0.35)', zIndex: 1299 }}
+        />
+      )}
       {!hideSidebar && (
       <Box
         component="nav"
@@ -527,7 +537,13 @@ export default function AppShell({
         sx={{
           width: railWidth,
           flexShrink: 0,
-          display: { xs: 'none', md: 'flex' },
+          display: { xs: mobileNavOpen ? 'flex' : 'none', md: 'flex' },
+          // Below md the sidebar is a slide-over above the page.
+          position: { xs: 'fixed', md: 'static' },
+          top: 0,
+          left: 0,
+          zIndex: { xs: 1300, md: 'auto' },
+          boxShadow: { xs: '0 16px 40px rgba(28, 25, 23, 0.2)', md: 'none' },
           flexDirection: 'column',
           color: brand.ink,
           bgcolor: brand.sidebar,
@@ -552,10 +568,10 @@ export default function AppShell({
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
               <Typography
                 sx={{
-                  fontWeight: 700,
-                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  fontSize: '0.9375rem',
                   lineHeight: 1.2,
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.01em',
                   color: brand.ink,
                 }}
               >
@@ -627,7 +643,15 @@ export default function AppShell({
         <Stack
           id={NAV_LIST_ID}
           spacing={0.2}
-          sx={{ p: navCollapsed ? 0.5 : 1, flexGrow: 1, overflow: 'auto', overflowX: 'hidden' }}
+          sx={{
+            p: navCollapsed ? 0.5 : 1,
+            flexGrow: 1,
+            overflow: 'auto',
+            overflowX: 'hidden',
+            // Hidden track: a 15px scrollbar would truncate the longest labels ("Compliance Assessment").
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+          }}
           role="list"
         >
           {nav.map((item) => {
@@ -664,6 +688,7 @@ export default function AppShell({
                       width: '100%',
                       px: 1.1,
                       py: 0.75,
+                      minHeight: NAV_ROW,
                       border: 0,
                       borderRadius: 1,
                       textAlign: 'left',
@@ -675,12 +700,14 @@ export default function AppShell({
                       '&:focus-visible': { outline: `2px solid ${brand.accent}`, outlineOffset: 1 },
                     }}
                   >
-                    <Box sx={{ display: 'flex', color: settingsChildActive ? brand.accent : 'inherit', opacity: 0.85 }}>
+                    <Box sx={{ display: 'flex', color: settingsChildActive ? brand.accent : 'inherit', opacity: 0.85, '& .MuiSvgIcon-root': { fontSize: 18 } }}>
                       {item.icon}
                     </Box>
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 650, flexGrow: 1, fontSize: '0.8125rem', letterSpacing: '-0.01em' }}
+                      noWrap
+                      title={item.label}
+                      sx={{ fontWeight: 500, flexGrow: 1, minWidth: 0, fontSize: '0.875rem' }}
                     >
                       {item.label}
                     </Typography>
@@ -749,7 +776,8 @@ export default function AppShell({
                             </Box>
                             <Typography
                               variant="body2"
-                              sx={{ fontWeight: 650, flexGrow: 1, fontSize: '0.75rem', letterSpacing: '-0.01em' }}
+                              noWrap
+                              sx={{ fontWeight: 400, flexGrow: 1, minWidth: 0, fontSize: '0.8125rem' }}
                             >
                               Modules
                             </Typography>
@@ -904,11 +932,22 @@ export default function AppShell({
               overflow: 'visible',
             }}
           >
+            {!hideSidebar ? (
+              <IconButton
+                aria-label="Open navigation"
+                aria-controls="arbor-primary-nav"
+                aria-expanded={mobileNavOpen}
+                onClick={() => setMobileNavOpen(true)}
+                sx={{ display: { md: 'none' }, ml: -0.5 }}
+              >
+                <MenuRoundedIcon />
+              </IconButton>
+            ) : null}
             {hideSidebar ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 0.5, flexShrink: 0 }}>
                 <LogoMark size={30} />
                 <Box sx={{ display: { xs: 'none', sm: 'block' }, minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: '0.8125rem', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
                     Arbor GRC
                   </Typography>
                   {productTag ? (
@@ -988,7 +1027,7 @@ export default function AppShell({
                       bgcolor: 'transparent',
                       textAlign: 'left',
                       font: 'inherit',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: { xs: '1rem', sm: '0.9375rem' },
                       lineHeight: 1.25,
                       letterSpacing: '-0.025em',
@@ -1005,7 +1044,7 @@ export default function AppShell({
                   ) : (
                   <Typography
                     sx={{
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: { xs: '1rem', sm: '0.9375rem' },
                       lineHeight: 1.25,
                       letterSpacing: '-0.025em',
@@ -1083,7 +1122,7 @@ export default function AppShell({
               >
                 <Typography
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: { xs: '1rem', sm: '0.95rem' },
                     lineHeight: 1.2,
                     letterSpacing: '-0.025em',
@@ -1183,8 +1222,14 @@ export default function AppShell({
                   useFlexGap
                   sx={{
                     mr: 1,
+                    // Phones/tablets: the action row swipes sideways instead of clipping off-screen.
                     flexShrink: 0,
-                    justifyContent: { xs: 'flex-end', sm: 'flex-start' },
+                    maxWidth: { xs: '55%', md: 'none' },
+                    overflowX: { xs: 'auto', md: 'visible' },
+                    scrollbarWidth: 'none',
+                    '&::-webkit-scrollbar': { display: 'none' },
+                    '& > *': { flexShrink: 0 },
+                    justifyContent: { xs: 'flex-start', sm: 'flex-start' },
                     ...(actionsLockedReason
                       ? { opacity: 0.45, pointerEvents: 'none', filter: 'grayscale(0.2)' }
                       : {}),

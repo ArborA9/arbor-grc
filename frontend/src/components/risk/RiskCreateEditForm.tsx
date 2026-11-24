@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Box,
   Checkbox,
@@ -39,7 +40,6 @@ import {
   CE_EXCEL_LABEL,
   ERM_RISK_CAUSES,
   ERM_RISK_CAUSE_OTHER,
-  EXCEL_DATE_FIELD_WIDTH,
   EXCEL_FIELD,
   EXCEL_TREAT_LABEL,
   IS_ASSOCIATED_THREATS,
@@ -55,26 +55,37 @@ import {
 import ReferenceAttachmentField from './ReferenceAttachmentField'
 import RiskRecordCreateProgress from './RiskRecordCreateProgress'
 import { RISK_INPUT_ID } from './riskFormRequired'
+import { formGrid12Sx, span, spanReadoutSx } from '../ui/formLayout'
+import { brand } from '../../theme'
 
 const TREAT: TreatmentOption[] = ['TREAT', 'TOLERATE', 'TERMINATE', 'TRANSFER']
 
-const fourColFieldSx = {
-  display: 'grid',
-  gridTemplateColumns: {
-    xs: '1fr',
-    sm: 'repeat(2, minmax(0, 1fr))',
-    md: 'repeat(4, minmax(0, 1fr))',
-  },
-  gap: 1,
-  alignItems: 'end',
-} as const
-
-const twoColFieldSx = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-  gap: 1,
-  alignItems: 'start',
-} as const
+/** Rating readout beside the inputs: label / value rows on a warm panel. */
+function Readout({ rows, note }: { rows: { label: string; value: ReactNode }[]; note?: string }) {
+  return (
+    <Box
+      sx={{
+        bgcolor: brand.tableHeader,
+        border: `1px solid ${brand.border}`,
+        borderRadius: 2,
+        px: 1.75,
+        py: 1.5,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+        mt: { lg: 2.75 },
+      }}
+    >
+      {rows.map((r) => (
+        <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minHeight: 24 }}>
+          <Typography sx={{ fontSize: '0.75rem', color: brand.muted, width: 132, flexShrink: 0 }}>{r.label}</Typography>
+          <Box sx={{ minWidth: 0, fontSize: '0.875rem', fontWeight: 600 }}>{r.value}</Box>
+        </Box>
+      ))}
+      {note ? <Typography sx={{ fontSize: '0.75rem', color: brand.muted, pt: 0.25 }}>{note}</Typography> : null}
+    </Box>
+  )
+}
 
 function evalDecisionChip(willAutoClose: boolean, decision: string): {
   level: 'critical' | 'medium' | 'low'
@@ -294,7 +305,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
     { value: '', label: 'Select category…' },
     ...cats.map((c) => ({
       value: c,
-      label: c === 'OTHER' ? 'Other' : c.replace(/_/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase()),
+      label: c === 'OTHER' ? 'Other' : c.charAt(0) + c.slice(1).toLowerCase().replace(/_/g, ' '),
     })),
     ...(props.category !== '' && !cats.includes(props.category)
       ? [
@@ -340,9 +351,9 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
     : undefined
 
   return (
-    <Box sx={{ ...complexFormContainerSx, position: 'relative' }}>
+    <Box sx={{ ...complexFormContainerSx, position: 'relative', maxWidth: 1180, mx: 'auto' }}>
       {!editMode && props.formBusy ? <RiskRecordCreateProgress isErm={isErm} isPrivacy={isPrivacy} /> : null}
-      <Stack spacing={1.25} sx={{ pointerEvents: !editMode && props.formBusy ? 'none' : 'auto' }}>
+      <Stack spacing={2} sx={{ pointerEvents: !editMode && props.formBusy ? 'none' : 'auto' }}>
         {!editMode && props.copyFromLabel ? (
           <AttentionBanner
             dense
@@ -353,16 +364,10 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
         ) : null}
         {/* STAGE 1 */}
         <Box id="risk-form-identification" sx={sectionAnchorSx}>
-          <SettingsCard
-            compact
-            autoHeight
-            titleCaps
-            title="Risk identification"
-            subtitle="What the risk is, and whose it is"
-          >
-            <Stack spacing={1}>
-              <Box sx={fourColFieldSx}>
-                {!editMode && (
+          <SettingsCard section autoHeight title="Risk identification" subtitle="What the risk is, and whose it is">
+            <Box sx={formGrid12Sx}>
+              {!editMode && (
+                <Box sx={span(3)}>
                   <CompactTextField
                     label={EXCEL_FIELD.riskId}
                     wrapLabel
@@ -371,11 +376,14 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                     onChange={(e) => props.setDisplayIdOverride(e.target.value)}
                     maxWidth="100%"
                   />
-                )}
+                </Box>
+              )}
+              <Box sx={span(3)}>
                 <CompactTextField
                   label={EXCEL_FIELD.dateIdentified}
                   wrapLabel
                   type="date"
+                  fill
                   required
                   value={props.dateIdentified}
                   onChange={(e) => {
@@ -385,9 +393,49 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   error={Boolean(err(RISK_INPUT_ID.dateIdentified))}
                   helperText={err(RISK_INPUT_ID.dateIdentified)}
                   inputProps={{ max: dateMin }}
-                  maxWidth={EXCEL_DATE_FIELD_WIDTH}
                 />
-                {isPrivacy ? (
+              </Box>
+              <Box sx={span(3)}>
+                <FormSelect
+                  label={EXCEL_FIELD.riskOwner}
+                  wrapLabel
+                  required
+                  fullWidth
+                  value={props.riskOwnerUserId === '' ? '' : String(props.riskOwnerUserId)}
+                  options={userOptions.map((o) => ({
+                    value: o.value === '' ? '' : String(o.value),
+                    label: o.label,
+                  }))}
+                  onChange={(v) => {
+                    clear(RISK_INPUT_ID.riskOwner)
+                    props.setRiskOwnerUserId(v === '' ? '' : Number(v))
+                  }}
+                  error={Boolean(err(RISK_INPUT_ID.riskOwner))}
+                  helperText={err(RISK_INPUT_ID.riskOwner)}
+                />
+              </Box>
+              {!editMode && (
+                <Box sx={span(3)}>
+                  <FormSelect
+                    label={EXCEL_FIELD.riskCustodian}
+                    wrapLabel
+                    fullWidth
+                    value={props.assignUserId === '' ? '' : String(props.assignUserId)}
+                    options={[
+                      { value: '', label: custodianPlaceholder },
+                      ...props.eligibleContributors.map((u) => ({
+                        value: String(u.id),
+                        label: `${u.fullName} (${u.email})`,
+                      })),
+                    ]}
+                    onChange={(v) => props.setAssignUserId(v === '' ? '' : Number(v))}
+                    disabled={divisionHasNoCustodian}
+                    helperText={custodianEmptyHint}
+                  />
+                </Box>
+              )}
+              {isPrivacy ? (
+                <Box sx={span(6)}>
                   <CompactTextField
                     label="Processing Activity"
                     wrapLabel
@@ -395,37 +443,30 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                     onChange={(e) => props.setProcessingActivity?.(e.target.value)}
                     maxWidth="100%"
                   />
-                ) : null}
-                <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1', md: editMode ? 'span 3' : 'span 2' } }}>
-                  <CompactTextField
-                    label={EXCEL_FIELD.riskTitle}
-                    wrapLabel
-                    required
-                    maxLength={INPUT_LIMIT.riskTitle}
-                    value={props.title}
-                    onChange={(e) => {
-                      clear(RISK_INPUT_ID.title)
-                      props.setTitle(e.target.value)
-                    }}
-                    error={Boolean(err(RISK_INPUT_ID.title))}
-                    helperText={err(RISK_INPUT_ID.title)}
-                  />
                 </Box>
+              ) : null}
+              <Box sx={span(12)}>
+                <CompactTextField
+                  label={EXCEL_FIELD.riskTitle}
+                  wrapLabel
+                  required
+                  maxLength={INPUT_LIMIT.riskTitle}
+                  value={props.title}
+                  onChange={(e) => {
+                    clear(RISK_INPUT_ID.title)
+                    props.setTitle(e.target.value)
+                  }}
+                  error={Boolean(err(RISK_INPUT_ID.title))}
+                  helperText={err(RISK_INPUT_ID.title)}
+                />
               </Box>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-                  gap: 1,
-                  alignItems: 'start',
-                }}
-              >
+              <Box sx={span(6)}>
                 <CompactTextField
                   label={EXCEL_FIELD.riskDescription}
                   wrapLabel
                   required
                   multiline
-                  minRows={3}
+                  minRows={4}
                   maxRows={NARRATIVE_MAX_ROWS}
                   value={props.description}
                   onChange={(e) => {
@@ -435,12 +476,14 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   error={Boolean(err(RISK_INPUT_ID.description))}
                   helperText={err(RISK_INPUT_ID.description)}
                 />
+              </Box>
+              <Box sx={span(6)}>
                 <CompactTextField
                   label={EXCEL_FIELD.gapObservation}
                   wrapLabel
                   required
                   multiline
-                  minRows={3}
+                  minRows={4}
                   maxRows={NARRATIVE_MAX_ROWS}
                   value={props.observedGap}
                   onChange={(e) => {
@@ -451,27 +494,14 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   helperText={err(RISK_INPUT_ID.observedGap)}
                 />
               </Box>
-              <ReferenceAttachmentField
-                pendingFiles={props.createEvidenceFiles}
-                classification={props.createEvidenceClass}
-                saved={props.identificationEvidence}
-                busy={props.referenceBusy}
-                disabled={props.formBusy}
-                hideInlineProgress={!editMode}
-                onPendingFilesChange={props.setCreateEvidenceFiles}
-                onClassification={props.setCreateEvidenceClass}
-                onUploadPending={props.onUploadReference}
-                onRemoveSaved={props.onRemoveReference}
-                onError={props.onEvidenceError}
-                quotaUsed={props.evidenceQuotaUsed}
-              />
               {isErm ? (
                 <>
-                  <Box sx={fourColFieldSx}>
+                  <Box sx={span(4)}>
                     <FormSelect
                       label={EXCEL_FIELD.riskCategory}
                       wrapLabel
                       required
+                      fullWidth
                       value={props.category}
                       options={categoryOptions}
                       onChange={(v) => {
@@ -485,7 +515,9 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                       error={Boolean(err(RISK_INPUT_ID.category))}
                       helperText={err(RISK_INPUT_ID.category)}
                     />
-                    {props.category === 'OTHER' && (
+                  </Box>
+                  {props.category === 'OTHER' && (
+                    <Box sx={span(4)}>
                       <CompactTextField
                         label="Specify category"
                         wrapLabel
@@ -500,42 +532,14 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                         maxWidth="100%"
                         maxLength={128}
                       />
-                    )}
-                    <FormSelect
-                      label={EXCEL_FIELD.division}
-                      wrapLabel
-                      required
-                      value={props.orgUnitId === '' ? '' : String(props.orgUnitId)}
-                      options={orgOptions.map((o) => ({
-                        value: o.value === '' ? '' : String(o.value),
-                        label: o.label,
-                      }))}
-                      onChange={(v) => {
-                        clear(RISK_INPUT_ID.division)
-                        props.setOrgUnitId(v === '' ? '' : Number(v))
-                      }}
-                      error={Boolean(err(RISK_INPUT_ID.division))}
-                      helperText={err(RISK_INPUT_ID.division)}
-                    />
-                    <CompactTextField
-                      label={EXCEL_FIELD.strategicObjective}
-                      wrapLabel
-                      required
-                      value={props.strategicObjective}
-                      onChange={(e) => {
-                        clear(RISK_INPUT_ID.strategicObjective)
-                        props.setStrategicObjective(e.target.value)
-                      }}
-                      error={Boolean(err(RISK_INPUT_ID.strategicObjective))}
-                      helperText={err(RISK_INPUT_ID.strategicObjective)}
-                      maxWidth="100%"
-                    />
-                  </Box>
-                  <Box sx={fourColFieldSx}>
+                    </Box>
+                  )}
+                  <Box sx={span(4)}>
                     <FormSelect
                       label={EXCEL_FIELD.riskCause}
                       wrapLabel
                       required
+                      fullWidth
                       value={props.cause}
                       options={causeOptions}
                       onChange={(v) => {
@@ -547,7 +551,9 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                       error={Boolean(err(RISK_INPUT_ID.cause))}
                       helperText={err(RISK_INPUT_ID.cause)}
                     />
-                    {props.cause === ERM_RISK_CAUSE_OTHER && (
+                  </Box>
+                  {props.cause === ERM_RISK_CAUSE_OTHER && (
+                    <Box sx={span(4)}>
                       <CompactTextField
                         label="Specify cause"
                         wrapLabel
@@ -562,52 +568,14 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                         maxWidth="100%"
                         maxLength={128}
                       />
-                    )}
-                    <FormSelect
-                      label={EXCEL_FIELD.riskOwner}
-                      wrapLabel
-                      required
-                      value={props.riskOwnerUserId === '' ? '' : String(props.riskOwnerUserId)}
-                      options={userOptions.map((o) => ({
-                        value: o.value === '' ? '' : String(o.value),
-                        label: o.label,
-                      }))}
-                      onChange={(v) => {
-                        clear(RISK_INPUT_ID.riskOwner)
-                        props.setRiskOwnerUserId(v === '' ? '' : Number(v))
-                      }}
-                      error={Boolean(err(RISK_INPUT_ID.riskOwner))}
-                      helperText={err(RISK_INPUT_ID.riskOwner)}
-                    />
-                    {!editMode && (
-                      <FormSelect
-                        label={EXCEL_FIELD.riskCustodian}
-                        wrapLabel
-                        value={props.assignUserId === '' ? '' : String(props.assignUserId)}
-                        options={[
-                          {
-                            value: '',
-                            label: custodianPlaceholder,
-                          },
-                          ...props.eligibleContributors.map((u) => ({
-                            value: String(u.id),
-                            label: `${u.fullName} (${u.email})`,
-                          })),
-                        ]}
-                        onChange={(v) => props.setAssignUserId(v === '' ? '' : Number(v))}
-                        disabled={divisionHasNoCustodian}
-                        helperText={custodianEmptyHint}
-                      />
-                    )}
-                  </Box>
-                </>
-              ) : (
-                <>
-                  <Box sx={fourColFieldSx}>
+                    </Box>
+                  )}
+                  <Box sx={span(4)}>
                     <FormSelect
                       label={EXCEL_FIELD.division}
                       wrapLabel
                       required
+                      fullWidth
                       value={props.orgUnitId === '' ? '' : String(props.orgUnitId)}
                       options={orgOptions.map((o) => ({
                         value: o.value === '' ? '' : String(o.value),
@@ -620,8 +588,63 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                       error={Boolean(err(RISK_INPUT_ID.division))}
                       helperText={err(RISK_INPUT_ID.division)}
                     />
-                    {!isPrivacy && (
-                      <>
+                  </Box>
+                  <Box sx={span(12)}>
+                    <CompactTextField
+                      label={EXCEL_FIELD.strategicObjective}
+                      wrapLabel
+                      required
+                      value={props.strategicObjective}
+                      onChange={(e) => {
+                        clear(RISK_INPUT_ID.strategicObjective)
+                        props.setStrategicObjective(e.target.value)
+                      }}
+                      error={Boolean(err(RISK_INPUT_ID.strategicObjective))}
+                      helperText={err(RISK_INPUT_ID.strategicObjective)}
+                      maxWidth="100%"
+                    />
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <Box sx={span(4)}>
+                    <FormSelect
+                      label={EXCEL_FIELD.division}
+                      wrapLabel
+                      required
+                      fullWidth
+                      value={props.orgUnitId === '' ? '' : String(props.orgUnitId)}
+                      options={orgOptions.map((o) => ({
+                        value: o.value === '' ? '' : String(o.value),
+                        label: o.label,
+                      }))}
+                      onChange={(v) => {
+                        clear(RISK_INPUT_ID.division)
+                        props.setOrgUnitId(v === '' ? '' : Number(v))
+                      }}
+                      error={Boolean(err(RISK_INPUT_ID.division))}
+                      helperText={err(RISK_INPUT_ID.division)}
+                    />
+                  </Box>
+                  <Box sx={span(4)}>
+                    <FormSelect
+                      label={EXCEL_FIELD.associatedThreat}
+                      wrapLabel
+                      required
+                      fullWidth
+                      value={props.threats}
+                      options={threatOptions}
+                      onChange={(v) => {
+                        clear(RISK_INPUT_ID.associatedThreat)
+                        props.setThreats(v)
+                      }}
+                      error={Boolean(err(RISK_INPUT_ID.associatedThreat))}
+                      helperText={err(RISK_INPUT_ID.associatedThreat)}
+                    />
+                  </Box>
+                  {!isPrivacy && (
+                    <>
+                      <Box sx={span(8)}>
                         <FormSelect
                           label={EXCEL_FIELD.controlRef}
                           wrapLabel
@@ -644,189 +667,123 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                               : undefined
                           }
                         />
-                        <Box>
-                          <FormFieldLabel wrap>{EXCEL_FIELD.controlStatus}</FormFieldLabel>
-                          <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2">
-                              {excelControlStatusLabel(frameworkNodeId, props.controlAssessmentStatus) || '-'}
-                            </Typography>
-                          </Box>
+                      </Box>
+                      <Box sx={span(4)}>
+                        <FormFieldLabel wrap>{EXCEL_FIELD.controlStatus}</FormFieldLabel>
+                        <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body2">
+                            {excelControlStatusLabel(frameworkNodeId, props.controlAssessmentStatus) || '-'}
+                          </Typography>
                         </Box>
-                      </>
-                    )}
-                    <FormSelect
-                      label={EXCEL_FIELD.associatedThreat}
-                      wrapLabel
-                      required
-                      value={props.threats}
-                      options={threatOptions}
-                      onChange={(v) => {
-                        clear(RISK_INPUT_ID.associatedThreat)
-                        props.setThreats(v)
-                      }}
-                      error={Boolean(err(RISK_INPUT_ID.associatedThreat))}
-                      helperText={err(RISK_INPUT_ID.associatedThreat)}
-                    />
-                  </Box>
-                  <Box sx={twoColFieldSx}>
-                    <FormSelect
-                      label={EXCEL_FIELD.riskOwner}
-                      wrapLabel
-                      required
-                      value={props.riskOwnerUserId === '' ? '' : String(props.riskOwnerUserId)}
-                      options={userOptions.map((o) => ({
-                        value: o.value === '' ? '' : String(o.value),
-                        label: o.label,
-                      }))}
-                      onChange={(v) => {
-                        clear(RISK_INPUT_ID.riskOwner)
-                        props.setRiskOwnerUserId(v === '' ? '' : Number(v))
-                      }}
-                      error={Boolean(err(RISK_INPUT_ID.riskOwner))}
-                      helperText={err(RISK_INPUT_ID.riskOwner)}
-                    />
-                    {!editMode && (
-                      <FormSelect
-                        label={EXCEL_FIELD.riskCustodian}
-                        wrapLabel
-                        value={props.assignUserId === '' ? '' : String(props.assignUserId)}
-                        options={[
-                          {
-                            value: '',
-                            label: custodianPlaceholder,
-                          },
-                          ...props.eligibleContributors.map((u) => ({
-                            value: String(u.id),
-                            label: `${u.fullName} (${u.email})`,
-                          })),
-                        ]}
-                        onChange={(v) => props.setAssignUserId(v === '' ? '' : Number(v))}
-                        disabled={divisionHasNoCustodian}
-                        helperText={custodianEmptyHint}
-                      />
-                    )}
-                  </Box>
+                      </Box>
+                    </>
+                  )}
                 </>
               )}
-            </Stack>
+              <Box sx={span(12)}>
+                <ReferenceAttachmentField
+                  pendingFiles={props.createEvidenceFiles}
+                  classification={props.createEvidenceClass}
+                  saved={props.identificationEvidence}
+                  busy={props.referenceBusy}
+                  disabled={props.formBusy}
+                  hideInlineProgress={!editMode}
+                  onPendingFilesChange={props.setCreateEvidenceFiles}
+                  onClassification={props.setCreateEvidenceClass}
+                  onUploadPending={props.onUploadReference}
+                  onRemoveSaved={props.onRemoveReference}
+                  onError={props.onEvidenceError}
+                  quotaUsed={props.evidenceQuotaUsed}
+                />
+              </Box>
+            </Box>
           </SettingsCard>
         </Box>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'minmax(0, 0.88fr) minmax(0, 0.88fr) minmax(0, 1.24fr)',
-            },
-            gap: 1.25,
-            alignItems: 'stretch',
-          }}
-        >
-          <Box id="risk-form-inherent" sx={sectionAnchorSx}>
-            <SettingsCard
-              compact
-              titleCaps
-              title="Risk analysis"
-              subtitle="Likelihood × Impact"
-              action={
-                <RiskLevelBadge
-                  level={apiRiskLevelToBadge(excelRatingToLevel(previewInherentBand))}
-                  label={ratingLabel(previewInherentBand)}
+        {/* STAGE 2: before controls */}
+        <Box id="risk-form-inherent" sx={sectionAnchorSx}>
+          <SettingsCard section autoHeight title="Risk analysis" subtitle="Before controls: likelihood × impact">
+            <Box sx={formGrid12Sx}>
+              <Box sx={span(4)}>
+                <FormSelect
+                  label={scaledExcelField('likelihood', matrixGridSize)}
+                  wrapLabel
+                  fullWidth
+                  value={props.probability}
+                  options={levelOptions}
+                  onChange={(v) => props.setProbability(v as RiskLevel)}
                 />
-              }
-            >
-              <Stack spacing={1}>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, minmax(0, max-content))',
-                    columnGap: 1.25,
-                    alignItems: 'start',
-                  }}
-                >
-                  <FormSelect
-                    label={scaledExcelField('likelihood', matrixGridSize)}
-                    wrapLabel
-                    minWidth={isErm ? 168 : 128}
-                    maxWidth={isErm ? 200 : 140}
-                    value={props.probability}
-                    options={levelOptions}
-                    onChange={(v) => props.setProbability(v as RiskLevel)}
-                  />
-                  <FormSelect
-                    label={scaledExcelField('impact', matrixGridSize)}
-                    wrapLabel
-                    minWidth={128}
-                    maxWidth={140}
-                    value={props.impact}
-                    options={impactOptions}
-                    onChange={(v) => props.setImpact(v as RiskLevel)}
-                  />
-                </Box>
-                <Box>
-                  <FormFieldLabel wrap>{EXCEL_FIELD.inherentScore}</FormFieldLabel>
-                  <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
-                    <Typography variant="body2">
-                      {`${props.previewInherentScore} · ${ratingLabel(previewInherentBand)}`}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Stack>
-            </SettingsCard>
-          </Box>
+              </Box>
+              <Box sx={span(4)}>
+                <FormSelect
+                  label={scaledExcelField('impact', matrixGridSize)}
+                  wrapLabel
+                  fullWidth
+                  value={props.impact}
+                  options={impactOptions}
+                  onChange={(v) => props.setImpact(v as RiskLevel)}
+                />
+              </Box>
+              <Box sx={spanReadoutSx}>
+                <Readout
+                  rows={[
+                    {
+                      label: 'Inherent rating',
+                      value: (
+                        <RiskLevelBadge
+                          level={apiRiskLevelToBadge(excelRatingToLevel(previewInherentBand))}
+                          label={ratingLabel(previewInherentBand)}
+                        />
+                      ),
+                    },
+                    { label: EXCEL_FIELD.inherentScore, value: String(props.previewInherentScore) },
+                  ]}
+                />
+              </Box>
+            </Box>
+          </SettingsCard>
+        </Box>
 
-          <Box id="risk-form-controls" sx={sectionAnchorSx}>
-            <SettingsCard compact titleCaps title="Existing controls" subtitle="What is already in place">
-              <Stack spacing={1.5}>
+        {/* STAGE 3 */}
+        <Box id="risk-form-controls" sx={sectionAnchorSx}>
+          <SettingsCard section autoHeight title="Existing controls" subtitle="What is already in place">
+            <Box sx={formGrid12Sx}>
+              <Box sx={span(12)}>
                 <CompactTextField
                   label={EXCEL_FIELD.existingControls}
                   wrapLabel
                   multiline
-                  minRows={2}
+                  minRows={3}
                   maxRows={NARRATIVE_MAX_ROWS}
                   value={props.existingControls}
                   onChange={(e) => props.setExistingControls(e.target.value)}
                 />
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
-                    gap: 1.5,
-                    alignItems: 'start',
-                  }}
-                >
-                  <FormSelect
-                    label={scaledExcelField('controlEffectiveness', matrixGridSize)}
-                    wrapLabel
-                    value={props.controlEff}
-                    options={ceOptions}
-                    onChange={(v) => props.setControlEff(v as RiskLevel)}
-                  />
-                  <Box>
-                    <FormFieldLabel wrap>{EXCEL_FIELD.riskReduction}</FormFieldLabel>
-                    <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
-                      <Typography variant="body2">{props.previewReductionPct || '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </Stack>
-            </SettingsCard>
-          </Box>
-
-          <Box id="risk-form-residual" sx={sectionAnchorSx}>
-            <SettingsCard
-              compact
-              titleCaps
-              title="Residual & evaluation"
-              action={
-                <RiskLevelBadge
-                  level={apiRiskLevelToBadge(excelRatingToLevel(previewResidualBand))}
-                  label={ratingLabel(previewResidualBand)}
+              </Box>
+              <Box sx={span(4)}>
+                <FormSelect
+                  label={scaledExcelField('controlEffectiveness', matrixGridSize)}
+                  wrapLabel
+                  fullWidth
+                  value={props.controlEff}
+                  options={ceOptions}
+                  onChange={(v) => props.setControlEff(v as RiskLevel)}
                 />
-              }
-            >
-              <Stack spacing={1}>
+              </Box>
+              <Box sx={span(4)}>
+                <FormFieldLabel wrap>{EXCEL_FIELD.riskReduction}</FormFieldLabel>
+                <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="body2">{props.previewReductionPct || '-'}</Typography>
+                </Box>
+              </Box>
+            </Box>
+          </SettingsCard>
+        </Box>
+
+        {/* STAGE 4: after controls */}
+        <Box id="risk-form-residual" sx={sectionAnchorSx}>
+          <SettingsCard section autoHeight title="Residual & evaluation" subtitle="After controls">
+            <Box sx={formGrid12Sx}>
+              <Box sx={span(12)}>
                 <FormControlLabel
                   sx={{ m: 0, alignItems: 'center' }}
                   control={
@@ -846,42 +803,35 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                       sx={{ py: 0 }}
                     />
                   }
-                  label={
-                    <Typography sx={{ fontSize: '0.6875rem', lineHeight: 1.35 }}>
-                      Enter residual score manually
-                    </Typography>
-                  }
+                  label={<Typography sx={{ fontSize: '0.8125rem' }}>Enter residual score manually</Typography>}
                 />
-                {props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
-                  isErm ? (
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, minmax(0, max-content))',
-                        columnGap: 1.25,
-                        alignItems: 'start',
-                      }}
-                    >
+              </Box>
+              {props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
+                isErm ? (
+                  <>
+                    <Box sx={span(4)}>
                       <FormSelect
                         label={scaledExcelField('likelihood', matrixGridSize)}
                         wrapLabel
-                        minWidth={168}
-                        maxWidth={200}
+                        fullWidth
                         value={props.residualProbability}
                         options={residualLikelihoodOptions}
                         onChange={(v) => props.setResidualProbability(v as RiskLevel)}
                       />
+                    </Box>
+                    <Box sx={span(4)}>
                       <FormSelect
                         label={scaledExcelField('impact', matrixGridSize)}
                         wrapLabel
-                        minWidth={128}
-                        maxWidth={140}
+                        fullWidth
                         value={props.residualImpact}
                         options={residualImpactOptions}
                         onChange={(v) => props.setResidualImpact(v as RiskLevel)}
                       />
                     </Box>
-                  ) : (
+                  </>
+                ) : (
+                  <Box sx={span(8)}>
                     <CompactTextField
                       label={EXCEL_FIELD.residualScore}
                       wrapLabel
@@ -902,65 +852,57 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                         htmlInput: { min: 1, max: props.previewInherentScore, step: 1 },
                       }}
                     />
-                  )
-                ) : (
-                  <Box>
-                    <FormFieldLabel wrap>{EXCEL_FIELD.residualScore}</FormFieldLabel>
-                    <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
-                      <Typography variant="body2">{String(props.previewResidualScore ?? '-')}</Typography>
-                    </Box>
                   </Box>
-                )}
-                {isErm && props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
-                  <Box>
-                    <FormFieldLabel wrap>{EXCEL_FIELD.residualScore}</FormFieldLabel>
-                    <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
-                      <Typography variant="body2">
-                        {`${props.previewResidualScore ?? '-'} · ${ratingLabel(previewResidualBand)}`}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ) : null}
-                <Box sx={twoColFieldSx}>
-                  <Box>
-                    <FormFieldLabel wrap>{EXCEL_FIELD.residualRating}</FormFieldLabel>
-                    <Box sx={{ height: 32, display: 'flex', alignItems: 'center' }}>
-                      <RiskLevelBadge
-                        level={apiRiskLevelToBadge(excelRatingToLevel(previewResidualBand))}
-                        label={ratingLabel(previewResidualBand)}
-                      />
-                    </Box>
-                  </Box>
-                  <Box>
-                    <FormFieldLabel wrap>{EXCEL_FIELD.withinAppetite}</FormFieldLabel>
-                    <Box sx={{ height: 32, display: 'flex', alignItems: 'center' }}>
-                      <RiskLevelBadge
-                        level={props.previewWithinAppetite.startsWith('EXCEEDS') ? 'critical' : 'low'}
-                        label={
-                          props.previewWithinAppetite.startsWith('EXCEEDS')
-                            ? 'Exceeds'
-                            : 'Within appetite'
-                        }
-                      />
-                    </Box>
-                  </Box>
-                  <Box sx={{ minWidth: 0, gridColumn: '1 / -1' }}>
-                    <FormFieldLabel wrap>{EXCEL_FIELD.evaluationDecision}</FormFieldLabel>
-                    <Box sx={{ height: 32, display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                      <RiskLevelBadge
-                        level={evalDecisionChip(willAutoClose, props.previewEvalDecision).level}
-                        label={evalDecisionChip(willAutoClose, props.previewEvalDecision).label}
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-                <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary', lineHeight: 1.35 }}>
-                  {willAutoClose
-                    ? 'Evaluation is Auto-closed - no action unless Admin keeps it open.'
-                    : previewResidualAction}
-                </Typography>
-                {willAutoClose && (
-                  <Stack spacing={0.75}>
+                )
+              ) : null}
+              <Box
+                sx={
+                  props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT'
+                    ? spanReadoutSx
+                    : { gridColumn: { xs: 'span 12', lg: 'span 6' }, minWidth: 0 }
+                }
+              >
+                <Readout
+                  rows={[
+                    { label: EXCEL_FIELD.residualScore, value: String(props.previewResidualScore ?? '-') },
+                    {
+                      label: EXCEL_FIELD.residualRating,
+                      value: (
+                        <RiskLevelBadge
+                          level={apiRiskLevelToBadge(excelRatingToLevel(previewResidualBand))}
+                          label={ratingLabel(previewResidualBand)}
+                        />
+                      ),
+                    },
+                    {
+                      label: EXCEL_FIELD.withinAppetite,
+                      value: (
+                        <RiskLevelBadge
+                          level={props.previewWithinAppetite.startsWith('EXCEEDS') ? 'critical' : 'low'}
+                          label={props.previewWithinAppetite.startsWith('EXCEEDS') ? 'Exceeds' : 'Within appetite'}
+                        />
+                      ),
+                    },
+                    {
+                      label: EXCEL_FIELD.evaluationDecision,
+                      value: (
+                        <RiskLevelBadge
+                          level={evalDecisionChip(willAutoClose, props.previewEvalDecision).level}
+                          label={evalDecisionChip(willAutoClose, props.previewEvalDecision).label}
+                        />
+                      ),
+                    },
+                  ]}
+                  note={
+                    willAutoClose
+                      ? 'Evaluation is Auto-closed - no action unless Admin keeps it open.'
+                      : previewResidualAction
+                  }
+                />
+              </Box>
+              {willAutoClose && (
+                <Box sx={span(12)}>
+                  <Stack spacing={1}>
                     <FormControlLabel
                       sx={{ m: 0, alignItems: 'flex-start' }}
                       control={
@@ -972,7 +914,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                         />
                       }
                       label={
-                        <Typography sx={{ fontSize: '0.6875rem', lineHeight: 1.35 }}>
+                        <Typography sx={{ fontSize: '0.8125rem' }}>
                           Keep open (override auto-closure). Justification required.
                         </Typography>
                       }
@@ -983,7 +925,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                         wrapLabel
                         required
                         multiline
-                        minRows={1}
+                        minRows={2}
                         value={props.autoCloseJustification}
                         onChange={(e) => {
                           clear(RISK_INPUT_ID.autoCloseJustification)
@@ -994,69 +936,65 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                       />
                     )}
                   </Stack>
-                )}
-              </Stack>
-            </SettingsCard>
-          </Box>
+                </Box>
+              )}
+            </Box>
+          </SettingsCard>
         </Box>
 
-        {/* STAGE 4: create: 4T only. Action plan, evidence, target CE wait for later stages. */}
+        {/* STAGE 5: create: 4T only. Action plan, evidence, target CE wait for later stages. */}
         <Box id="risk-form-treatment" sx={sectionAnchorSx}>
-          <SettingsCard compact titleCaps title="Risk treatment">
-            <Stack spacing={1}>
-              <FormSelect
-                label={EXCEL_FIELD.treatmentOption}
-                wrapLabel
-                value={props.treatmentOption}
-                options={TREAT.map((t) => ({ value: t, label: EXCEL_TREAT_LABEL[t] }))}
-                onChange={(v) => props.setTreatmentOption(v as TreatmentOption)}
-                maxWidth={240}
-              />
-              <CompactTextField
-                label={EXCEL_FIELD.treatmentJustification}
-                wrapLabel
-                required
-                multiline
-                minRows={2}
-                maxRows={NARRATIVE_MAX_ROWS}
-                value={props.treatmentJustification}
-                onChange={(e) => {
-                  clear(RISK_INPUT_ID.treatmentJustification)
-                  props.setTreatmentJustification(e.target.value)
-                }}
-                error={Boolean(err(RISK_INPUT_ID.treatmentJustification))}
-                helperText={err(RISK_INPUT_ID.treatmentJustification)}
-              />
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'minmax(0, 1fr) max-content',
-                  },
-                  gap: 1,
-                  alignItems: 'start',
-                }}
-              >
+          <SettingsCard section autoHeight title="Risk treatment" subtitle="How the risk will be handled">
+            <Box sx={formGrid12Sx}>
+              <Box sx={span(4)}>
+                <FormSelect
+                  label={EXCEL_FIELD.treatmentOption}
+                  wrapLabel
+                  fullWidth
+                  value={props.treatmentOption}
+                  options={TREAT.map((t) => ({ value: t, label: EXCEL_TREAT_LABEL[t] }))}
+                  onChange={(v) => props.setTreatmentOption(v as TreatmentOption)}
+                />
+              </Box>
+              <Box sx={span(12)}>
+                <CompactTextField
+                  label={EXCEL_FIELD.treatmentJustification}
+                  wrapLabel
+                  required
+                  multiline
+                  minRows={3}
+                  maxRows={NARRATIVE_MAX_ROWS}
+                  value={props.treatmentJustification}
+                  onChange={(e) => {
+                    clear(RISK_INPUT_ID.treatmentJustification)
+                    props.setTreatmentJustification(e.target.value)
+                  }}
+                  error={Boolean(err(RISK_INPUT_ID.treatmentJustification))}
+                  helperText={err(RISK_INPUT_ID.treatmentJustification)}
+                />
+              </Box>
+              <Box sx={span(8)}>
                 <CompactTextField
                   label={EXCEL_FIELD.evidenceRequired}
                   wrapLabel
                   value={props.planEvidenceRequired}
                   onChange={(e) => props.setPlanEvidenceRequired(e.target.value)}
                 />
+              </Box>
+              <Box sx={span(4)}>
                 <CompactTextField
                   label={EXCEL_FIELD.targetDate}
                   wrapLabel
                   type="date"
+                  fill
                   value={props.planTargetDate}
                   onChange={(e) => props.setPlanTargetDate(e.target.value)}
                   error={!!treatPlanDateError}
                   helperText={treatPlanDateError || undefined}
                   inputProps={{ min: dateMin }}
-                  maxWidth={EXCEL_DATE_FIELD_WIDTH}
                 />
               </Box>
-            </Stack>
+            </Box>
           </SettingsCard>
         </Box>
       </Stack>

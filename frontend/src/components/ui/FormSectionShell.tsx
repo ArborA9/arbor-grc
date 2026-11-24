@@ -153,10 +153,9 @@ export default function FormSectionShell({
         <Box
           sx={{
             flexShrink: 0,
-            px: 2.5,
-            py: 1,
+            px: 2,
             borderBottom: `1px solid ${brand.hairline}`,
-            bgcolor: brand.accentMuted,
+            bgcolor: brand.paper,
             overflowX: 'auto',
             // In page-scroll mode the tab bar stays pinned while sections scroll.
             ...(fill
@@ -164,25 +163,30 @@ export default function FormSectionShell({
               : { position: 'sticky', top: 0, zIndex: 6, boxShadow: '0 1px 4px rgba(28, 25, 23, 0.08)' }),
           }}
         >
-          <Stack direction="row" spacing={0.75} sx={{ minWidth: 'max-content' }}>
+          <Stack direction="row" spacing={0.5} sx={{ minWidth: 'max-content' }}>
             {sections.map((s) => (
               <Box
                 key={s.id}
                 component="button"
                 type="button"
                 onClick={() => scrollToSection(s.id)}
+                aria-current={activeSection === s.id ? 'true' : undefined}
                 sx={{
-                  border: `1px solid ${activeSection === s.id ? brand.accent : brand.hairlineStrong}`,
-                  bgcolor: activeSection === s.id ? brand.paper : '#fff',
+                  // Underline tabs: navigation, not a row of buttons.
+                  border: 0,
+                  borderBottom: `2px solid ${activeSection === s.id ? brand.accent : 'transparent'}`,
+                  bgcolor: 'transparent',
                   color: activeSection === s.id ? brand.accentHover : brand.muted,
-                  borderRadius: 1,
-                  px: 1.25,
-                  py: 0.45,
-                  fontSize: '0.75rem',
-                  fontWeight: 650,
+                  px: 1.5,
+                  pt: 1.5,
+                  pb: 1.25,
+                  fontSize: '0.8125rem',
+                  fontWeight: activeSection === s.id ? 600 : 500,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                   whiteSpace: 'nowrap',
+                  '&:hover': { color: brand.ink },
+                  '&:focus-visible': { outline: `2px solid ${brand.accent}`, outlineOffset: -2 },
                 }}
               >
                 {s.label}

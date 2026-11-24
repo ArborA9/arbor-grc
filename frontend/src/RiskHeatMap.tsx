@@ -75,6 +75,7 @@ export function RiskHeatMapPanel({
   presentation = 'card',
   refined = false,
   headerAction,
+  initialPicture = 'bands',
   onCellClick,
   onError,
 }: {
@@ -86,12 +87,14 @@ export function RiskHeatMapPanel({
   /** Dashboard risk picture: larger cells, legend, gold toggle. Same counts. */
   refined?: boolean
   headerAction?: ReactNode
+  /** Refined panels open on bands by default; the register's Heat Map button opens on the matrix. */
+  initialPicture?: 'bands' | 'matrix'
   onCellClick: (drill: RiskHeatMapDrill) => void
   onError?: (msg: string) => void
 }) {
   const mode = embedded ? 'dialog' : presentation
   const [basis, setBasis] = useState<HeatMapScoreBasis>('INHERENT')
-  const [picture, setPicture] = useState<'bands' | 'matrix'>('bands')
+  const [picture, setPicture] = useState<'bands' | 'matrix'>(initialPicture)
   const [map, setMap] = useState<RiskHeatMap | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -128,6 +131,8 @@ export function RiskHeatMapPanel({
   const nRows = rows.length
   const mapMaxWidth = refined ? 460 : compact ? 260 : mode === 'dialog' ? 320 : 360
   const cellGap = refined ? '4px' : '2px'
+  /** Likelihood label column; the impact labels are offset by the same width so they sit under their cells. */
+  const yLabelWidth = riskType === 'ERM' ? 124 : 72
   const showBands = refined && picture === 'bands'
   const bandTotals = useMemo(() => {
     const totals = new Map<RiskLevel, number>()
@@ -146,15 +151,17 @@ export function RiskHeatMapPanel({
         spacing={0.75}
         alignItems="center"
         justifyContent="space-between"
-        sx={{ mb: 1.5 }}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ mb: 1.5, rowGap: 1 }}
       >
-        <Typography sx={{ fontSize: '0.6875rem', fontWeight: 600, color: refined ? brand.goldDark : brand.ink, lineHeight: 1.3 }}>
+        <Typography sx={{ fontSize: refined ? '0.875rem' : '0.75rem', fontWeight: 600, color: brand.ink, lineHeight: 1.3, whiteSpace: 'nowrap' }}>
           {title}
-          <Typography component="span" sx={{ fontSize: '0.59375rem', color: brand.mutedLight, ml: 0.5 }}>
+          <Typography component="span" sx={{ fontSize: '0.75rem', fontWeight: 400, color: brand.mutedLight, ml: 0.5 }}>
             · {map ? `${map.total} risk${map.total === 1 ? '' : 's'} plotted` : busy ? 'loading…' : '…'}
           </Typography>
         </Typography>
-        <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+        <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="nowrap" useFlexGap>
           {refined && (
             <ToggleButtonGroup
               size="small"
@@ -172,8 +179,8 @@ export function RiskHeatMapPanel({
                   border: 0,
                   px: 1.25,
                   py: 0.375,
-                  fontSize: '0.5625rem',
-                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
                   color: brand.muted,
                   '&.Mui-selected': {
                     bgcolor: brand.paper,
@@ -202,8 +209,8 @@ export function RiskHeatMapPanel({
                 border: 0,
                 px: 1.25,
                 py: 0.375,
-                fontSize: '0.5625rem',
-                fontWeight: 600,
+                fontSize: '0.75rem',
+                fontWeight: 500,
                 color: brand.muted,
                 '&.Mui-selected': {
                   bgcolor: brand.paper,
@@ -227,10 +234,10 @@ export function RiskHeatMapPanel({
             return (
               <Box key={band.level}>
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.4 }}>
-                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: brand.goldDark }}>
+                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: brand.ink }}>
                     {axisBand(riskType, band.level)}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: brand.gold, fontVariantNumeric: 'tabular-nums' }}>
+                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: brand.ink, fontVariantNumeric: 'tabular-nums' }}>
                     {band.count}
                   </Typography>
                 </Stack>
@@ -276,9 +283,9 @@ export function RiskHeatMapPanel({
                   justifyContent: 'flex-end',
                   pr: 0.25,
                   fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: brand.mutedLight,
-                  minWidth: riskType === 'ERM' ? 108 : 58,
+                  fontWeight: 500,
+                  color: brand.muted,
+                  width: yLabelWidth,
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -331,7 +338,7 @@ export function RiskHeatMapPanel({
                       bgcolor: style.bg,
                       cursor: 'pointer',
                       font: 'inherit',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: compact ? '0.6875rem' : '0.75rem',
                       color: style.text,
                       transition: 'opacity 100ms ease, transform 100ms ease',
@@ -349,7 +356,7 @@ export function RiskHeatMapPanel({
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: cellGap, mt: 0.75, pl: '66px' }}>
+        <Box sx={{ display: 'flex', gap: cellGap, mt: 0.75, pl: `${yLabelWidth + 6}px` }}>
           {cols.map((c) => (
             <Typography
               key={`x-${c}`}
@@ -357,7 +364,7 @@ export function RiskHeatMapPanel({
                 flex: 1,
                 textAlign: 'center',
                 fontSize: '0.75rem',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: brand.muted,
                 lineHeight: 1.2,
               }}
@@ -370,7 +377,7 @@ export function RiskHeatMapPanel({
           sx={{
             textAlign: 'center',
             mt: 0.25,
-            pl: '26px',
+            pl: `${yLabelWidth + 6}px`,
             fontSize: '0.6875rem',
             color: brand.muted,
           }}
@@ -396,8 +403,8 @@ export function RiskHeatMapPanel({
       )}
 
       {map && map.total === 0 && (
-        <Typography sx={{ mt: 1, color: semantic.risk.low, fontWeight: 600, textAlign: 'center', fontSize: '0.75rem' }}>
-          All good: nothing to action
+        <Typography sx={{ mt: 1, color: brand.mutedLight, fontWeight: 400, textAlign: 'center', fontSize: '0.75rem' }}>
+          Nothing to action
         </Typography>
       )}
     </>

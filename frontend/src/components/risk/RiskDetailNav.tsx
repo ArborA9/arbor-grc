@@ -22,7 +22,8 @@ export default function RiskDetailNav({
   onSelectRisk: (id: number) => void
 }) {
   return (
-    <Stack direction="row" spacing={0.25} alignItems="center">
+    // Hidden on phones: Draft/Close matter more there, and the register is one tap back.
+    <Stack direction="row" spacing={0.25} alignItems="center" sx={{ display: { xs: 'none', sm: 'flex' } }}>
       <IconButton
         size="small"
         disabled={detailIndex <= 0}

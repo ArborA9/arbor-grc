@@ -24,10 +24,10 @@ export default function SectionHeader({ title, actionLabel, onAction, hint }: Se
       <Box sx={{ minWidth: 0 }}>
         <Typography
           sx={{
-            fontSize: '0.6875rem',
+            fontSize: '0.75rem',
             fontWeight: 600,
             color: brand.muted,
-            letterSpacing: '0.04em',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
           }}
         >
@@ -48,8 +48,8 @@ export default function SectionHeader({ title, actionLabel, onAction, hint }: Se
             m: 0,
             flexShrink: 0,
             font: 'inherit',
-            fontSize: '0.6875rem',
-            fontWeight: 600,
+            fontSize: '0.8125rem',
+            fontWeight: 500,
             color: brand.goldDark,
             cursor: 'pointer',
             bgcolor: 'transparent',

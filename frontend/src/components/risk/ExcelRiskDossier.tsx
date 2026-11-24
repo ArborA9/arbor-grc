@@ -15,9 +15,7 @@ import {
   FormFieldLabel,
   RiskLevelBadge,
   SettingsCard,
-  fourColFieldSx,
   sectionAnchorSx,
-  MEDIUM_FORM_MAX_WIDTH,
 } from '../ui'
 import { apiRiskLevelToBadge } from '../ui/riskBadgeMappers'
 import { controlEffectivenessTone } from '../ui/ratingTone'
@@ -25,6 +23,7 @@ import { fmtLevel } from '../../riskLevelLabels'
 import { fmtErmImpact, fmtErmLikelihood, fmtErmRating } from './ermRiskLabels'
 import EvidenceAttachedList from '../evidence/EvidenceAttachedList'
 import { brand } from '../../theme'
+import { formatTenantDate } from '../../uiQuality/tenantLocale'
 import { excelRating, excelRatingToLevel, parseGridSize } from './riskMatrix'
 import { riskStatusBadge } from './riskUi'
 import {
@@ -64,20 +63,16 @@ function sheetLabel(label: string): string {
   return label.replace(/\s*\(auto\)\s*/gi, '').replace(/\s+/g, ' ').trim()
 }
 
-const VALUE_SIZE = '0.78125rem'
+const VALUE_SIZE = '0.875rem'
 
+/** Read-only value: plain text under its label (definition-list style), not a disabled input. */
 const valueWellSx = {
   boxSizing: 'border-box' as const,
-  height: CONTROL_HEIGHT,
-  minHeight: CONTROL_HEIGHT,
+  minHeight: 24,
   display: 'flex',
   alignItems: 'center',
-  px: 1.25,
-  border: `1px solid ${brand.border}`,
-  borderRadius: '6px',
-  bgcolor: brand.hover,
   fontSize: VALUE_SIZE,
-  fontWeight: 600,
+  fontWeight: 400,
   color: brand.ink,
   lineHeight: 1.25,
   overflow: 'hidden',
@@ -97,13 +92,12 @@ const valueWellWrapSx = {
   overflowY: 'auto' as const,
   overflowX: 'hidden' as const,
   alignItems: 'flex-start',
-  py: 0.75,
-  lineHeight: 1.4,
+  lineHeight: 1.5,
 }
 
 const narrativeValueSx = {
   fontSize: VALUE_SIZE,
-  fontWeight: 600,
+  fontWeight: 400,
   color: brand.ink,
   lineHeight: 1.45,
   whiteSpace: 'pre-wrap' as const,
@@ -143,12 +137,13 @@ function Field({
   children?: ReactNode
 }) {
   if (!children && emptyVal(value) && !keep) return null
-  const display = emptyVal(value) ? '-' : String(value)
+  const isEmpty = emptyVal(value)
+  const display = isEmpty ? '—' : String(value)
   return (
     <Box
       sx={{
         minWidth: 0,
-        gridColumn: span ? { xs: '1 / -1' } : wide ? { sm: 'span 2' } : undefined,
+        gridColumn: span ? '1 / -1' : wide ? { xs: 'auto', sm: 'span 2' } : undefined,
       }}
     >
       <FormFieldLabel wrap>{sheetLabel(label)}</FormFieldLabel>
@@ -158,6 +153,8 @@ function Field({
         <Box sx={{ minHeight: CONTROL_HEIGHT, display: 'flex', alignItems: 'center' }}>
           <RiskLevelBadge level={tone} label={display} wrap={wrap} />
         </Box>
+      ) : isEmpty ? (
+        <Typography sx={{ ...narrativeValueSx, color: brand.mutedLight }}>—</Typography>
       ) : well ? (
         <ValueWell text={display} wrap={wrap} />
       ) : (
@@ -198,8 +195,29 @@ function levelCaption(label: string, level: RiskLevel, isErm?: boolean): string 
   return fmtLevel(level)
 }
 
+const viewGridSx = {
+  display: 'grid',
+  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
+  columnGap: 3,
+  rowGap: 2,
+  alignItems: 'start',
+} as const
+
+/** Read-only field grid: same 3 columns in every section so values line up down the page. */
 function Grid({ children }: { children: ReactNode }) {
-  return <Box sx={fourColFieldSx}>{children}</Box>
+  return <Box sx={viewGridSx}>{children}</Box>
+}
+
+/** One cell of the key-facts strip at the top of the risk view. */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Box sx={{ minWidth: 0, px: 2, py: 1.5 }}>
+      <Typography sx={{ fontSize: '0.75rem', color: brand.muted, mb: 0.75 }}>{label}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 24, fontSize: '0.9375rem', fontWeight: 600, color: brand.ink }}>
+        {children}
+      </Box>
+    </Box>
+  )
 }
 
 function reductionPct(raw: number | null | undefined): string | null {
@@ -246,7 +264,7 @@ function acceptanceRequiredTone(
 
 function evalText(decision: string | null | undefined): string | null {
   if (!decision) return null
-  if (decision === 'TREATMENT_REQUIRED') return 'TREATMENT REQUIRED'
+  if (decision === 'TREATMENT_REQUIRED') return 'Treatment required'
   if (decision === 'MONITOR') return 'Within appetite - monitor only'
   if (decision === 'AUTO_CLOSE' || decision === 'AUTO_CLOSED') return 'Auto-closed - no action'
   const labelled = evaluationDecisionLabel(decision)
@@ -328,7 +346,7 @@ export default function ExcelRiskDossier({
   const category =
     risk.category === 'OTHER' && risk.categoryOther?.trim()
       ? `Other: ${risk.categoryOther.trim()}`
-      : risk.category.replace(/_/g, ' ')
+      : risk.category.charAt(0) + risk.category.slice(1).toLowerCase().replace(/_/g, ' ')
   const inherentBand = isErm
     ? fmtErmRating(risk.inherentRating ?? risk.inherentRisk)
     : fmtLevel(risk.inherentRating ?? risk.inherentRisk)
@@ -374,18 +392,65 @@ export default function ExcelRiskDossier({
   })
   const alertText = reviewAlertLabel(risk.nextReviewDate)
 
-  const isoDate = (value: string | null | undefined) =>
-    !value ? null : value.length >= 10 ? value.slice(0, 10) : value
+  const isoDate = (value: string | null | undefined) => (!value ? null : formatTenantDate(value))
+  const inherentTone = apiRiskLevelToBadge(excelRatingToLevel(risk.inherentRating ?? risk.inherentRisk))
+  const residualTone = apiRiskLevelToBadge(excelRatingToLevel(risk.residualRating ?? risk.residualRisk))
+  const ceText = risk.controlEffectiveness
+    ? (CE_EXCEL_LABEL[risk.controlEffectiveness] ?? fmtLevel(risk.controlEffectiveness))
+    : null
 
   return (
-    <Stack spacing={1.25}>
+    <Stack spacing={2}>
       <Box id="risk-section-identification" sx={sectionAnchorSx}>
+        {/* Key facts: the answer to "how bad, and what are we doing" before any detail. */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(5, minmax(0, 1fr))' },
+            bgcolor: brand.paper,
+            border: `1px solid ${brand.border}`,
+            borderRadius: 1,
+            boxShadow: brand.shadowCard,
+            mb: 2,
+            '& > *:not(:last-child)': { borderRight: { md: `1px solid ${brand.border}` } },
+          }}
+        >
+          <Fact label="Inherent rating">
+            {inherentTone ? <RiskLevelBadge level={inherentTone} label={inherentBand} /> : '—'}
+            {risk.inherentScore != null ? (
+              <Typography component="span" sx={{ fontSize: '0.8125rem', color: brand.muted }}>
+                {risk.inherentScore}
+              </Typography>
+            ) : null}
+          </Fact>
+          <Fact label="Control effectiveness">{ceText ?? '—'}</Fact>
+          <Fact label="Residual rating">
+            {residualTone ? <RiskLevelBadge level={residualTone} label={residualBand} /> : '—'}
+            {risk.residualScore != null ? (
+              <Typography component="span" sx={{ fontSize: '0.8125rem', color: brand.muted }}>
+                {risk.residualScore}
+              </Typography>
+            ) : null}
+          </Fact>
+          <Fact label="Appetite">
+            {risk.withinAppetite == null ? (
+              '—'
+            ) : (
+              <RiskLevelBadge
+                level={risk.withinAppetite ? 'low' : 'critical'}
+                label={risk.withinAppetite ? 'Within appetite' : 'Exceeds appetite'}
+              />
+            )}
+          </Fact>
+          <Fact label="Treatment">{treat ?? '—'}</Fact>
+        </Box>
         {headerSlot}
-        <SettingsCard compact autoHeight titleCaps title="Risk identification" subtitle="What the risk is, and whose it is">
+        <SettingsCard section autoHeight title="Risk identification" subtitle="What the risk is, and whose it is">
           <Grid>
             <Field well label={EXCEL_FIELD.riskId} value={risk.displayId} />
-            <Field well label={EXCEL_FIELD.dateIdentified} value={risk.dateIdentified} />
-            <Field wide well wrap label={EXCEL_FIELD.riskTitle} value={risk.title} />
+            <Field well label={EXCEL_FIELD.dateIdentified} value={isoDate(risk.dateIdentified)} />
+            <Field keep well label={EXCEL_FIELD.riskOwner} value={risk.riskOwnerName || userLabel(risk.riskOwnerUserId)} />
+            <Field span well wrap label={EXCEL_FIELD.riskTitle} value={risk.title} />
             <Box
               sx={{
                 gridColumn: '1 / -1',
@@ -398,22 +463,15 @@ export default function ExcelRiskDossier({
               <Field keep well wrap label={EXCEL_FIELD.riskDescription} value={risk.description} />
               <Field keep well wrap label={EXCEL_FIELD.gapObservation} value={risk.observedGap} />
             </Box>
-            <Box sx={{ gridColumn: '1 / -1', my: 0.5, maxWidth: MEDIUM_FORM_MAX_WIDTH }}>
-              <SettingsCard
-                compact
-                autoHeight
-                titleCaps
-                title={EXCEL_FIELD.referenceAttachment}
-                subtitle="Optional supporting files"
-              >
-                <EvidenceAttachedList
-                  items={referenceFiles}
-                  numbered={false}
-                  flush
-                  emptyLabel="No reference attachments yet"
-                  onError={onEvidenceError}
-                />
-              </SettingsCard>
+            <Box sx={{ gridColumn: '1 / -1', minWidth: 0 }}>
+              <FormFieldLabel wrap>{EXCEL_FIELD.referenceAttachment}</FormFieldLabel>
+              <EvidenceAttachedList
+                items={referenceFiles}
+                numbered={false}
+                flush
+                emptyLabel="No reference attachments yet"
+                onError={onEvidenceError}
+              />
             </Box>
             {isErm && <Field well label={EXCEL_FIELD.riskCategory} value={category} />}
             <Field well label={EXCEL_FIELD.division} value={risk.orgUnitName || orgLabel(risk.orgUnitId)} />
@@ -431,14 +489,13 @@ export default function ExcelRiskDossier({
               </>
             )}
             <Field
-              span
               well
               wrap
               label={isErm ? EXCEL_FIELD.riskCause : EXCEL_FIELD.associatedThreat}
               value={isErm ? risk.cause : risk.threats}
             />
-            <Field well label={EXCEL_FIELD.riskOwner} value={risk.riskOwnerName || userLabel(risk.riskOwnerUserId)} />
             <Field
+              keep
               well
               label={EXCEL_FIELD.riskCustodian}
               value={risk.assignedContributorName || userLabel(risk.assignedContributorId)}
@@ -452,39 +509,20 @@ export default function ExcelRiskDossier({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: 'minmax(0, 0.88fr) minmax(0, 0.88fr) minmax(0, 1.24fr)',
-          },
-          gap: 1.25,
+          gridTemplateColumns: '1fr',
+          gap: 2,
           alignItems: 'stretch',
         }}
       >
         <Box id="risk-section-scoring" sx={sectionAnchorSx}>
           <SettingsCard
-            compact
-            autoHeight
-            titleCaps
+            section autoHeight
             title="Risk analysis"
-            subtitle="Likelihood × Impact"
-            action={
-              <RiskLevelBadge
-                level={apiRiskLevelToBadge(excelRatingToLevel(risk.inherentRating ?? risk.inherentRisk))}
-                label={inherentBand}
-              />
-            }
+            subtitle="Before controls: likelihood × impact"
           >
-            <Stack spacing={1}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: 1,
-                }}
-              >
+            <Grid>
                 <LevelField keep isErm={isErm} label={scaledExcelField('likelihood', gridSize)} level={risk.probability} />
                 <LevelField keep isErm={isErm} label={scaledExcelField('impact', gridSize)} level={risk.impact} />
-              </Box>
               <Field
                 keep
                 well
@@ -495,42 +533,27 @@ export default function ExcelRiskDossier({
                     : inherentBand
                 }
               />
-            </Stack>
+            </Grid>
           </SettingsCard>
         </Box>
 
         <Box id="risk-section-controls" sx={sectionAnchorSx}>
-          <SettingsCard compact autoHeight titleCaps title="Existing controls" subtitle="What is already in place">
-            <Stack spacing={1}>
+          <SettingsCard section autoHeight title="Existing controls" subtitle="What is already in place">
+            <Grid>
               <Field keep span well wrap label={EXCEL_FIELD.existingControls} value={risk.existingControls} />
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
-                  gap: 1,
-                }}
-              >
-                <LevelField keep label={scaledExcelField('controlEffectiveness', gridSize)} level={risk.controlEffectiveness} />
-                <Field keep well label={EXCEL_FIELD.riskReduction} value={reductionPct(risk.riskReductionPct)} />
-              </Box>
-            </Stack>
+              <LevelField keep label={scaledExcelField('controlEffectiveness', gridSize)} level={risk.controlEffectiveness} />
+              <Field keep well label={EXCEL_FIELD.riskReduction} value={reductionPct(risk.riskReductionPct)} />
+            </Grid>
           </SettingsCard>
         </Box>
 
         <Box id="risk-section-evaluation" sx={sectionAnchorSx}>
           <SettingsCard
-            compact
-            autoHeight
-            titleCaps
+            section autoHeight
             title="Residual & evaluation"
-            action={
-              <RiskLevelBadge
-                level={apiRiskLevelToBadge(excelRatingToLevel(risk.residualRating ?? risk.residualRisk))}
-                label={residualBand}
-              />
-            }
+            subtitle="After controls"
           >
-            <Stack spacing={1}>
+            <Grid>
               <Field
                 keep
                 well
@@ -541,7 +564,6 @@ export default function ExcelRiskDossier({
                     : residualBand
                 }
               />
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1 }}>
                 <Field
                   keep
                   label={EXCEL_FIELD.residualRating}
@@ -553,31 +575,31 @@ export default function ExcelRiskDossier({
                   label={EXCEL_FIELD.withinAppetite}
                   value={
                     risk.withinAppetite === false
-                      ? 'EXCEEDS APPETITE'
+                      ? 'Exceeds appetite'
                       : risk.withinAppetite
-                        ? 'Within Appetite'
+                        ? 'Within appetite'
                         : null
                   }
                   tone={risk.withinAppetite === false ? 'critical' : risk.withinAppetite ? 'low' : undefined}
                 />
-              </Box>
               <Field
                 keep
+                span
                 label={EXCEL_FIELD.evaluationDecision}
                 value={evalText(risk.evaluationDecision)}
                 tone={risk.evaluationDecision === 'TREATMENT_REQUIRED' ? 'critical' : 'low'}
               />
-            </Stack>
+            </Grid>
           </SettingsCard>
         </Box>
       </Box>
 
       <Box id="risk-section-treatment" sx={sectionAnchorSx}>
-        <SettingsCard compact autoHeight titleCaps title="Risk treatment" subtitle="What will be done, by whom, by when">
+        <SettingsCard section autoHeight title="Risk treatment" subtitle="What will be done, by whom, by when">
           <Grid>
             <Field well label={EXCEL_FIELD.treatmentOption} value={treat} />
             <Field well wrap label={EXCEL_FIELD.evidenceRequired} value={risk.activeTreatmentPlan?.evidenceRequired} />
-            <Field well label={EXCEL_FIELD.targetDate} value={risk.activeTreatmentPlan?.targetDate} />
+            <Field well label={EXCEL_FIELD.targetDate} value={isoDate(risk.activeTreatmentPlan?.targetDate)} />
             <Field span well wrap label={EXCEL_FIELD.treatmentJustification} value={risk.treatmentChangeJustification} />
           </Grid>
         </SettingsCard>
@@ -585,7 +607,7 @@ export default function ExcelRiskDossier({
 
       {(showPlan || showFiles) && (
         <Box id="risk-section-contributor" sx={sectionAnchorSx}>
-          <SettingsCard compact autoHeight titleCaps title="Contributor" subtitle="Treatment Action Plan Detail and Attached Evidence">
+          <SettingsCard section autoHeight title="Contributor" subtitle="Treatment Action Plan Detail and Attached Evidence">
             <Grid>
               <Field span well wrap label={EXCEL_FIELD.treatmentActionPlan} value={planText} />
               {showFiles && (
@@ -605,7 +627,7 @@ export default function ExcelRiskDossier({
 
       {showPostSubmit && (
         <Box id="risk-section-post-submit" sx={sectionAnchorSx}>
-          <SettingsCard compact autoHeight titleCaps title={finishTitle} subtitle={finishSubtitle}>
+          <SettingsCard section autoHeight title={finishTitle} subtitle={finishSubtitle}>
             <Grid>
               <Field
                 label={scaledExcelField(isErm ? 'targetCe' : 'treatmentCe', gridSize)}

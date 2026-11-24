@@ -29,6 +29,9 @@ export const brand = {
   accentHover: '#92530A',
   accentMuted: '#FEF3C7',
   accentSoft: '#FDE68A',
+  /** Filled-button gold: darker than `accent` so white labels pass WCAG AA (4.8:1). */
+  accentButton: '#96690A',
+  accentButtonHover: '#7E5808',
 
   sidebarHover: 'rgba(184, 134, 11, 0.08)',
   sidebarSelected: 'rgba(184, 134, 11, 0.12)',
@@ -114,7 +117,7 @@ const successMain = semantic.risk.low
 const successDark = '#166534'
 
 const INPUT_HEIGHT = 32
-const SIDEBAR_WIDTH_PX = 232
+const SIDEBAR_WIDTH_PX = 264
 const SIDEBAR_COLLAPSED_WIDTH_PX = 64
 const SIDEBAR_NAV_ROW_PX = 40
 const TOPBAR_HEIGHT_PX = 56
@@ -162,13 +165,13 @@ const theme = createTheme({
   typography: {
     fontFamily: '"Poppins", system-ui, -apple-system, Segoe UI, sans-serif',
     h4: {
-      fontWeight: 700,
+      fontWeight: 600,
       letterSpacing: '-0.02em',
       fontSize: '1.75rem',
       lineHeight: 1.15,
     },
     h5: {
-      fontWeight: 700,
+      fontWeight: 600,
       letterSpacing: '-0.02em',
       fontSize: '1.35rem',
       lineHeight: 1.2,
@@ -180,16 +183,16 @@ const theme = createTheme({
     },
     subtitle1: { fontWeight: 600, fontSize: '0.9375rem' },
     subtitle2: { fontWeight: 600, fontSize: '0.8125rem' },
-    button: { fontWeight: 600, letterSpacing: 0, textTransform: 'none' },
+    button: { fontWeight: 500, letterSpacing: 0, textTransform: 'none' },
     overline: {
       fontWeight: 600,
       letterSpacing: '0.08em',
       fontSize: '0.6875rem',
       color: brand.navMuted,
     },
-    body1: { fontSize: '0.875rem', lineHeight: 1.45, color: brand.ink, fontWeight: 500 },
-    body2: { fontSize: '0.8125rem', lineHeight: 1.4, color: brand.ink, fontWeight: 500 },
-        caption: { fontSize: '0.6875rem', lineHeight: 1.35, color: brand.muted, fontWeight: 500 },
+    body1: { fontSize: '0.875rem', lineHeight: 1.45, color: brand.ink, fontWeight: 400 },
+    body2: { fontSize: '0.8125rem', lineHeight: 1.4, color: brand.ink, fontWeight: 400 },
+    caption: { fontSize: '0.6875rem', lineHeight: 1.35, color: brand.muted, fontWeight: 400 },
   },
   components: {
     MuiCssBaseline: {
@@ -254,7 +257,7 @@ const theme = createTheme({
         root: {
           borderRadius: 6,
           textTransform: 'none',
-          fontWeight: 600,
+          fontWeight: 500,
           minHeight: INPUT_HEIGHT,
           paddingInline: 14,
           fontSize: '0.75rem',
@@ -265,11 +268,11 @@ const theme = createTheme({
         sizeLarge: { minHeight: 40, paddingInline: 16, fontSize: '0.8125rem' },
         sizeSmall: { minHeight: INPUT_HEIGHT, paddingInline: 12, fontSize: '0.75rem' },
         containedPrimary: {
-          backgroundColor: brand.accent,
-          '&:hover': { backgroundColor: brand.accentHover },
+          backgroundColor: brand.accentButton,
+          '&:hover': { backgroundColor: brand.accentButtonHover },
           '&.Mui-disabled': {
-            backgroundColor: alpha(brand.accent, 0.35),
-            color: '#fff',
+            backgroundColor: '#EFEEEB',
+            color: '#A19D96',
             opacity: 1,
           },
         },
@@ -342,7 +345,7 @@ const theme = createTheme({
           paddingTop: 0,
           paddingBottom: 0,
           fontSize: '0.75rem',
-          fontWeight: 500,
+          fontWeight: 400,
           lineHeight: 1.25,
           height: INPUT_HEIGHT - 2,
           boxSizing: 'border-box',
@@ -360,7 +363,7 @@ const theme = createTheme({
       styleOverrides: {
         select: {
           fontSize: '0.75rem',
-          fontWeight: 500,
+          fontWeight: 400,
           lineHeight: 1.25,
           minHeight: 'unset',
           display: 'flex',
@@ -390,7 +393,7 @@ const theme = createTheme({
     },
     MuiChip: {
       styleOverrides: {
-        root: { fontWeight: 600, borderRadius: 20, height: 22 },
+        root: { fontWeight: 500, borderRadius: 20, height: 22 },
         sizeSmall: { height: 22, fontSize: '0.6875rem' },
         label: { paddingInline: 8 },
         outlined: {
@@ -424,7 +427,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontWeight: 600,
+          fontWeight: 500,
           borderRadius: 6,
           borderColor: brand.border,
           py: 0.75,
@@ -446,7 +449,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontWeight: 600,
+          fontWeight: 500,
           minHeight: 40,
           fontSize: '0.8125rem',
           color: brand.muted,
@@ -462,8 +465,8 @@ const theme = createTheme({
       styleOverrides: {
         head: {
           fontSize: '0.6875rem',
-          fontWeight: 700,
-          letterSpacing: '0.08em',
+          fontWeight: 600,
+          letterSpacing: '0.05em',
           textTransform: 'uppercase',
           color: brand.muted,
           background: brand.sidebar,

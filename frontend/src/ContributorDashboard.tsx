@@ -108,7 +108,8 @@ function emptyQueueMessage(filter: QueueFilter): string {
   if (filter === 'week') return 'Nothing is due this week.'
   if (filter === 'returned') return 'Nothing has been returned.'
   if (filter === 'closed') return 'Nothing is closed.'
-  return 'Nothing is waiting on you.'
+  if (filter === 'open') return 'No open items assigned to you.'
+  return 'No items need action right now.'
 }
 
 function needsAttention(row: ContributorDashboardQueueItem): boolean {
@@ -197,7 +198,7 @@ function ModulePostureCell({
         border: `1px solid ${brand.border}`,
         borderLeft: `3px solid ${color}`,
         borderRadius: '12px',
-        bgcolor: alpha(color, 0.06),
+        bgcolor: brand.paper,
         px: 1.75,
         py: 1.5,
         boxShadow: 'none',
@@ -211,14 +212,14 @@ function ModulePostureCell({
           </Box>
           <Typography
             noWrap
-            sx={{ fontWeight: 700, fontSize: '0.8125rem', letterSpacing: '0.02em', color: brand.goldDark }}
+            sx={{ fontWeight: 600, fontSize: '0.875rem', color: brand.ink }}
           >
             {mod.label}
           </Typography>
         </Stack>
       </Stack>
       <Typography
-        sx={{ fontWeight: 650, fontSize: '1.65rem', letterSpacing: '-0.03em', color: brand.gold, lineHeight: 1.1, mt: 1 }}
+        sx={{ fontWeight: 600, fontSize: '1.5rem', letterSpacing: '-0.02em', color: brand.ink, lineHeight: 1.2, mt: 1 }}
       >
         {mod.openCount}
       </Typography>
@@ -260,17 +261,17 @@ function WorkCard({
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Stack direction="row" spacing={0.75} alignItems="center">
           <Box sx={{ color: brand.goldDark, display: 'flex', '& .MuiSvgIcon-root': { fontSize: 16 } }}>{icon}</Box>
-          <Typography sx={{ fontSize: '0.6875rem', fontWeight: 650, letterSpacing: '0.08em', color: brand.muted }}>
+          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: brand.ink }}>
             {kicker}
           </Typography>
         </Stack>
         <ChevronRightRoundedIcon sx={{ fontSize: 18, color: brand.muted }} />
       </Stack>
-      <Typography sx={{ fontWeight: 700, fontSize: '1.75rem', letterSpacing: '-0.03em', mt: 1.25, lineHeight: 1, color: brand.gold }}>
+      <Typography sx={{ fontWeight: 600, fontSize: '1.5rem', letterSpacing: '-0.02em', mt: 1.25, lineHeight: 1, color: brand.ink }}>
         {value}
       </Typography>
       {label ? (
-        <Typography sx={{ fontSize: '0.8125rem', color: '#5F6368', mt: 0.5 }}>{label}</Typography>
+        <Typography sx={{ fontSize: '0.8125rem', color: brand.muted, mt: 0.5 }}>{label}</Typography>
       ) : null}
     </Box>
   )
@@ -312,7 +313,7 @@ function TaskLine({
     >
       <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: rowDot(row), flexShrink: 0 }} />
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: brand.goldDark }} noWrap>
+        <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: brand.ink }} noWrap>
           {row.title}
         </Typography>
         <Typography variant="caption" color="text.secondary" noWrap display="block">
@@ -331,9 +332,9 @@ function TaskLine({
       </Box>
       <Typography
         sx={{
-          fontWeight: 650,
+          fontWeight: 500,
           fontSize: '0.75rem',
-          color: brand.goldDark,
+          color: brand.muted,
           flexShrink: 0,
           minWidth: { sm: 88 },
           textAlign: 'right',
@@ -341,7 +342,7 @@ function TaskLine({
       >
         {row.agingLabel}
       </Typography>
-      <ChevronRightRoundedIcon sx={{ fontSize: 18, color: brand.goldDark, flexShrink: 0 }} />
+      <ChevronRightRoundedIcon sx={{ fontSize: 18, color: brand.muted, flexShrink: 0 }} />
     </Box>
   )
 }
@@ -475,16 +476,16 @@ export default function ContributorDashboard({
         boxSizing: 'border-box',
       }}
     >
-      <ModuleListShell title="Dashboard" breadcrumbTrail="" />
+      <ModuleListShell title="Dashboard" breadcrumbTrail="Overview" />
 
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
         <Typography
           sx={{
-            fontWeight: 650,
-            fontSize: { xs: '1.2rem', md: '1.35rem' },
-            letterSpacing: '-0.03em',
-            lineHeight: 1.25,
-            color: brand.goldDark,
+            fontWeight: 600,
+            fontSize: { xs: '1.0625rem', md: '1.25rem' },
+            letterSpacing: '-0.01em',
+            lineHeight: 1.3,
+            color: brand.ink,
           }}
         >
           {when ? `${when}, ${decisionLine.charAt(0).toLowerCase()}${decisionLine.slice(1)}` : decisionLine}
@@ -542,15 +543,15 @@ export default function ContributorDashboard({
           <SectionHeader
             title="Decide today"
             hint={decideRows.length > 5 ? 'First 5' : decideRows.length === 0 ? 'Clear' : undefined}
-            actionLabel="View Queue"
+            actionLabel="View queue"
             onAction={() => focusQueue(decideRows.length > 0 ? 'attention' : 'open')}
           />
           {decide.length === 0 ? (
-            <Card sx={{ borderRadius: '12px', px: 2, py: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                {openCount === 0 ? 'Nothing is waiting on you.' : 'Nothing is due or returned.'}
-              </Typography>
-            </Card>
+            <Typography variant="body2" color="text.secondary" sx={{ px: 0.25 }}>
+              {openCount === 0
+                ? 'No decisions due. New assignments will appear here.'
+                : 'No items are due this week or returned to you.'}
+            </Typography>
           ) : (
             <Card
               sx={{
@@ -584,7 +585,7 @@ export default function ContributorDashboard({
             />
             <WorkCard
               kicker="Waiting"
-              label=""
+              label="Submitted, waiting on review"
               value={submittedCount}
               icon={<FactCheckRoundedIcon />}
               onClick={() => focusQueue('admin')}
@@ -621,7 +622,7 @@ export default function ContributorDashboard({
                 return (
                   <Box key={bucket.id}>
                     <Typography
-                      sx={{ fontWeight: 700, fontSize: '1.35rem', letterSpacing: '-0.03em', color, lineHeight: 1 }}
+                      sx={{ fontWeight: 600, fontSize: '1.35rem', letterSpacing: '-0.02em', color, lineHeight: 1 }}
                     >
                       {bucket.count}
                     </Typography>
@@ -690,12 +691,17 @@ export default function ContributorDashboard({
       <Box>
         <SectionHeader title="Submitted in the last 6 weeks" />
         <Card sx={{ borderRadius: '12px', boxShadow: '0 1px 2px rgba(23,23,23,0.04)', px: 2, py: 2 }}>
+          {data.weeklySubmitted.every((w) => w.submittedCount === 0) ? (
+            <Typography variant="body2" color="text.secondary">
+              Nothing submitted in the last 6 weeks.
+            </Typography>
+          ) : (
           <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ height: 132 }}>
             {data.weeklySubmitted.map((w) => {
               const bar = Math.max(w.submittedCount > 0 ? 8 : 4, (w.submittedCount / weekMax) * 88)
               return (
                 <Stack key={w.weekStart} spacing={0.5} alignItems="center" justifyContent="flex-end" sx={{ flex: 1, minWidth: 0, height: '100%' }}>
-                  <Typography sx={{ fontSize: '0.6875rem', fontWeight: 650, color: brand.goldDark, fontVariantNumeric: 'tabular-nums' }}>
+                  <Typography sx={{ fontSize: '0.6875rem', fontWeight: 600, color: brand.ink, fontVariantNumeric: 'tabular-nums' }}>
                     {w.submittedCount}
                   </Typography>
                   <Box
@@ -715,6 +721,7 @@ export default function ContributorDashboard({
               )
             })}
           </Stack>
+          )}
         </Card>
       </Box>
       </Box>
