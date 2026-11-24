@@ -34,3 +34,15 @@ dist/
 
 # Vite build copied into the JAR before mvn package (generated, do not commit)
 src/main/resources/static/
+
+# Claude Code
+.claude/
+.mcp.json
+frontend/.claude/
+frontend/.mcp.json
+
+# E2E
+e2e/
+
+# Build artifacts
+frontend/tsconfig.tsbuildinfo
