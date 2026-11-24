@@ -12,8 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 /**
  * SPA shell for JAR deploys (local smoke + Azure). Vite dev server is unaffected.
  * Favicons are mapped here because {@code GET /{nav}} would otherwise 404 {@code /favicon.ico}.
- * Older Chrome always fetches {@code /favicon.ico} and does not fall back to PNG {@code <link>}
- * tags. That path is PNG bytes (same 32x32 as {@code favicon-32.png}), not an ICO container.
+ * Older Chrome always fetches {@code /favicon.ico} and does not fall back to PNG {@code <link>} tags.
  */
 @Controller
 public class SpaShellController {
@@ -35,7 +34,7 @@ public class SpaShellController {
     @GetMapping("/favicon.ico")
     @ResponseBody
     public ResponseEntity<Resource> faviconIco() {
-        return classpathFile("static/favicon.ico", MediaType.IMAGE_PNG);
+        return classpathFile("static/favicon.ico", MediaType.parseMediaType("image/x-icon"));
     }
 
     @GetMapping("/favicon.svg")
