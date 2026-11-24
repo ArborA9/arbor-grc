@@ -23,6 +23,7 @@ import {
   Typography,
 } from '@mui/material'
 import LockRoundedIcon from '@mui/icons-material/LockRounded'
+import LogoMark from './components/ui/LogoMark'
 import {
   externalAuditPortalApi,
   type AuditPortalEvidenceItem,
@@ -272,22 +273,7 @@ export default function ExternalAuditPortal() {
         }}
       >
         <Stack direction="row" spacing={1} alignItems="center">
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: 1,
-              bgcolor: brand.accent,
-              color: '#fff',
-              fontWeight: 800,
-              fontSize: 13,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            A
-          </Box>
+          <LogoMark size={28} />
           <Box>
             <Typography variant="subtitle2" fontWeight={700}>
               Arbor GRC
