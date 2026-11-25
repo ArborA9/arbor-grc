@@ -4,13 +4,13 @@ import { semantic } from '../../theme'
 /** Decorative 3×3 risk heatmap: illustrative counts only. */
 const CELLS: { bg: string; text: string; count: number }[] = [
   { bg: semantic.heatmap.low, text: '#065F46', count: 2 },
-  { bg: semantic.heatmap.medium, text: '#92400E', count: 5 },
+  { bg: semantic.heatmap.medium, text: '#fff', count: 5 },
   { bg: semantic.heatmap.high, text: '#fff', count: 3 },
   { bg: semantic.heatmap.medHigh, text: '#92400E', count: 8 },
-  { bg: semantic.heatmap.medium, text: '#92400E', count: 12 },
+  { bg: semantic.heatmap.medium, text: '#fff', count: 12 },
   { bg: semantic.heatmap.low, text: '#065F46', count: 4 },
   { bg: semantic.heatmap.veryLow, text: '#64748B', count: 1 },
-  { bg: semantic.heatmap.medium, text: '#92400E', count: 6 },
+  { bg: semantic.heatmap.medium, text: '#fff', count: 6 },
   { bg: semantic.heatmap.high, text: '#fff', count: 2 },
 ]
 

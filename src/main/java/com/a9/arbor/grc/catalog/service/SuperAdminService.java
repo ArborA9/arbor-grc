@@ -2,6 +2,7 @@ package com.a9.arbor.grc.catalog.service;
 
 import com.a9.arbor.grc.catalog.domain.SuperAdmin;
 import com.a9.arbor.grc.catalog.domain.SuperAdminReset;
+import com.a9.arbor.grc.catalog.repo.SuperAdminMfaTotpRepository;
 import com.a9.arbor.grc.catalog.repo.SuperAdminRepository;
 import com.a9.arbor.grc.catalog.repo.SuperAdminResetRepository;
 import com.a9.arbor.grc.modules.iam.service.InvalidCredentialsException;
@@ -29,13 +30,16 @@ public class SuperAdminService {
 
     private final SuperAdminRepository repository;
     private final SuperAdminResetRepository resetRepository;
+    private final SuperAdminMfaTotpRepository mfaRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordPolicyService passwordPolicyService;
 
     public SuperAdminService(SuperAdminRepository repository, SuperAdminResetRepository resetRepository,
+                             SuperAdminMfaTotpRepository mfaRepository,
                              PasswordEncoder passwordEncoder, PasswordPolicyService passwordPolicyService) {
         this.repository = repository;
         this.resetRepository = resetRepository;
+        this.mfaRepository = mfaRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordPolicyService = passwordPolicyService;
     }
@@ -44,6 +48,13 @@ public class SuperAdminService {
         return repository.findByEmail(email)
                 .filter(sa -> "ACTIVE".equals(sa.getStatus()))
                 .filter(sa -> passwordEncoder.matches(rawPassword, sa.getPasswordHash()))
+                .orElseThrow(InvalidCredentialsException::new);
+    }
+
+    @Transactional(transactionManager = "catalogTransactionManager", readOnly = true)
+    public SuperAdmin requireActiveByEmail(String email) {
+        return repository.findByEmail(email)
+                .filter(sa -> "ACTIVE".equals(sa.getStatus()))
                 .orElseThrow(InvalidCredentialsException::new);
     }
 
@@ -91,7 +102,11 @@ public class SuperAdminService {
         admin.setPasswordHash(passwordEncoder.encode(rawPassword));
         admin.setStatus("ACTIVE");
         admin.setMustChangePassword(true);
-        repository.save(admin);
+        SuperAdmin saved = repository.save(admin);
+        // Option 1: emergency password reset also clears MFA so one ops action unlocks a lost authenticator.
+        if (saved.getId() != null) {
+            mfaRepository.deleteBySuperAdminId(saved.getId());
+        }
 
         SuperAdminReset applied = new SuperAdminReset();
         applied.setCodeHash(codeHash);

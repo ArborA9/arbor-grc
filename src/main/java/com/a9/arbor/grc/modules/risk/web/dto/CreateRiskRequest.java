@@ -69,7 +69,9 @@ public record CreateRiskRequest(
         Long sourceDpiaId,
         Long sourceRopaId,
         Long sourceDpiaAssessmentRowId,
-        @Size(max = 255) String processingActivity
+        @Size(max = 255) String processingActivity,
+        /** FCA Design × Performance rows (ERM / Unified). Replace-all on create. */
+        @Valid List<RiskControlRequest> controls
 ) {
     /** Existing call sites omit processing activity. JSON uses the canonical constructor. */
     @com.fasterxml.jackson.annotation.JsonIgnore
@@ -132,6 +134,6 @@ public record CreateRiskRequest(
                 sourceGapItemId, infosecStatusInitial, riskProjectId, dateIdentified, cause, residualScore,
                 targetControlEffectiveness, assignedContributorId, nextReviewDate, thirdPartyName,
                 treatmentJustification, compensatingControls, sourceDpiaId, sourceRopaId,
-                sourceDpiaAssessmentRowId, null);
+                sourceDpiaAssessmentRowId, null, null);
     }
 }

@@ -52,6 +52,8 @@ public record UpdateRiskRequest(
         java.time.LocalDate nextReviewDate,
         @Size(max = 512) String thirdPartyName,
         @Size(max = 8000) String treatmentJustification,
-        @Size(max = 8000) String compensatingControls
+        @Size(max = 8000) String compensatingControls,
+        /** When non-null, replace-all FCA control rows for ERM / Unified. */
+        @Valid List<RiskControlRequest> controls
 ) {
 }

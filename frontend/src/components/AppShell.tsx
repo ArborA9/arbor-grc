@@ -14,6 +14,7 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
@@ -21,6 +22,7 @@ import KeyboardDoubleArrowLeftRoundedIcon from '@mui/icons-material/KeyboardDoub
 import KeyboardDoubleArrowRightRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowRightRounded'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded'
+import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded'
 import { brand, layout } from '../theme'
@@ -34,6 +36,8 @@ import {
 
 const NAV_COLLAPSED_KEY = 'arbor.shell.navCollapsed'
 const NAV_LIST_ID = 'arbor-primary-nav'
+/** Below MUI `md` (900px): split-screen / narrow windows. Keep an icon rail, never hide nav. */
+const COMPACT_NAV_MQ = '(max-width:899.95px)'
 
 function readNavCollapsed(): boolean {
   try {
@@ -133,6 +137,9 @@ interface AppShellProps {
   onLogout: () => void
   /** Local accounts only. Hidden for SSO. Super Admin is always local. */
   canChangePassword?: boolean
+  /** Opens authenticator setup (Super Admin or tenant Owner/Admin). */
+  canSetupAuthenticator?: boolean
+  onSetupAuthenticator?: () => void
   superAdmin?: boolean
   children: ReactNode
 }
@@ -431,6 +438,8 @@ export default function AppShell({
   actions,
   onLogout,
   canChangePassword = false,
+  canSetupAuthenticator = false,
+  onSetupAuthenticator,
   superAdmin = false,
   children,
 }: AppShellProps) {
@@ -439,7 +448,13 @@ export default function AppShell({
   const [modulesOpen, setModulesOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const [navCollapsed, setNavCollapsed] = useState(readNavCollapsed)
+  /** On compact viewports, user may expand labels for this session without changing desktop preference. */
+  const [compactExpanded, setCompactExpanded] = useState(false)
   const [fullName, setFullName] = useState<string | null>(null)
+  const isCompactViewport = useMediaQuery(COMPACT_NAV_MQ, { noSsr: true })
+  useEffect(() => {
+    if (!isCompactViewport) setCompactExpanded(false)
+  }, [isCompactViewport])
   useEffect(() => {
     if (superAdmin) return
     let live = true
@@ -454,14 +469,21 @@ export default function AppShell({
   const initials = accountInitials(fullName, email)
   const moduleActive = active.startsWith(licensedModuleNavPrefix)
 
+  // Compact (split / narrow): icon rail by default; desktop: localStorage preference.
+  const navCollapsedEffective = isCompactViewport ? !compactExpanded : navCollapsed
+
   const setCollapsed = useCallback((next: boolean) => {
     setNavCollapsed(next)
     writeNavCollapsed(next)
   }, [])
 
   const toggleCollapsed = useCallback(() => {
+    if (isCompactViewport) {
+      setCompactExpanded((prev) => !prev)
+      return
+    }
     setCollapsed(!navCollapsed)
-  }, [navCollapsed, setCollapsed])
+  }, [isCompactViewport, navCollapsed, setCollapsed])
 
   useEffect(() => {
     if (hideSidebar) return
@@ -470,6 +492,10 @@ export default function AppShell({
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       e.preventDefault()
+      if (isCompactViewport) {
+        setCompactExpanded((prev) => !prev)
+        return
+      }
       setNavCollapsed((prev) => {
         const next = !prev
         writeNavCollapsed(next)
@@ -478,7 +504,7 @@ export default function AppShell({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [hideSidebar])
+  }, [hideSidebar, isCompactViewport])
 
   const isGroupOpen = (item: NavItem) => {
     if (openGroups[item.id] !== undefined) return openGroups[item.id]
@@ -491,7 +517,7 @@ export default function AppShell({
     setOpenGroups((prev) => ({ ...prev, [id]: !currentlyOpen }))
   }
 
-  const railWidth = navCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_WIDTH
+  const railWidth = navCollapsedEffective ? SIDEBAR_COLLAPSED : SIDEBAR_WIDTH
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', bgcolor: 'background.default' }}>
@@ -523,11 +549,12 @@ export default function AppShell({
         component="nav"
         aria-label="Primary"
         data-testid="shell-nav"
-        data-collapsed={navCollapsed ? 'true' : 'false'}
+        data-collapsed={navCollapsedEffective ? 'true' : 'false'}
+        data-compact={isCompactViewport ? 'true' : 'false'}
         sx={{
           width: railWidth,
           flexShrink: 0,
-          display: { xs: 'none', md: 'flex' },
+          display: 'flex',
           flexDirection: 'column',
           color: brand.ink,
           bgcolor: brand.sidebar,
@@ -541,14 +568,19 @@ export default function AppShell({
         {/* Header: logo + title with the collapse toggle at the right (Pattern 1).
             Collapsed: logo above, toggle below, so the control stays top-anchored in both states. */}
         <Stack
-          direction={navCollapsed ? 'column' : 'row'}
-          spacing={navCollapsed ? 0.75 : 1.25}
+          direction={navCollapsedEffective ? 'column' : 'row'}
+          spacing={navCollapsedEffective ? 0.75 : 1.25}
           alignItems="center"
-          justifyContent={navCollapsed ? 'center' : 'flex-start'}
-          sx={{ px: navCollapsed ? 0.75 : 1.5, pt: 2, pb: navCollapsed ? 1.25 : 1.5, minHeight: 52 }}
+          justifyContent={navCollapsedEffective ? 'center' : 'flex-start'}
+          sx={{
+            px: navCollapsedEffective ? 0.75 : 1.5,
+            pt: 2,
+            pb: navCollapsedEffective ? 1.25 : 1.5,
+            minHeight: 52,
+          }}
         >
-          <LogoMark size={navCollapsed ? 28 : 30} />
-          {!navCollapsed && (
+          <LogoMark size={navCollapsedEffective ? 28 : 30} />
+          {!navCollapsedEffective && (
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
               <Typography
                 sx={{
@@ -580,7 +612,7 @@ export default function AppShell({
           )}
           <Tooltip
             title={
-              navCollapsed
+              navCollapsedEffective
                 ? 'Expand navigation (Ctrl+\\)'
                 : 'Collapse navigation (Ctrl+\\)'
             }
@@ -592,8 +624,8 @@ export default function AppShell({
               component="button"
               type="button"
               data-testid="shell-nav-collapse"
-              aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-              aria-expanded={!navCollapsed}
+              aria-label={navCollapsedEffective ? 'Expand navigation' : 'Collapse navigation'}
+              aria-expanded={!navCollapsedEffective}
               aria-controls={NAV_LIST_ID}
               onClick={toggleCollapsed}
               sx={{
@@ -613,7 +645,7 @@ export default function AppShell({
                 '&:focus-visible': { outline: `2px solid ${brand.accent}`, outlineOffset: 1 },
               }}
             >
-              {navCollapsed ? (
+              {navCollapsedEffective ? (
                 <KeyboardDoubleArrowRightRoundedIcon sx={{ fontSize: 20 }} />
               ) : (
                 <KeyboardDoubleArrowLeftRoundedIcon sx={{ fontSize: 20 }} />
@@ -627,7 +659,12 @@ export default function AppShell({
         <Stack
           id={NAV_LIST_ID}
           spacing={0.2}
-          sx={{ p: navCollapsed ? 0.5 : 1, flexGrow: 1, overflow: 'auto', overflowX: 'hidden' }}
+          sx={{
+            p: navCollapsedEffective ? 0.5 : 1,
+            flexGrow: 1,
+            overflow: 'auto',
+            overflowX: 'hidden',
+          }}
           role="list"
         >
           {nav.map((item) => {
@@ -636,7 +673,7 @@ export default function AppShell({
               const childActive = item.children.some((c) => navContainsActive(c, active))
               const nestModulesHere = item.id === 'settings' && showLicensedModulesNav
               const settingsChildActive = childActive || (nestModulesHere && moduleActive)
-              if (navCollapsed) {
+              if (navCollapsedEffective) {
                 return (
                   <CollapsedCascadeParent
                     key={item.id}
@@ -798,7 +835,7 @@ export default function AppShell({
                 </Box>
               )
             }
-            if (navCollapsed) {
+            if (navCollapsedEffective) {
               return (
                 <CollapsedIconButton
                   key={item.id}
@@ -827,34 +864,34 @@ export default function AppShell({
 
         <Box
           sx={{
-            px: navCollapsed ? 0.5 : 1,
+            px: navCollapsedEffective ? 0.5 : 1,
             pt: 1,
             pb: 1.5,
             borderTop: `1px solid ${brand.hairline}`,
             display: 'flex',
             flexDirection: 'column',
             gap: 0.75,
-            alignItems: navCollapsed ? 'center' : 'stretch',
+            alignItems: navCollapsedEffective ? 'center' : 'stretch',
           }}
         >
           {workspaceName ? (
             <Tooltip
-              title={navCollapsed ? workspaceName : ''}
+              title={navCollapsedEffective ? workspaceName : ''}
               placement="right"
               enterDelay={400}
-              slotProps={navCollapsed ? collapsedNavTipSlotProps : undefined}
+              slotProps={navCollapsedEffective ? collapsedNavTipSlotProps : undefined}
             >
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: navCollapsed ? 'center' : 'flex-start',
+                  justifyContent: navCollapsedEffective ? 'center' : 'flex-start',
                   gap: 1,
-                  px: navCollapsed ? 0 : 1.25,
+                  px: navCollapsedEffective ? 0 : 1.25,
                   py: 1,
                   borderRadius: 0.75,
                   bgcolor: 'rgba(184, 134, 11, 0.06)',
-                  width: navCollapsed ? 40 : 'auto',
+                  width: navCollapsedEffective ? 40 : 'auto',
                   minHeight: 36,
                 }}
               >
@@ -867,7 +904,7 @@ export default function AppShell({
                     flexShrink: 0,
                   }}
                 />
-                {!navCollapsed && (
+                {!navCollapsedEffective && (
                   <Typography
                     sx={{
                       fontSize: '0.6875rem',
@@ -921,11 +958,7 @@ export default function AppShell({
                   ) : null}
                 </Box>
               </Box>
-            ) : (
-              <Box sx={{ display: { md: 'none' } }}>
-                <LogoMark size={26} />
-              </Box>
-            )}
+            ) : null}
             {!hideSidebar ? (
             <Box
               sx={{
@@ -1262,6 +1295,19 @@ export default function AppShell({
                     <LockResetRoundedIcon fontSize="small" />
                   </ListItemIcon>
                   Change Password
+                </MenuItem>
+              )}
+              {canSetupAuthenticator && onSetupAuthenticator && (
+                <MenuItem
+                  onClick={() => {
+                    setMenuEl(null)
+                    onSetupAuthenticator()
+                  }}
+                >
+                  <ListItemIcon>
+                    <VerifiedUserRoundedIcon fontSize="small" />
+                  </ListItemIcon>
+                  Set Up Authenticator
                 </MenuItem>
               )}
               <MenuItem

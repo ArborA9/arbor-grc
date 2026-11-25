@@ -171,6 +171,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || "/api/auth/password-link".equals(path)
                 || "/api/auth/sso/exchange".equals(path)
                 || "/api/auth/super-admin/login".equals(path)
+                || "/api/auth/super-admin/mfa/verify".equals(path)
                 || (path != null && path.startsWith("/api/auth/tenant/"));
     }
 }

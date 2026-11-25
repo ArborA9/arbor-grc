@@ -26,6 +26,8 @@ public class JwtService {
     /** Invite row id for a TPRM vendor-portal session. */
     public static final String CLAIM_VENDOR_TOKEN_ID = "vtid";
     public static final String PURPOSE_MFA_CHALLENGE = "mfa_challenge";
+    /** Present on Super Admin MFA challenge tokens (no tenant). Tenant MFA challenges omit this. */
+    public static final String CLAIM_SUPER_ADMIN_MFA = "sa_mfa";
     public static final String PURPOSE_VENDOR_PORTAL = "tprm_vendor";
 
     private final SecretKey key;
@@ -125,8 +127,30 @@ public class JwtService {
                 .compact();
     }
 
+    /** Short-lived token after Super Admin password check: only for {@code POST /api/auth/super-admin/mfa/verify}. */
+    public String issueSuperAdminMfaChallenge(String email) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(email)
+                .claim(CLAIM_PURPOSE, PURPOSE_MFA_CHALLENGE)
+                .claim(CLAIM_SUPER_ADMIN_MFA, true)
+                .claim(CLAIM_ROLES, List.of())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(mfaChallengeExpiryMinutes * 60)))
+                .signWith(key)
+                .compact();
+    }
+
     public static boolean isMfaChallenge(Claims claims) {
         return PURPOSE_MFA_CHALLENGE.equals(claims.get(CLAIM_PURPOSE, String.class));
+    }
+
+    public static boolean isSuperAdminMfaChallenge(Claims claims) {
+        if (!isMfaChallenge(claims)) {
+            return false;
+        }
+        Object flag = claims.get(CLAIM_SUPER_ADMIN_MFA);
+        return Boolean.TRUE.equals(flag) || "true".equalsIgnoreCase(String.valueOf(flag));
     }
 
     public Claims parse(String token) {

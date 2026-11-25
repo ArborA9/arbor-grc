@@ -11,6 +11,11 @@ public record CreateRiskProjectRequest(
         @NotNull RiskType projectType,
         @NotBlank @Size(max = 255) String name,
         @NotNull @Min(2000) @Max(2100) Integer year,
-        Long frameworkId
+        Long frameworkId,
+        /**
+         * Unified Risk only. When true, seed default risks from the framework library after create.
+         * Null or false = empty register (product default). Ignored for ERM / Privacy.
+         */
+        Boolean seedDefaultRisks
 ) {
 }

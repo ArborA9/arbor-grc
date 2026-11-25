@@ -454,14 +454,35 @@ export default function LoginView({
   const doMfaVerify = () =>
     run(async () => {
       if (!mfaToken) throw new Error('MFA challenge missing: sign in again')
-      const session = await api.verifyMfaLogin(tenantTrimmed, mfaToken, mfaCode.trim(), rememberMe)
+      const session = operator
+        ? await api.verifySuperAdminMfa(mfaToken, mfaCode.trim(), true)
+        : await api.verifyMfaLogin(tenantTrimmed, mfaToken, mfaCode.trim(), rememberMe)
       setMfaToken(null)
       setMfaCode('')
-      rememberSession()
+      if (!operator) rememberSession()
       return session
     })
 
-  const doSuperAdminLogin = () => run(() => api.superAdminLogin(saEmail.trim(), saPassword))
+  const doSuperAdminLogin = async () => {
+    setBusy(true)
+    setSigningIn(true)
+    setError('')
+    try {
+      const result = await api.superAdminLogin(saEmail.trim(), saPassword)
+      if ('mfaRequired' in result) {
+        setMfaToken(result.mfaToken)
+        setMfaCode('')
+        setSigningIn(false)
+        return
+      }
+      onLogin(result)
+    } catch (e) {
+      setSigningIn(false)
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
   const ssoReady = !!tenantTrimmed && ssoEnabled && !ssoChecking
 
   const rules = passwordRules(newPassword, linkStatus)
@@ -877,8 +898,13 @@ export default function LoginView({
 
               {!operator && resetToken && renderLinkPanel()}
 
-              {!operator && mfaToken && (
-                <Stack spacing={1.75} id="login-panel-mfa" role="tabpanel" aria-labelledby="login-tab-client">
+              {mfaToken && (
+                <Stack
+                  spacing={1.75}
+                  id={operator ? 'login-panel-sa-mfa' : 'login-panel-mfa'}
+                  role="tabpanel"
+                  aria-labelledby={operator ? 'login-tab-arbor' : 'login-tab-client'}
+                >
                   <Alert severity="info" variant="outlined">
                     Enter the 6-digit code from your authenticator app to finish signing in.
                   </Alert>
@@ -1004,7 +1030,7 @@ export default function LoginView({
                 </Stack>
               )}
 
-              {operator && (
+              {operator && !mfaToken && (
                 <Stack id="login-panel-arbor" role="tabpanel" aria-labelledby="login-tab-arbor" spacing={1.75}>
                   <Alert severity="info" variant="outlined" sx={{ py: 0.5 }}>
                     Platform operators: provision and administer client tenants.

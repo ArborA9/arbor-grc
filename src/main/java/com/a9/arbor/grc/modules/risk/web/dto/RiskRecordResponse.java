@@ -120,13 +120,17 @@ public record RiskRecordResponse(
         String orgUnitName,
         String riskOwnerName,
         String assignedContributorName,
-        String processingActivity
+        String processingActivity,
+        List<RiskControlResponse> controls,
+        Integer consolidatedControlScore,
+        String consolidatedControlLabel
 ) {
     public static RiskRecordResponse from(RiskRecord risk,
                                           TreatmentPlanResponse plan,
                                           RiskAcceptanceFormResponse acceptance,
                                           List<RiskFrameworkMappingResponse> mappings) {
-        return from(risk, plan, acceptance, mappings, null, null, null, null, null, null, null, null, null);
+        return from(risk, plan, acceptance, mappings, null, null, null, null, null, null, null, null, null,
+                List.of(), null, null);
     }
 
     public static RiskRecordResponse from(RiskRecord risk,
@@ -140,7 +144,7 @@ public record RiskRecordResponse(
                                           String residualRating,
                                           String residualAction) {
         return from(risk, plan, acceptance, mappings, inherentScore, inherentRating, inherentAction,
-                residualScore, residualRating, residualAction, null, null, null);
+                residualScore, residualRating, residualAction, null, null, null, List.of(), null, null);
     }
 
     public static RiskRecordResponse from(RiskRecord risk,
@@ -156,6 +160,27 @@ public record RiskRecordResponse(
                                           String orgUnitName,
                                           String riskOwnerName,
                                           String assignedContributorName) {
+        return from(risk, plan, acceptance, mappings, inherentScore, inherentRating, inherentAction,
+                residualScore, residualRating, residualAction, orgUnitName, riskOwnerName,
+                assignedContributorName, List.of(), null, null);
+    }
+
+    public static RiskRecordResponse from(RiskRecord risk,
+                                          TreatmentPlanResponse plan,
+                                          RiskAcceptanceFormResponse acceptance,
+                                          List<RiskFrameworkMappingResponse> mappings,
+                                          Integer inherentScore,
+                                          String inherentRating,
+                                          String inherentAction,
+                                          Integer residualScore,
+                                          String residualRating,
+                                          String residualAction,
+                                          String orgUnitName,
+                                          String riskOwnerName,
+                                          String assignedContributorName,
+                                          List<RiskControlResponse> controls,
+                                          Integer consolidatedControlScore,
+                                          String consolidatedControlLabel) {
         PriorityLevel priority = residualRating != null
                 ? PriorityLevel.fromExcelRating(residualRating)
                 : PriorityLevel.fromResidual(risk.getResidualRisk());
@@ -280,7 +305,10 @@ public record RiskRecordResponse(
                 orgUnitName,
                 riskOwnerName,
                 assignedContributorName,
-                risk.getProcessingActivity());
+                risk.getProcessingActivity(),
+                controls == null ? List.of() : controls,
+                consolidatedControlScore,
+                consolidatedControlLabel);
     }
 
     public static RiskRecordResponse from(RiskRecord risk) {

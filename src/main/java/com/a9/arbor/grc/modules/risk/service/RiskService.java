@@ -30,7 +30,10 @@ import com.a9.arbor.grc.modules.org.repo.OrgUnitRepository;
 import com.a9.arbor.grc.modules.risk.domain.AcceptanceDecision;
 import com.a9.arbor.grc.modules.risk.domain.EvaluationDecision;
 import com.a9.arbor.grc.modules.risk.domain.ExcelRiskScoring;
+import com.a9.arbor.grc.modules.risk.domain.FcaControlEffectiveness;
+import com.a9.arbor.grc.modules.risk.domain.FcaRiskMatrix;
 import com.a9.arbor.grc.modules.risk.domain.FinalRiskStatus;
+import com.a9.arbor.grc.modules.risk.domain.RiskControl;
 import com.a9.arbor.grc.modules.risk.domain.AcceptanceFormStatus;
 import com.a9.arbor.grc.modules.risk.domain.HeatMapScoreBasis;
 import com.a9.arbor.grc.modules.risk.domain.MatrixAxes;
@@ -55,6 +58,7 @@ import com.a9.arbor.grc.modules.risk.domain.TreatmentPlan;
 import com.a9.arbor.grc.modules.risk.domain.TreatmentPlanStatus;
 import com.a9.arbor.grc.modules.risk.domain.UaeIaPriority;
 import com.a9.arbor.grc.modules.risk.repo.RiskAcceptanceFormRepository;
+import com.a9.arbor.grc.modules.risk.repo.RiskControlRepository;
 import com.a9.arbor.grc.modules.risk.repo.RiskFrameworkMappingRepository;
 import com.a9.arbor.grc.modules.risk.repo.RiskScoreHistoryRepository;
 import com.a9.arbor.grc.modules.risk.repo.RiskStageNoteRepository;
@@ -73,6 +77,8 @@ import com.a9.arbor.grc.modules.risk.web.dto.CreateRiskStageNoteRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.CreateMilestoneRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.CreateRiskRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.FinalRiskStatusRequest;
+import com.a9.arbor.grc.modules.risk.web.dto.RiskControlRequest;
+import com.a9.arbor.grc.modules.risk.web.dto.RiskControlResponse;
 import com.a9.arbor.grc.modules.risk.web.dto.PostTreatmentRequest;
 import com.a9.arbor.grc.modules.risk.web.dto.EligibleContributorResponse;
 import com.a9.arbor.grc.modules.risk.web.dto.RejectValidationRequest;
@@ -135,6 +141,7 @@ public class RiskService {
     private final TreatmentPlanRepository treatmentPlanRepository;
     private final TreatmentMilestoneRepository milestoneRepository;
     private final RiskAcceptanceFormRepository acceptanceFormRepository;
+    private final RiskControlRepository riskControlRepository;
     private final RiskFrameworkMappingRepository frameworkMappingRepository;
     private final RiskScoreHistoryRepository scoreHistoryRepository;
     private final RiskStageNoteRepository stageNoteRepository;
@@ -165,6 +172,7 @@ public class RiskService {
                        TreatmentPlanRepository treatmentPlanRepository,
                        TreatmentMilestoneRepository milestoneRepository,
                        RiskAcceptanceFormRepository acceptanceFormRepository,
+                       RiskControlRepository riskControlRepository,
                        RiskFrameworkMappingRepository frameworkMappingRepository,
                        RiskScoreHistoryRepository scoreHistoryRepository,
                        RiskStageNoteRepository stageNoteRepository,
@@ -194,6 +202,7 @@ public class RiskService {
         this.treatmentPlanRepository = treatmentPlanRepository;
         this.milestoneRepository = milestoneRepository;
         this.acceptanceFormRepository = acceptanceFormRepository;
+        this.riskControlRepository = riskControlRepository;
         this.frameworkMappingRepository = frameworkMappingRepository;
         this.scoreHistoryRepository = scoreHistoryRepository;
         this.stageNoteRepository = stageNoteRepository;
@@ -363,18 +372,30 @@ public class RiskService {
             }
         }
         RiskLevel band = risk.getResidualRisk();
-        Integer residualScore = risk.getResidualScore();
-        if (residualScore != null) {
-            try {
-                band = ExcelRiskScoring.workflowLevel(gs, residualScore);
-            } catch (Exception ignored) {
-                // keep stored residual band
+        if (useFcaLookup(risk, gs)
+                && risk.getResidualProbability() != null
+                && risk.getResidualImpact() != null) {
+            band = FcaRiskMatrix.lookup(risk.getResidualProbability(), risk.getResidualImpact());
+        } else {
+            Integer residualScore = risk.getResidualScore();
+            if (residualScore != null) {
+                try {
+                    band = ExcelRiskScoring.workflowLevel(gs, residualScore);
+                } catch (Exception ignored) {
+                    // keep stored residual band
+                }
             }
         }
         if (band == null) {
             band = RiskLevel.MEDIUM;
         }
         return gs.clampRow(band);
+    }
+
+    private static boolean useFcaLookup(RiskRecord risk, MatrixGridSize gridSize) {
+        return risk.getRiskType() != null
+                && risk.getRiskType().usesFcaMatrixLabels()
+                && FcaRiskMatrix.appliesTo(gridSize);
     }
 
     /** Interactive heat map counts (J8 / §19.2): dimensions follow tenant matrix grid size. */
@@ -435,9 +456,15 @@ public class RiskService {
                 RiskLevel colLevel = heatCols[ci];
                 long count = counts[ri][ci];
                 total += count;
-                RiskLevel band = basis == HeatMapScoreBasis.INHERENT
-                        ? riskMatrixService.inherent(rowLevel, colLevel)
-                        : riskMatrixService.residual(rowLevel, colLevel);
+                RiskLevel band;
+                if (type.usesFcaMatrixLabels() && FcaRiskMatrix.appliesTo(gridSize)) {
+                    // ERM/Unified: cell colour from FCA L×I lookup (inherent and manual residual axes).
+                    band = FcaRiskMatrix.lookup(rowLevel, colLevel);
+                } else if (basis == HeatMapScoreBasis.INHERENT) {
+                    band = riskMatrixService.inherent(rowLevel, colLevel);
+                } else {
+                    band = riskMatrixService.residual(rowLevel, colLevel);
+                }
                 cells.add(new RiskHeatMapCellResponse(rowLevel, colLevel, ri, ci, count, band));
             }
         }
@@ -595,6 +622,10 @@ public class RiskService {
         notifyRiskOwnerNamed(risk, null);
 
         replaceAdditionalFrameworks(risk.getId(), req.additionalFrameworks());
+        if (req.controls() != null && type.usesFcaMatrixLabels()) {
+            replaceControls(risk, req.controls());
+            riskRepository.save(risk);
+        }
         applyTreatmentPlanDraft(risk, req.treatmentPlanDetail(), req.treatmentPlan());
         recordScoreHistory(risk, user, "Initial identification");
         if (req.assignedContributorId() != null
@@ -969,6 +1000,10 @@ public class RiskService {
         riskRepository.save(risk);
         if (req.additionalFrameworks() != null) {
             replaceAdditionalFrameworks(risk.getId(), req.additionalFrameworks());
+        }
+        if (req.controls() != null && risk.getRiskType().usesFcaMatrixLabels()) {
+            replaceControls(risk, req.controls());
+            riskRepository.save(risk);
         }
         if (req.treatmentPlanDetail() != null) {
             applyTreatmentPlanDraft(risk, req.treatmentPlanDetail(), req.treatmentPlan());
@@ -2293,38 +2328,71 @@ public class RiskService {
                 ? risk.getResidualScoringMode()
                 : ResidualScoringMode.MANUAL_PROBABILITY_IMPACT;
         try {
-            if (risk.getRiskProjectId() != null && risk.getInherentScore() != null) {
-                MatrixGridSize gs = riskMatrixService.currentGridSize();
-                inherentScore = risk.getInherentScore();
-                inherentRating = ExcelRiskScoring.rating(gs, inherentScore);
-                inherentAction = ExcelRiskScoring.action(gs, inherentScore);
+            MatrixGridSize gs = riskMatrixService.currentGridSize();
+            boolean fca = useFcaLookup(risk, gs);
+            if (risk.getProbability() != null && risk.getImpact() != null) {
+                inherentScore = risk.getInherentScore() != null
+                        ? risk.getInherentScore()
+                        : riskMatrixService.score(risk.getProbability(), risk.getImpact());
+                if (fca) {
+                    inherentRating = FcaRiskMatrix.ratingKey(risk.getProbability(), risk.getImpact());
+                    inherentAction = FcaRiskMatrix.action(risk.getProbability(), risk.getImpact());
+                } else if (risk.getInherentScore() != null && risk.getRiskProjectId() != null) {
+                    inherentRating = ExcelRiskScoring.rating(gs, inherentScore);
+                    inherentAction = ExcelRiskScoring.action(gs, inherentScore);
+                } else {
+                    inherentRating = riskMatrixService.rating(risk.getProbability(), risk.getImpact());
+                    inherentAction = riskMatrixService.action(risk.getProbability(), risk.getImpact());
+                }
+            }
+            if (mode == ResidualScoringMode.CONTROL_EFFECTIVENESS && !fca) {
                 if (risk.getResidualScore() != null) {
                     residualScore = risk.getResidualScore();
                     residualRating = ExcelRiskScoring.rating(gs, residualScore);
                     residualAction = ExcelRiskScoring.action(gs, residualScore);
+                } else {
+                    residualAction = "Control effectiveness × Inherent (auto)";
                 }
-            } else if (risk.getProbability() != null && risk.getImpact() != null) {
-                inherentScore = riskMatrixService.score(risk.getProbability(), risk.getImpact());
-                inherentRating = riskMatrixService.rating(risk.getProbability(), risk.getImpact());
-                inherentAction = riskMatrixService.action(risk.getProbability(), risk.getImpact());
-            }
-            if (risk.getRiskProjectId() != null && residualScore != null) {
-                // already filled from stored Excel scores
-            } else if (mode == ResidualScoringMode.CONTROL_EFFECTIVENESS) {
-                residualAction = "Control effectiveness × Inherent (auto)";
             } else {
                 RiskLevel rp = risk.getResidualProbability() != null
                         ? risk.getResidualProbability() : risk.getProbability();
                 RiskLevel ri = risk.getResidualImpact() != null
                         ? risk.getResidualImpact() : risk.getImpact();
                 if (rp != null && ri != null) {
-                    residualScore = riskMatrixService.score(rp, ri);
-                    residualRating = riskMatrixService.rating(rp, ri);
-                    residualAction = riskMatrixService.action(rp, ri);
+                    residualScore = risk.getResidualScore() != null
+                            ? risk.getResidualScore()
+                            : riskMatrixService.score(rp, ri);
+                    if (fca) {
+                        residualRating = FcaRiskMatrix.ratingKey(rp, ri);
+                        residualAction = FcaRiskMatrix.action(rp, ri);
+                    } else if (risk.getRiskProjectId() != null && risk.getResidualScore() != null) {
+                        residualRating = ExcelRiskScoring.rating(gs, residualScore);
+                        residualAction = ExcelRiskScoring.action(gs, residualScore);
+                    } else {
+                        residualRating = riskMatrixService.rating(rp, ri);
+                        residualAction = riskMatrixService.action(rp, ri);
+                    }
                 }
             }
         } catch (Exception ignored) {
             // Levels outside active axes (frozen legacy): leave Excel fields null.
+        }
+        List<RiskControlResponse> controlRows = List.of();
+        Integer consolidatedScore = null;
+        String consolidatedLabel = null;
+        if (risk.getRiskType() != null && risk.getRiskType().usesFcaMatrixLabels()) {
+            controlRows = riskControlRepository.findByRiskIdOrderBySortOrderAscIdAsc(risk.getId()).stream()
+                    .map(RiskControlResponse::from)
+                    .toList();
+            if (!controlRows.isEmpty()) {
+                List<Integer> scores = controlRows.stream().map(RiskControlResponse::score).toList();
+                boolean cap = controlRows.stream().anyMatch(c ->
+                        "Unsatisfactory".equalsIgnoreCase(c.performance()));
+                consolidatedScore = FcaControlEffectiveness.consolidate(scores, cap);
+                if (consolidatedScore != null) {
+                    consolidatedLabel = consolidatedScore + " · " + FcaControlEffectiveness.word(consolidatedScore);
+                }
+            }
         }
         return RiskRecordResponse.from(
                 risk, planResp, acc, mappings,
@@ -2332,7 +2400,55 @@ public class RiskService {
                 residualScore, residualRating, residualAction,
                 resolveOrgUnitName(risk.getOrgUnitId()),
                 resolveUserName(risk.getRiskOwnerUserId()),
-                resolveUserName(risk.getAssignedContributorId()));
+                resolveUserName(risk.getAssignedContributorId()),
+                controlRows,
+                consolidatedScore,
+                consolidatedLabel);
+    }
+
+    /**
+     * Replace-all FCA control rows; sync legacy CE + existingControls narrative from roll-up.
+     */
+    private void replaceControls(RiskRecord risk, List<RiskControlRequest> requests) {
+        riskControlRepository.deleteByRiskId(risk.getId());
+        if (requests == null || requests.isEmpty()) {
+            return;
+        }
+        List<Integer> scores = new java.util.ArrayList<>();
+        boolean anyUnsatPerf = false;
+        StringBuilder narrative = new StringBuilder();
+        int order = 0;
+        for (RiskControlRequest req : requests) {
+            FcaControlEffectiveness.Axis design = FcaControlEffectiveness.Axis.parse(req.design());
+            FcaControlEffectiveness.Axis performance = FcaControlEffectiveness.Axis.parse(req.performance());
+            int score = FcaControlEffectiveness.score(design, performance);
+            scores.add(score);
+            if (performance == FcaControlEffectiveness.Axis.UNSATISFACTORY) {
+                anyUnsatPerf = true;
+            }
+            String description = req.description() == null || req.description().isBlank()
+                    ? "Control assessment"
+                    : req.description().trim();
+            RiskControl row = new RiskControl();
+            row.setRiskId(risk.getId());
+            row.setSortOrder(order++);
+            row.setDescription(description);
+            row.setDesign(design.name());
+            row.setPerformance(performance.name());
+            row.setControlGap(blankToNull(req.controlGap()));
+            riskControlRepository.save(row);
+            if (!narrative.isEmpty()) {
+                narrative.append("\n");
+            }
+            narrative.append(description);
+        }
+        Integer consolidated = FcaControlEffectiveness.consolidate(scores, anyUnsatPerf);
+        if (consolidated != null) {
+            risk.setControlEffectiveness(FcaControlEffectiveness.toLegacyLevel(consolidated));
+        }
+        if (!narrative.isEmpty()) {
+            risk.setExistingControls(narrative.toString());
+        }
     }
 
     private RiskAcceptanceFormResponse toAcceptanceResponse(RiskAcceptanceForm form) {
@@ -2699,10 +2815,10 @@ public class RiskService {
                     : ResidualScoringMode.MANUAL_PROBABILITY_IMPACT;
         }
         risk.setResidualScoringMode(resolved);
-        // Unified Risk / IS project risks keep typed residual score; ERM uses residual L×I.
+        // Privacy project risks keep typed residual score; ERM + Unified use residual L×I.
         if (risk.getRiskProjectId() != null
                 && resolved == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT
-                && risk.getRiskType() != RiskType.ERM) {
+                && !risk.getRiskType().usesFcaMatrixLabels()) {
             return;
         }
         if (resolved == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT) {
@@ -2730,7 +2846,7 @@ public class RiskService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Residual Likelihood and Impact are required");
             }
-            if (risk.getRiskType() == RiskType.ERM
+            if (risk.getRiskType().usesFcaMatrixLabels()
                     && risk.getProbability() != null
                     && risk.getImpact() != null) {
                 ExcelRiskScoring.requireResidualAxesWithinAnalysis(
@@ -2780,14 +2896,25 @@ public class RiskService {
                 return;
             }
         }
-        RiskLevel inherent = riskMatrixService.inherent(risk.getProbability(), risk.getImpact());
+        RiskLevel inherent;
         RiskLevel residual;
-        if (mode == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT) {
-            residual = riskMatrixService.residualProbabilityImpact(
-                    risk.getResidualProbability(), risk.getResidualImpact());
+        if (useFcaLookup(risk, size)) {
+            inherent = FcaRiskMatrix.lookup(risk.getProbability(), risk.getImpact());
+            if (mode == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT) {
+                residual = FcaRiskMatrix.lookup(risk.getResidualProbability(), risk.getResidualImpact());
+            } else {
+                residual = RiskMatrix.residualFromControlEffectiveness(
+                        risk.getControlEffectiveness(), inherent);
+            }
         } else {
-            residual = RiskMatrix.residualFromControlEffectiveness(
-                    risk.getControlEffectiveness(), inherent);
+            inherent = riskMatrixService.inherent(risk.getProbability(), risk.getImpact());
+            if (mode == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT) {
+                residual = riskMatrixService.residualProbabilityImpact(
+                        risk.getResidualProbability(), risk.getResidualImpact());
+            } else {
+                residual = RiskMatrix.residualFromControlEffectiveness(
+                        risk.getControlEffectiveness(), inherent);
+            }
         }
         risk.setInherentRisk(inherent);
         risk.setResidualRisk(residual);
@@ -2807,7 +2934,7 @@ public class RiskService {
             }
             reduction = ExcelRiskScoring.reductionPercent(size, axes, risk.getControlEffectiveness());
             residualScore = ExcelRiskScoring.residualScore(inherentScore, reduction);
-        } else if (risk.getRiskType() == RiskType.ERM) {
+        } else if (risk.getRiskType().usesFcaMatrixLabels()) {
             RiskLevel rp = risk.getResidualProbability();
             RiskLevel ri = risk.getResidualImpact();
             if (rp == null) {
@@ -2832,18 +2959,43 @@ public class RiskService {
         risk.setInherentScore(inherentScore);
         risk.setResidualScore(residualScore);
         risk.setRiskReductionPct(java.math.BigDecimal.valueOf(reduction));
-        risk.setInherentRisk(ExcelRiskScoring.workflowLevel(size, inherentScore));
-        risk.setResidualRisk(ExcelRiskScoring.workflowLevel(size, residualScore));
-        risk.setWithinAppetite(residualScore <= ExcelRiskScoring.appetiteMaxResidual(size, appetite));
-        risk.setEvaluationDecision(ExcelRiskScoring.evaluation(size, residualScore, appetite));
+        if (useFcaLookup(risk, size)) {
+            RiskLevel inherentBand = FcaRiskMatrix.lookup(risk.getProbability(), risk.getImpact());
+            RiskLevel residualBand;
+            if (mode == ResidualScoringMode.MANUAL_PROBABILITY_IMPACT
+                    || risk.getRiskType().usesFcaMatrixLabels()) {
+                RiskLevel rp = risk.getResidualProbability() != null
+                        ? risk.getResidualProbability() : risk.getProbability();
+                RiskLevel ri = risk.getResidualImpact() != null
+                        ? risk.getResidualImpact() : risk.getImpact();
+                residualBand = FcaRiskMatrix.lookup(rp, ri);
+            } else {
+                residualBand = ExcelRiskScoring.workflowLevel(size, residualScore);
+            }
+            risk.setInherentRisk(inherentBand);
+            risk.setResidualRisk(residualBand);
+            risk.setWithinAppetite(FcaRiskMatrix.withinAppetite(residualBand, appetite));
+            risk.setEvaluationDecision(FcaRiskMatrix.evaluation(residualBand, appetite));
+        } else {
+            risk.setInherentRisk(ExcelRiskScoring.workflowLevel(size, inherentScore));
+            risk.setResidualRisk(ExcelRiskScoring.workflowLevel(size, residualScore));
+            risk.setWithinAppetite(residualScore <= ExcelRiskScoring.appetiteMaxResidual(size, appetite));
+            risk.setEvaluationDecision(ExcelRiskScoring.evaluation(size, residualScore, appetite));
+        }
         if (risk.getTargetControlEffectiveness() != null && axes.isActive(risk.getTargetControlEffectiveness())) {
             int target = ExcelRiskScoring.residualScore(
                     size, axes, inherentScore, risk.getTargetControlEffectiveness());
             risk.setTargetResidualScore(target);
             risk.setTargetResidualManual(false);
             if (risk.getTargetResidualScore() != null) {
-                risk.setTargetWithinAppetite(
-                        risk.getTargetResidualScore() <= ExcelRiskScoring.appetiteMaxResidual(size, appetite));
+                if (useFcaLookup(risk, size)) {
+                    // Target CE path still stores a product score; appetite vs product for target only.
+                    risk.setTargetWithinAppetite(
+                            risk.getTargetResidualScore() <= ExcelRiskScoring.appetiteMaxResidual(size, appetite));
+                } else {
+                    risk.setTargetWithinAppetite(
+                            risk.getTargetResidualScore() <= ExcelRiskScoring.appetiteMaxResidual(size, appetite));
+                }
             }
         }
         risk.setAcceptanceRequired(ExcelRiskScoring.acceptanceSheetRequired(

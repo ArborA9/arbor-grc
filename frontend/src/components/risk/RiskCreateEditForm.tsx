@@ -52,6 +52,7 @@ import {
   ERM_LIKELIHOOD_LABEL,
   fmtErmRating,
 } from './ermRiskLabels'
+import { FcaControlsEditor } from './FcaControlsEditor'
 import ReferenceAttachmentField from './ReferenceAttachmentField'
 import RiskRecordCreateProgress from './RiskRecordCreateProgress'
 import { RISK_INPUT_ID } from './riskFormRequired'
@@ -169,6 +170,11 @@ export type RiskCreateEditFormProps = {
   setAutoCloseJustification: (v: string) => void
   existingControls: string
   setExistingControls: (v: string) => void
+  /** FCA Design × Performance (ERM / Unified). */
+  fcaDesign?: import('./fcaRiskMatrix').FcaControlAxis
+  setFcaDesign?: (v: import('./fcaRiskMatrix').FcaControlAxis) => void
+  fcaPerformance?: import('./fcaRiskMatrix').FcaControlAxis
+  setFcaPerformance?: (v: import('./fcaRiskMatrix').FcaControlAxis) => void
   infosecStatusInitial: string
   setInfosecStatusInitial: (v: string) => void
   treatmentOption: TreatmentOption
@@ -253,12 +259,14 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
   } = props
   const err = (id: string) => props.fieldErrors[id] || undefined
   const clear = (id: string) => props.clearFieldError(id)
+  // ERM + Unified Risk: FCA labels and L×I manual residual. Privacy keeps typed score.
+  const useFcaMatrix = isErm || !isPrivacy
 
   const likelihoodLabel = (l: RiskLevel) =>
-    isErm ? ERM_LIKELIHOOD_LABEL[l] : (LIKELIHOOD_EXCEL_LABEL[l] ?? fmtLevel(l))
+    useFcaMatrix ? ERM_LIKELIHOOD_LABEL[l] : (LIKELIHOOD_EXCEL_LABEL[l] ?? fmtLevel(l))
   const impactLabel = (l: RiskLevel) =>
-    isErm ? ERM_IMPACT_LABEL[l] : (LIKELIHOOD_EXCEL_LABEL[l] ?? fmtLevel(l))
-  const ratingLabel = (band: string) => (isErm ? fmtErmRating(band) : fmtLevel(band))
+    useFcaMatrix ? ERM_IMPACT_LABEL[l] : (LIKELIHOOD_EXCEL_LABEL[l] ?? fmtLevel(l))
+  const ratingLabel = (band: string) => (useFcaMatrix ? fmtErmRating(band) : fmtLevel(band))
   const levelOptions = scoreLevels.map((l) => ({
     value: l,
     label: likelihoodLabel(l),
@@ -717,7 +725,10 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              md: 'minmax(0, 0.88fr) minmax(0, 0.88fr) minmax(0, 1.24fr)',
+              // FCA: widen Existing controls so Design / Performance fit without squeeze.
+              md: useFcaMatrix
+                ? 'minmax(0, 0.85fr) minmax(0, 1.2fr) minmax(0, 0.95fr)'
+                : 'minmax(0, 0.88fr) minmax(0, 0.88fr) minmax(0, 1.24fr)',
             },
             gap: 1.25,
             alignItems: 'stretch',
@@ -748,8 +759,8 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                   <FormSelect
                     label={scaledExcelField('likelihood', matrixGridSize)}
                     wrapLabel
-                    minWidth={isErm ? 168 : 128}
-                    maxWidth={isErm ? 200 : 140}
+                    minWidth={useFcaMatrix ? 168 : 128}
+                    maxWidth={useFcaMatrix ? 200 : 140}
                     value={props.probability}
                     options={levelOptions}
                     onChange={(v) => props.setProbability(v as RiskLevel)}
@@ -777,39 +788,64 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
           </Box>
 
           <Box id="risk-form-controls" sx={sectionAnchorSx}>
-            <SettingsCard compact titleCaps title="Existing controls" subtitle="What is already in place">
+            <SettingsCard
+              compact
+              titleCaps
+              title="Existing controls"
+              subtitle={
+                useFcaMatrix
+                  ? 'Rate Design and Performance'
+                  : 'What is already in place'
+              }
+            >
               <Stack spacing={1.5}>
-                <CompactTextField
-                  label={EXCEL_FIELD.existingControls}
-                  wrapLabel
-                  multiline
-                  minRows={2}
-                  maxRows={NARRATIVE_MAX_ROWS}
-                  value={props.existingControls}
-                  onChange={(e) => props.setExistingControls(e.target.value)}
-                />
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
-                    gap: 1.5,
-                    alignItems: 'start',
-                  }}
-                >
-                  <FormSelect
-                    label={scaledExcelField('controlEffectiveness', matrixGridSize)}
-                    wrapLabel
-                    value={props.controlEff}
-                    options={ceOptions}
-                    onChange={(v) => props.setControlEff(v as RiskLevel)}
+                {useFcaMatrix &&
+                props.fcaDesign &&
+                props.setFcaDesign &&
+                props.fcaPerformance &&
+                props.setFcaPerformance ? (
+                  <FcaControlsEditor
+                    design={props.fcaDesign}
+                    performance={props.fcaPerformance}
+                    onDesignChange={props.setFcaDesign}
+                    onPerformanceChange={props.setFcaPerformance}
+                    disabled={props.formBusy}
                   />
-                  <Box>
-                    <FormFieldLabel wrap>{EXCEL_FIELD.riskReduction}</FormFieldLabel>
-                    <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
-                      <Typography variant="body2">{props.previewReductionPct || '-'}</Typography>
+                ) : (
+                  <>
+                    <CompactTextField
+                      label={EXCEL_FIELD.existingControls}
+                      wrapLabel
+                      multiline
+                      minRows={2}
+                      maxRows={NARRATIVE_MAX_ROWS}
+                      value={props.existingControls}
+                      onChange={(e) => props.setExistingControls(e.target.value)}
+                    />
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
+                        gap: 1.5,
+                        alignItems: 'start',
+                      }}
+                    >
+                      <FormSelect
+                        label={scaledExcelField('controlEffectiveness', matrixGridSize)}
+                        wrapLabel
+                        value={props.controlEff}
+                        options={ceOptions}
+                        onChange={(v) => props.setControlEff(v as RiskLevel)}
+                      />
+                      <Box>
+                        <FormFieldLabel wrap>{EXCEL_FIELD.riskReduction}</FormFieldLabel>
+                        <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body2">{props.previewReductionPct || '-'}</Typography>
+                        </Box>
+                      </Box>
                     </Box>
-                  </Box>
-                </Box>
+                  </>
+                )}
               </Stack>
             </SettingsCard>
           </Box>
@@ -827,6 +863,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
               }
             >
               <Stack spacing={1}>
+                {!useFcaMatrix ? (
                 <FormControlLabel
                   sx={{ m: 0, alignItems: 'center' }}
                   control={
@@ -837,10 +874,6 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                         props.setResidualScoringMode(
                           manual ? 'MANUAL_PROBABILITY_IMPACT' : 'CONTROL_EFFECTIVENESS',
                         )
-                        if (manual && isErm) {
-                          props.setResidualProbability(props.probability)
-                          props.setResidualImpact(props.impact)
-                        }
                       }}
                       size="small"
                       sx={{ py: 0 }}
@@ -852,8 +885,9 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                     </Typography>
                   }
                 />
-                {props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
-                  isErm ? (
+                ) : null}
+                {props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' || useFcaMatrix ? (
+                  useFcaMatrix ? (
                     <Box
                       sx={{
                         display: 'grid',
@@ -911,7 +945,7 @@ export default function RiskCreateEditForm(props: RiskCreateEditFormProps) {
                     </Box>
                   </Box>
                 )}
-                {isErm && props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
+                {useFcaMatrix && props.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? (
                   <Box>
                     <FormFieldLabel wrap>{EXCEL_FIELD.residualScore}</FormFieldLabel>
                     <Box sx={{ minHeight: 32, display: 'flex', alignItems: 'center' }}>

@@ -42,6 +42,12 @@ public class RiskProjectController {
         return projectService.list(currentUser(authentication), projectType);
     }
 
+    @GetMapping("/default-seed-count")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    public java.util.Map<String, Integer> defaultSeedCount(@RequestParam long frameworkId) {
+        return java.util.Map.of("count", projectService.defaultSeedCount(frameworkId));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('OWNER','ADMIN','GLOBAL_READER','CONTRIBUTOR','INTERNAL_AUDITOR','EXTERNAL_AUDITOR')")
     public RiskProjectResponse get(@PathVariable long id) {
@@ -53,6 +59,12 @@ public class RiskProjectController {
     public RiskProjectResponse create(Authentication authentication,
                                       @Valid @RequestBody CreateRiskProjectRequest request) {
         return projectService.create(adminUser(authentication), request);
+    }
+
+    @PostMapping("/{id}/seed-defaults")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    public RiskProjectResponse seedDefaults(Authentication authentication, @PathVariable long id) {
+        return projectService.seedDefaults(adminUser(authentication), id);
     }
 
     @PutMapping("/{id}/status")

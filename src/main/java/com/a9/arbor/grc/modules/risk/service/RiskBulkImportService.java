@@ -255,7 +255,7 @@ public class RiskBulkImportService {
                 row.probability(),
                 "Likelihood",
                 scale,
-                type == RiskType.ERM
+                type.usesFcaMatrixLabels()
                         ? RiskBulkImportWorkbook.ERM_LIKELIHOOD_LABEL
                         : RiskBulkImportWorkbook.LEVEL_LABEL);
         RiskLevel impact = level(row.impact(), "Impact", scale, RiskBulkImportWorkbook.LEVEL_LABEL);
