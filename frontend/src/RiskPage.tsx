@@ -133,7 +133,17 @@ import {
   fmtErmLikelihood,
   fmtErmImpact,
   fmtErmRating,
+  usesFcaMatrixLabels,
 } from './components/risk/ermRiskLabels'
+import {
+  fcaAction,
+  fcaAutoClosable,
+  fcaControlScore,
+  fcaLookup,
+  fcaWithinAppetite,
+  type FcaControlAxis,
+} from './components/risk/fcaRiskMatrix'
+import { fcaScoreToRiskLevel } from './components/risk/FcaControlsEditor'
 import {
   CE_EXCEL_LABEL,
   LIKELIHOOD_EXCEL_LABEL,
@@ -235,17 +245,17 @@ function riskEvidenceStageFor(r: RiskSummary): RiskEvidenceStage {
   return 'TREATMENT'
 }
 
-function priorityFromResidual(r: RiskLevel, gridSize: MatrixGridSize, isErm: boolean): string {
+function priorityFromResidual(r: RiskLevel, gridSize: MatrixGridSize, useFcaMatrix: boolean): string {
   const band = foldBandToGrid(r, gridSize)
-  return isErm ? fmtErmRating(band) : fmtLevel(band)
+  return useFcaMatrix ? fmtErmRating(band) : fmtLevel(band)
 }
 
-function drillFilterLabel(d: RiskHeatMapDrill | null, isErm: boolean): string | null {
+function drillFilterLabel(d: RiskHeatMapDrill | null, useFcaMatrix: boolean): string | null {
   if (!d) return null
   const row = d.scoreBasis === 'INHERENT' ? 'Likelihood' : 'Residual likelihood'
   const col = d.scoreBasis === 'INHERENT' ? 'Impact' : 'Inherent risk'
-  const rowLabel = isErm ? fmtErmLikelihood(d.rowLevel) : fmtLevel(d.rowLevel)
-  const colLabel = isErm ? fmtErmImpact(d.colLevel) : fmtLevel(d.colLevel)
+  const rowLabel = useFcaMatrix ? fmtErmLikelihood(d.rowLevel) : fmtLevel(d.rowLevel)
+  const colLabel = useFcaMatrix ? fmtErmImpact(d.colLevel) : fmtLevel(d.colLevel)
   return `${row} ${rowLabel} × ${col} ${colLabel}`
 }
 function fmtWhen(iso: string | null | undefined): string {
@@ -645,6 +655,7 @@ export default function RiskPage({
 }) {
   const isErm = riskType === 'ERM'
   const isPrivacy = riskType === 'PRIVACY_RISK'
+  const useFcaMatrix = usesFcaMatrixLabels(riskType)
   const cats = isErm ? ERM_CATS : IS_CATS
   const canAdmin = session.roles.some((r) => ['OWNER', 'ADMIN'].includes(r))
   const canExport = session.roles.some((r) => ['OWNER', 'ADMIN'].includes(r))
@@ -726,6 +737,9 @@ export default function RiskPage({
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectYear, setNewProjectYear] = useState(String(new Date().getFullYear()))
   const [newProjectFrameworkId, setNewProjectFrameworkId] = useState<number | ''>('')
+  /** Unified Risk: off by default - empty project unless Admin opts in. */
+  const [newProjectSeedDefaults, setNewProjectSeedDefaults] = useState(false)
+  const [newProjectSeedCount, setNewProjectSeedCount] = useState<number | null>(null)
   const [projectCreating, setProjectCreating] = useState(false)
   const [seedProgress, setSeedProgress] = useState({ done: 0, total: 0 })
   const [postTargetCe, setPostTargetCe] = useState<RiskLevel | ''>('')
@@ -735,6 +749,8 @@ export default function RiskPage({
   const [residualProbability, setResidualProbability] = useState<RiskLevel>('MEDIUM')
   const [residualImpact, setResidualImpact] = useState<RiskLevel>('MEDIUM')
   const [existingControls, setExistingControls] = useState('')
+  const [fcaDesign, setFcaDesign] = useState<FcaControlAxis>('SATISFACTORY')
+  const [fcaPerformance, setFcaPerformance] = useState<FcaControlAxis>('SATISFACTORY')
   const [treatmentOption, setTreatmentOption] = useState<TreatmentOption>('TREAT')
   const [treatmentPlan, setTreatmentPlan] = useState('')
   const [planActionOwnerId, setPlanActionOwnerId] = useState<number | ''>('')
@@ -831,39 +847,43 @@ export default function RiskPage({
   )
   const scoreLevels = useMemo(() => activeScoreLevels(matrixAxes), [matrixAxes])
   const formatRiskBand = (band: string | null | undefined) =>
-    isErm ? fmtErmRating(band) : fmtLevel(band)
+    useFcaMatrix ? fmtErmRating(band) : fmtLevel(band)
   const formatLikelihood = (level: string | null | undefined) =>
-    isErm ? fmtErmLikelihood(level) : fmtLevel(level)
+    useFcaMatrix ? fmtErmLikelihood(level) : fmtLevel(level)
   const formatImpact = (level: string | null | undefined) =>
-    isErm ? fmtErmImpact(level) : fmtLevel(level)
-  // ERM manual residual: keep residual L/I within Risk Analysis axes.
+    useFcaMatrix ? fmtErmImpact(level) : fmtLevel(level)
+  // FCA manual residual: keep residual L/I within Risk Analysis axes.
   useEffect(() => {
-    if (!isErm) return
+    if (!useFcaMatrix) return
     if (rowRank(matrixAxes, residualProbability) > rowRank(matrixAxes, probability)) {
       setResidualProbability(probability)
     }
     if (colRank(matrixAxes, residualImpact) > colRank(matrixAxes, impact)) {
       setResidualImpact(impact)
     }
-  }, [isErm, matrixAxes, probability, impact, residualProbability, residualImpact])
+  }, [useFcaMatrix, matrixAxes, probability, impact, residualProbability, residualImpact])
   const axesValid =
     hasDistinctLevels(editRowLevels) &&
     hasDistinctLevels(editColLevels) &&
     editRowLevels.length === editGridSize &&
     editColLevels.length === editGridSize
 
-  const previewInherent = calcInherent(inherentGrid, matrixAxes, probability, impact)
+  const useFcaLookup = useFcaMatrix && matrixGridSize === 5
+  const previewInherent = useFcaLookup
+    ? fcaLookup(probability, impact)
+    : calcInherent(inherentGrid, matrixAxes, probability, impact)
   const residualCeGrid = useMemo(
     () => defaultResidualCe(matrixGridSize, matrixAxes),
     [matrixGridSize, matrixAxes],
   )
-  const previewResidual =
-    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT'
+  const previewResidual = useFcaLookup
+    ? fcaLookup(residualProbability, residualImpact)
+    : residualScoringMode === 'MANUAL_PROBABILITY_IMPACT'
       ? calcResidualPi(matrixAxes, residualProbability, residualImpact)
       : calcResidual(residualCeGrid, matrixAxes, controlEff, previewInherent)
   const previewInherentScore = excelScore(matrixAxes, probability, impact)
   const residualManualError =
-    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && !isErm
+    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && !useFcaMatrix
       ? excelManualScoreError(manualResidualScore, matrixGridSize, {
           required: true,
           max: previewInherentScore,
@@ -873,42 +893,58 @@ export default function RiskPage({
     previewInherentScore,
     ceReductionPercent(matrixGridSize, colRank(matrixAxes, controlEff)),
   )
-  const ermManualResidualScore =
-    residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && isErm
-      ? excelScore(matrixAxes, residualProbability, residualImpact)
-      : null
+  const fcaManualResidualScore = useFcaMatrix
+    ? excelScore(matrixAxes, residualProbability, residualImpact)
+    : null
   const previewResidualScore =
-    ermManualResidualScore != null
-      ? ermManualResidualScore
+    fcaManualResidualScore != null
+      ? fcaManualResidualScore
       : residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' && !residualManualError
         ? Number(manualResidualScore)
         : autoPreviewResidual
-  const previewInherentBand = excelBandLabel(matrixGridSize, previewInherentScore)
-  const previewResidualBand =
-    previewResidualScore != null
+  const previewInherentBand = useFcaLookup
+    ? fcaLookup(probability, impact)
+    : excelBandLabel(matrixGridSize, previewInherentScore)
+  const previewResidualBand = useFcaLookup
+    ? fcaLookup(residualProbability, residualImpact)
+    : previewResidualScore != null
       ? excelBandLabel(matrixGridSize, previewResidualScore)
       : fmtLevel(previewResidual)
-  const previewInherentAction = excelAction(matrixGridSize, previewInherentScore)
-  const previewResidualAction =
-    previewResidualScore != null
+  const previewInherentAction = useFcaLookup
+    ? fcaAction(probability, impact)
+    : excelAction(matrixGridSize, previewInherentScore)
+  const previewResidualAction = useFcaLookup
+    ? fcaAction(residualProbability, residualImpact)
+    : previewResidualScore != null
       ? excelAction(matrixGridSize, previewResidualScore)
       : `${CONTROL_EFFECTIVENESS_LABEL} × Inherent (auto)`
-  const previewPriority = priorityFromResidual(previewResidual, matrixGridSize, isErm)
-  const willAutoClose = excelAutoClosable(matrixGridSize, previewResidualScore)
+  const previewPriority = priorityFromResidual(previewResidual, matrixGridSize, useFcaMatrix)
+  const appetiteLevel = (matrixMeta?.appetiteRating as RiskLevel | undefined) ?? 'LOW'
+  const willAutoClose = useFcaLookup
+    ? fcaAutoClosable(previewResidual)
+    : excelAutoClosable(matrixGridSize, previewResidualScore)
   const appetiteMax =
     matrixMeta?.appetiteMaxResidual ??
-    appetiteMaxResidual(matrixGridSize, (matrixMeta?.appetiteRating as RiskLevel | undefined) ?? 'LOW')
+    appetiteMaxResidual(matrixGridSize, appetiteLevel)
   const previewReductionPct = `${Math.round(
     ceReductionPercent(matrixGridSize, colRank(matrixAxes, controlEff)) * 100,
   )}%`
   const previewWithinAppetite = withinAppetiteLabel(
-    previewResidualScore != null ? previewResidualScore <= appetiteMax : null,
+    useFcaLookup
+      ? fcaWithinAppetite(previewResidual, appetiteLevel)
+      : previewResidualScore != null
+        ? previewResidualScore <= appetiteMax
+        : null,
   )
   const previewEvalDecision = willAutoClose
     ? evaluationDecisionLabel('AUTO_CLOSE')
-    : previewResidualScore != null && previewResidualScore <= appetiteMax
-      ? evaluationDecisionLabel('MONITOR')
-      : evaluationDecisionLabel('TREATMENT_REQUIRED')
+    : useFcaLookup
+      ? fcaWithinAppetite(previewResidual, appetiteLevel)
+        ? evaluationDecisionLabel('MONITOR')
+        : evaluationDecisionLabel('TREATMENT_REQUIRED')
+      : previewResidualScore != null && previewResidualScore <= appetiteMax
+        ? evaluationDecisionLabel('MONITOR')
+        : evaluationDecisionLabel('TREATMENT_REQUIRED')
   const previewTargetResidualScore = autoResidualScore(
     previewInherentScore,
     ceReductionPercent(matrixGridSize, colRank(matrixAxes, targetControlEff)),
@@ -1179,6 +1215,26 @@ export default function RiskPage({
   }, [isErm, selectedProjectId, projects, formMode])
 
   useEffect(() => {
+    if (isErm || isPrivacy || newProjectFrameworkId === '') {
+      setNewProjectSeedCount(null)
+      return
+    }
+    let cancelled = false
+    setNewProjectSeedCount(null)
+    void api
+      .getRiskProjectDefaultSeedCount(newProjectFrameworkId)
+      .then((r) => {
+        if (!cancelled) setNewProjectSeedCount(r.count ?? 0)
+      })
+      .catch(() => {
+        if (!cancelled) setNewProjectSeedCount(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isErm, isPrivacy, newProjectFrameworkId])
+
+  useEffect(() => {
     if (isErm || frameworkId === '' || frameworkNodeId === '') {
       setControlAssessmentStatus(null)
       return
@@ -1239,6 +1295,8 @@ export default function RiskPage({
     setThreats('')
     setAdminNotes('')
     setExistingControls('')
+    setFcaDesign('SATISFACTORY')
+    setFcaPerformance('SATISFACTORY')
     setTreatmentPlan('')
     setPlanActionOwnerId('')
     setPlanCustodianUserId('')
@@ -1267,7 +1325,7 @@ export default function RiskPage({
     setProbability('MEDIUM')
     setImpact('MEDIUM')
     setControlEff('MEDIUM')
-    setResidualScoringMode('CONTROL_EFFECTIVENESS')
+    setResidualScoringMode(useFcaMatrix ? 'MANUAL_PROBABILITY_IMPACT' : 'CONTROL_EFFECTIVENESS')
     setResidualProbability('MEDIUM')
     setResidualImpact('MEDIUM')
     setManualResidualScore('')
@@ -1376,6 +1434,7 @@ export default function RiskPage({
     }
     const errors = collectRiskRequiredErrors({
       isErm,
+      useFcaMatrix,
       dateIdentified,
       title,
       description,
@@ -1432,12 +1491,27 @@ export default function RiskPage({
         threats: !isErm ? threats.trim() || null : null,
         probability,
         impact,
-        controlEffectiveness: controlEff,
-        residualScoringMode,
+        controlEffectiveness: useFcaMatrix
+          ? fcaScoreToRiskLevel(fcaControlScore(fcaDesign, fcaPerformance))
+          : controlEff,
+        residualScoringMode: useFcaMatrix ? 'MANUAL_PROBABILITY_IMPACT' : residualScoringMode,
         residualProbability:
-          residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? residualProbability : null,
-        residualImpact: residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? residualImpact : null,
+          useFcaMatrix || residualScoringMode === 'MANUAL_PROBABILITY_IMPACT'
+            ? residualProbability
+            : null,
+        residualImpact:
+          useFcaMatrix || residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' ? residualImpact : null,
         existingControls: existingControls.trim() || null,
+        controls: useFcaMatrix
+          ? [
+              {
+                description: existingControls.trim() || 'Control assessment',
+                design: fcaDesign,
+                performance: fcaPerformance,
+                controlGap: null,
+              },
+            ]
+          : null,
         treatmentOption,
         treatmentPlan: null,
         treatmentJustification: treatmentJustification.trim() || null,
@@ -1466,7 +1540,7 @@ export default function RiskPage({
         cause: isErm ? ermCauseFromForm(cause, causeOther) : null,
         targetControlEffectiveness: null,
         residualScore:
-          !isErm &&
+          !useFcaMatrix &&
           residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' &&
           manualResidualScore.trim()
             ? Number(manualResidualScore)
@@ -1570,6 +1644,18 @@ export default function RiskPage({
     setResidualProbability(record.residualProbability ?? record.probability)
     setResidualImpact(record.residualImpact ?? record.impact)
     setExistingControls(record.existingControls ?? '')
+    {
+      const first = record.controls?.[0]
+      const norm = (raw: string | null | undefined): FcaControlAxis => {
+        const t = String(raw ?? 'SATISFACTORY')
+          .toUpperCase()
+          .replace(/[\s-]+/g, '_')
+        if (t === 'NEEDS_IMPROVEMENT' || t === 'UNSATISFACTORY' || t === 'SATISFACTORY') return t
+        return 'SATISFACTORY'
+      }
+      setFcaDesign(norm(first?.design))
+      setFcaPerformance(norm(first?.performance))
+    }
     setTreatmentOption(record.treatmentOption ?? 'TREAT')
     setTreatmentPlan(record.treatmentPlan ?? '')
     setRiskOwnerUserId(record.riskOwnerUserId ?? '')
@@ -1579,6 +1665,9 @@ export default function RiskPage({
     setAutoCloseJustification(record.autoCloseOverrideJustification ?? '')
     setDisplayIdOverride('')
     setFieldErrors({})
+    if (usesFcaMatrixLabels(record.riskType)) {
+      setResidualScoringMode('MANUAL_PROBABILITY_IMPACT')
+    }
     if (record.activeTreatmentPlan) {
       setPlanActionOwnerId(record.activeTreatmentPlan.actionOwnerId ?? '')
       setPlanCustodianUserId(record.activeTreatmentPlan.custodianUserId ?? '')
@@ -1796,9 +1885,16 @@ export default function RiskPage({
     ? 'No Privacy Risks yet. Raise one from a DPIA, or add a Privacy Risk here.'
     : isErm
     ? 'No ERM risks yet.'
-    : 'No Unified Risks yet. Create one or import the template. Import adds rows; it does not replace existing risks.'
+    : 'No Unified Risks yet. Create one, import the template, or add default risks. Import adds rows; it does not replace existing risks.'
   const terminal = ['CLOSED', 'AUTO_CLOSED', 'AVOIDED', 'TRANSFERRED', 'TOLERATED', 'ACCEPTED']
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null
+  const canSeedDefaults =
+    !isErm &&
+    !isPrivacy &&
+    canAdmin &&
+    selectedProject != null &&
+    (selectedProject.riskCount ?? 0) === 0 &&
+    selectedProject.seedStatus !== 'RUNNING'
   const detailIndex = detail ? scopedRows.findIndex((r) => r.id === detail.id) : -1
 
   const riskKpis = useMemo(() => {
@@ -1915,12 +2011,16 @@ export default function RiskPage({
         const imp = riskLevel(p.impact)
         const ce = riskLevel(p.controlEff)
         const inherentRisk = prob && imp ? calcInherent(inherentGrid, matrixAxes, prob, imp) : null
+        const residualProb = riskLevel(p.residualProbability) ?? prob
+        const residualImp = riskLevel(p.residualImpact) ?? imp
         const manualScore = Number(text(p.manualResidualScore))
         const residualRisk =
           p.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT'
-            ? text(p.manualResidualScore) && Number.isFinite(manualScore) && manualScore > 0
-              ? excelLevelFromScore(matrixGridSize, manualScore)
-              : null
+            ? useFcaMatrix && residualProb && residualImp
+              ? calcResidualPi(matrixAxes, residualProb, residualImp)
+              : text(p.manualResidualScore) && Number.isFinite(manualScore) && manualScore > 0
+                ? excelLevelFromScore(matrixGridSize, manualScore)
+                : null
             : inherentRisk && ce && prob && imp
               ? calcResidual(inherentGrid, matrixAxes, ce, inherentRisk, prob, imp)
               : null
@@ -1951,8 +2051,8 @@ export default function RiskPage({
             strategicObjective: text(p.strategicObjective),
             threats: text(p.threats),
             existingControls: text(p.existingControls),
-            likelihood: level(p.probability, isErm ? ERM_LIKELIHOOD_LABEL : LIKELIHOOD_EXCEL_LABEL),
-            impact: level(p.impact, isErm ? ERM_IMPACT_LABEL : LIKELIHOOD_EXCEL_LABEL),
+            likelihood: level(p.probability, useFcaMatrix ? ERM_LIKELIHOOD_LABEL : LIKELIHOOD_EXCEL_LABEL),
+            impact: level(p.impact, useFcaMatrix ? ERM_IMPACT_LABEL : LIKELIHOOD_EXCEL_LABEL),
             controlEffectiveness: level(p.controlEff, CE_EXCEL_LABEL),
             treatmentDescription: text(p.treatmentJustification),
             evidenceRequired: text(p.planEvidenceRequired),
@@ -1972,6 +2072,7 @@ export default function RiskPage({
     users,
     orgLabel,
     isErm,
+    useFcaMatrix,
     inherentGrid,
     matrixAxes,
     matrixGridSize,
@@ -2131,6 +2232,28 @@ export default function RiskPage({
   const creatingFramework = frameworks.find((f) => f.id === newProjectFrameworkId)
   const creatingFrameworkLabel = creatingFramework ? frameworkLabel(creatingFramework) : null
 
+  const waitForProjectSeed = async (projectId: number) => {
+    let finished = await api.getRiskProject(projectId)
+    upsertProject(finished)
+    setSeedProgress({
+      done: finished.riskCount,
+      total: finished.seedTotal || finished.riskCount,
+    })
+    if (finished.seedStatus !== 'RUNNING') return finished
+    const deadline = Date.now() + 8 * 60 * 1000
+    while (Date.now() < deadline) {
+      await new Promise((r) => window.setTimeout(r, 400))
+      finished = await api.getRiskProject(projectId)
+      upsertProject(finished)
+      setSeedProgress({
+        done: finished.riskCount,
+        total: finished.seedTotal || finished.riskCount,
+      })
+      if (finished.seedStatus === 'DONE' || finished.seedStatus === 'FAILED') break
+    }
+    return finished
+  }
+
   const createProject = async () => {
     if (!newProjectName.trim()) return
     if (projectNameTaken) {
@@ -2155,6 +2278,7 @@ export default function RiskPage({
         name: newProjectName.trim(),
         year,
         frameworkId: !isErm && !isPrivacy && newProjectFrameworkId !== '' ? newProjectFrameworkId : null,
+        seedDefaultRisks: !isErm && !isPrivacy ? newProjectSeedDefaults : false,
       })
       let finished = p
       upsertProject(p)
@@ -2163,29 +2287,21 @@ export default function RiskPage({
         total: p.seedTotal ?? 0,
       })
       if (p.seedStatus === 'RUNNING') {
-        const deadline = Date.now() + 8 * 60 * 1000
-        while (Date.now() < deadline) {
-          await new Promise((r) => window.setTimeout(r, 400))
-          finished = await api.getRiskProject(p.id)
-          upsertProject(finished)
-          setSeedProgress({
-            done: finished.riskCount,
-            total: finished.seedTotal || finished.riskCount,
-          })
-          if (finished.seedStatus === 'DONE') break
-          if (finished.seedStatus === 'FAILED') {
-            await refreshProjects()
-            onError('Seeding default risks failed. The project was created; open it from the list.')
-            setNewProjectName('')
-            setNewProjectFrameworkId('')
-            return
-          }
+        finished = await waitForProjectSeed(p.id)
+        if (finished.seedStatus === 'FAILED') {
+          await refreshProjects()
+          onError('Seeding default risks failed. The project was created; open it from the list.')
+          setNewProjectName('')
+          setNewProjectFrameworkId('')
+          setNewProjectSeedDefaults(false)
+          return
         }
         if (finished.seedStatus !== 'DONE') {
           await refreshProjects()
           onError('Seeding is still running. The project is on the list; open it in a moment.')
           setNewProjectName('')
           setNewProjectFrameworkId('')
+          setNewProjectSeedDefaults(false)
           return
         }
       }
@@ -2197,7 +2313,45 @@ export default function RiskPage({
       )
       setNewProjectName('')
       setNewProjectFrameworkId('')
+      setNewProjectSeedDefaults(false)
+      setNewProjectSeedCount(null)
       selectProject(finished.id)
+    } catch (e) {
+      onError(String(e))
+      await refreshProjects()
+    } finally {
+      setBusy(false)
+      setProjectCreating(false)
+    }
+  }
+
+  const seedDefaultsForSelectedProject = async () => {
+    if (selectedProjectId == null || !canSeedDefaults) return
+    setProjectCreating(true)
+    setSeedProgress({ done: 0, total: 0 })
+    setBusy(true)
+    try {
+      const p = await api.seedRiskProjectDefaults(selectedProjectId)
+      upsertProject(p)
+      setSeedProgress({ done: p.riskCount, total: p.seedTotal ?? 0 })
+      const finished = await waitForProjectSeed(p.id)
+      if (finished.seedStatus === 'FAILED') {
+        onError('Seeding default risks failed. Try again, or create risks manually.')
+        await refreshProjects()
+        return
+      }
+      if (finished.seedStatus !== 'DONE') {
+        onError('Seeding is still running. Refresh in a moment.')
+        await refreshProjects()
+        return
+      }
+      await refreshProjects()
+      await load()
+      onOk(
+        finished.riskCount > 0
+          ? `Added ${finished.riskCount} default risk(s)`
+          : 'No default risks were added for this framework',
+      )
     } catch (e) {
       onError(String(e))
       await refreshProjects()
@@ -2574,7 +2728,7 @@ export default function RiskPage({
   const detailBreadcrumbTrail = useMemo(() => {
     if (!detail) return ''
     const parts: string[] = []
-    const drillLabel = drillFilterLabel(drill, isErm)
+    const drillLabel = drillFilterLabel(drill, useFcaMatrix)
     if (drillLabel) parts.push(drillLabel)
     parts.push(
       detail.title,
@@ -2984,6 +3138,7 @@ export default function RiskPage({
       Object.keys(
         collectRiskRequiredErrors({
           isErm,
+          useFcaMatrix,
           dateIdentified,
           title,
           description,
@@ -3544,6 +3699,10 @@ export default function RiskPage({
               setAutoCloseJustification={setAutoCloseJustification}
               existingControls={existingControls}
               setExistingControls={setExistingControls}
+              fcaDesign={fcaDesign}
+              setFcaDesign={setFcaDesign}
+              fcaPerformance={fcaPerformance}
+              setFcaPerformance={setFcaPerformance}
               infosecStatusInitial={infosecStatusInitial}
               setInfosecStatusInitial={setInfosecStatusInitial}
               treatmentOption={treatmentOption}
@@ -3874,6 +4033,7 @@ export default function RiskPage({
                 frameworkLabel={creatingFrameworkLabel}
                 seeded={seedProgress.done}
                 total={seedProgress.total}
+                mode={seedProgress.total > 0 && !newProjectName.trim() ? 'seed' : 'create'}
               />
             )}
             {!listReady ? (
@@ -3960,7 +4120,7 @@ export default function RiskPage({
                         ? 'Name and year for this ERM cycle'
                         : isPrivacy
                           ? 'Name and year for this Privacy Risk cycle'
-                          : 'Name, year, and framework. Default risks load when a register exists for that framework.'
+                          : 'Name, year, and framework. Leave default risks off for an empty register, or turn them on to load the framework library.'
                     }
                   >
                     <Stack spacing={1.25}>
@@ -4013,6 +4173,36 @@ export default function RiskPage({
                           fullWidth
                         />
                       )}
+                      {!isErm && !isPrivacy && (
+                        <FormControlLabel
+                          sx={{ alignItems: 'flex-start', ml: 0, mr: 0 }}
+                          control={
+                            <Checkbox
+                              size="small"
+                              checked={newProjectSeedDefaults}
+                              disabled={projectCreating || newProjectFrameworkId === ''}
+                              onChange={(_, checked) => setNewProjectSeedDefaults(checked)}
+                              sx={{ pt: 0.25 }}
+                            />
+                          }
+                          label={
+                            <Box>
+                              <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: brand.ink }}>
+                                Add default risks from the framework library
+                              </Typography>
+                              <Typography sx={{ fontSize: '0.75rem', color: brand.muted, lineHeight: 1.4 }}>
+                                {newProjectFrameworkId === ''
+                                  ? 'Select a framework first. Off by default: create an empty project.'
+                                  : newProjectSeedCount == null
+                                    ? 'Checking how many default risks are available…'
+                                    : newProjectSeedCount > 0
+                                      ? `${newProjectSeedCount} default risk${newProjectSeedCount === 1 ? '' : 's'} available. Can take a minute for large frameworks.`
+                                      : 'No default library for this framework. The project will stay empty either way.'}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      )}
                       <BusyButton
                         variant="contained"
                         size="small"
@@ -4021,6 +4211,15 @@ export default function RiskPage({
                           !newProjectName.trim() ||
                           projectNameTaken ||
                           (!isErm && !isPrivacy && newProjectFrameworkId === '')
+                        }
+                        disabledReason={
+                          !newProjectName.trim()
+                            ? 'Enter a project name'
+                            : projectNameTaken
+                              ? 'Choose a unique project name'
+                              : !isErm && !isPrivacy && newProjectFrameworkId === ''
+                                ? 'Select a framework'
+                                : undefined
                         }
                         onClick={() => void createProject()}
                         sx={{ alignSelf: 'flex-start' }}
@@ -4049,8 +4248,23 @@ export default function RiskPage({
               display: 'flex',
               flexDirection: 'column',
               boxShadow: brand.shadowCard,
+              position: 'relative',
             }}
           >
+            {projectCreating && selectedProjectId != null && (
+              <ProjectCreateProgress
+                isErm={isErm}
+                isPrivacy={isPrivacy}
+                projectName={selectedProject?.name ?? ''}
+                frameworkLabel={(() => {
+                  const fw = frameworks.find((f) => f.id === selectedProject?.frameworkId)
+                  return fw ? frameworkLabel(fw) : null
+                })()}
+                seeded={seedProgress.done}
+                total={seedProgress.total}
+                mode="seed"
+              />
+            )}
             <RiskRegisterToolbar
               search={search}
               onSearchChange={setSearch}
@@ -4059,7 +4273,7 @@ export default function RiskPage({
               onStatusFilterChange={setStatusFilter}
               onPriorityFilterChange={setPriorityFilter}
               gridSize={matrixGridSize}
-              isErm={isErm}
+              isErm={useFcaMatrix}
               onClearFilters={clearRegisterFilters}
               filtersActive={filtersActive}
               waitingMyApproval={waitingApprovalOnly}
@@ -4072,6 +4286,23 @@ export default function RiskPage({
               extraActions={
                 canAdmin && selectedProjectId != null && !acceptanceView ? (
                   <>
+                    {canSeedDefaults && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={busy || projectCreating}
+                        onClick={() => void seedDefaultsForSelectedProject()}
+                        sx={{
+                          borderColor: brand.border,
+                          color: brand.inkSoft,
+                          textTransform: 'none',
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                        }}
+                      >
+                        Add default risks
+                      </Button>
+                    )}
                     <Button
                       size="small"
                       variant="outlined"
@@ -4133,7 +4364,7 @@ export default function RiskPage({
                 rows={riskPaged.paged}
                 totalCount={registerSourceRows.length}
                 selectedId={null}
-                isErm={isErm}
+                isErm={useFcaMatrix}
                 emptyMessage={
                   registerSourceRows.length === 0
                     ? acceptanceView
@@ -4189,7 +4420,7 @@ export default function RiskPage({
               <Alert severity="info" sx={{ py: 0, mb: 1.25 }}>
                 Auto-closed at creation because residual risk was{' '}
                 {formatRiskBand(detail.residualRisk)}
-                {isErm ? ' (Low or Moderate).' : ' (Very Low or Low).'}
+                {useFcaMatrix ? ' (Low or Moderate).' : ' (Very Low or Low).'}
                 {excelClick
                   ? ''
                   : ' Re-open with a mandatory reason to enter the 4T workflow.'}

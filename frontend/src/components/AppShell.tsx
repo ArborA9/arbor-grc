@@ -22,6 +22,7 @@ import KeyboardDoubleArrowLeftRoundedIcon from '@mui/icons-material/KeyboardDoub
 import KeyboardDoubleArrowRightRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowRightRounded'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded'
+import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded'
 import { brand, layout } from '../theme'
@@ -136,6 +137,9 @@ interface AppShellProps {
   onLogout: () => void
   /** Local accounts only. Hidden for SSO. Super Admin is always local. */
   canChangePassword?: boolean
+  /** Opens authenticator setup (Super Admin or tenant Owner/Admin). */
+  canSetupAuthenticator?: boolean
+  onSetupAuthenticator?: () => void
   superAdmin?: boolean
   children: ReactNode
 }
@@ -434,6 +438,8 @@ export default function AppShell({
   actions,
   onLogout,
   canChangePassword = false,
+  canSetupAuthenticator = false,
+  onSetupAuthenticator,
   superAdmin = false,
   children,
 }: AppShellProps) {
@@ -1289,6 +1295,19 @@ export default function AppShell({
                     <LockResetRoundedIcon fontSize="small" />
                   </ListItemIcon>
                   Change Password
+                </MenuItem>
+              )}
+              {canSetupAuthenticator && onSetupAuthenticator && (
+                <MenuItem
+                  onClick={() => {
+                    setMenuEl(null)
+                    onSetupAuthenticator()
+                  }}
+                >
+                  <ListItemIcon>
+                    <VerifiedUserRoundedIcon fontSize="small" />
+                  </ListItemIcon>
+                  Set Up Authenticator
                 </MenuItem>
               )}
               <MenuItem

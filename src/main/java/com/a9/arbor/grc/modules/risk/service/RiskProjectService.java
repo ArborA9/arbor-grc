@@ -148,7 +148,8 @@ public class RiskProjectService {
         p.setStatus(RiskProjectStatus.ACTIVE);
         p.setFrameworkId(type == RiskType.IS_RISK ? req.frameworkId() : null);
         p.setCreatedByUserId(user.getId());
-        if (type == RiskType.IS_RISK) {
+        boolean seedDefaults = type == RiskType.IS_RISK && Boolean.TRUE.equals(req.seedDefaultRisks());
+        if (seedDefaults) {
             int total = riskService.countSeedStubsForIsProject(req.frameworkId());
             p.setSeedTotal(total);
             p.setSeedStatus(total > 0 ? RiskProjectSeedStatus.RUNNING : RiskProjectSeedStatus.DONE);
@@ -162,31 +163,87 @@ public class RiskProjectService {
         auditTrailService.record(
                 AuditActionType.CREATED, "RISK", user.getId(), role,
                 "RISK_PROJECT", String.valueOf(p.getId()), p.getName(),
-                null, null, null, null, null);
+                "seedDefaultRisks", null, seedDefaults ? "true" : "false", null, null);
 
-        if (type == RiskType.IS_RISK && p.getSeedStatus() == RiskProjectSeedStatus.RUNNING) {
-            String tenantId = TenantContext.getTenantId();
-            long projectId = p.getId();
-            long userId = user.getId();
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    seedExecutor.execute(() -> {
-                        TenantContext.setTenantId(tenantId);
-                        try {
-                            riskService.seedStubsForIsProject(userId, projectId);
-                        } catch (Exception e) {
-                            log.error("IS project {} seed failed", projectId, e);
-                            riskService.markIsProjectSeedFailed(projectId);
-                        } finally {
-                            TenantContext.clear();
-                        }
-                    });
-                }
-            });
-        }
+        scheduleDefaultSeed(user, p);
 
         return RiskProjectResponse.from(p, 0);
+    }
+
+    /**
+     * Load Arbor default risks into an empty Unified Risk project (same library as create-time seed).
+     * Refused when the register already has rows or a seed is running.
+     */
+    @Transactional
+    public RiskProjectResponse seedDefaults(User user, long id) {
+        RiskProject p = require(id);
+        requireWriteForType(p.getProjectType());
+        if (p.getProjectType() != RiskType.IS_RISK) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Only Unified Risk projects can load default risks");
+        }
+        if (p.getFrameworkId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Unified Risk projects need a framework");
+        }
+        if (p.getSeedStatus() == RiskProjectSeedStatus.RUNNING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Default risks are already loading for this project");
+        }
+        int existing = riskRepository.countByRiskProjectId(p.getId());
+        if (existing > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This project already has risks. Default risks can only be added to an empty project.");
+        }
+        int total = riskService.countSeedStubsForIsProject(p.getFrameworkId());
+        if (total <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No default risks for this framework");
+        }
+        p.setSeedTotal(total);
+        p.setSeedStatus(RiskProjectSeedStatus.RUNNING);
+        projectRepository.save(p);
+
+        String role = user.getRoles().stream().map(Role::name).sorted().findFirst().orElse("UNKNOWN");
+        auditTrailService.record(
+                AuditActionType.UPDATED, "RISK", user.getId(), role,
+                "RISK_PROJECT", String.valueOf(p.getId()), p.getName(),
+                "seedDefaults", null, "RUNNING", null, null);
+
+        scheduleDefaultSeed(user, p);
+        return RiskProjectResponse.from(p, 0);
+    }
+
+    @Transactional(readOnly = true)
+    public int defaultSeedCount(long frameworkId) {
+        assertLicensedFramework(frameworkId);
+        return riskService.countSeedStubsForIsProject(frameworkId);
+    }
+
+    private void scheduleDefaultSeed(User user, RiskProject p) {
+        if (p.getProjectType() != RiskType.IS_RISK
+                || p.getSeedStatus() != RiskProjectSeedStatus.RUNNING) {
+            return;
+        }
+        String tenantId = TenantContext.getTenantId();
+        long projectId = p.getId();
+        long userId = user.getId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                seedExecutor.execute(() -> {
+                    TenantContext.setTenantId(tenantId);
+                    try {
+                        riskService.seedStubsForIsProject(userId, projectId);
+                    } catch (Exception e) {
+                        log.error("IS project {} seed failed", projectId, e);
+                        riskService.markIsProjectSeedFailed(projectId);
+                    } finally {
+                        TenantContext.clear();
+                    }
+                });
+            }
+        });
     }
 
     @Transactional

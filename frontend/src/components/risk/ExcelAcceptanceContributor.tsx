@@ -19,7 +19,7 @@ import {
 import type { RiskLevel as BadgeLevel } from '../ui/DomainBadge'
 import { brand } from '../../theme'
 import { fmtLevel } from '../../riskLevelLabels'
-import { fmtErmRating } from './ermRiskLabels'
+import { fmtErmRating, usesFcaMatrixLabels } from './ermRiskLabels'
 import { excelRating, excelRatingToLevel, parseGridSize } from './riskMatrix'
 import { formatTenantDate } from '../../uiQuality/tenantLocale'
 import {
@@ -106,7 +106,7 @@ function optionLabel(options: { value: string; label: string }[], value: string)
 
 function riskValueText(risk: RiskSummary): string {
   if (risk.treatedRiskScore != null) return String(risk.treatedRiskScore)
-  return risk.riskType === 'ERM' ? fmtErmRating(risk.residualRating) : fmtLevel(risk.residualRating)
+  return usesFcaMatrixLabels(risk.riskType) ? fmtErmRating(risk.residualRating) : fmtLevel(risk.residualRating)
 }
 
 function scoreTone(score: number | null | undefined, gridSize?: number | null): BadgeLevel | undefined {

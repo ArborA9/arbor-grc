@@ -68,7 +68,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         if (path.equals("/api/auth/login")
                 || path.equals("/api/auth/mfa/verify")
-                || path.startsWith("/api/auth/super-admin/login")) {
+                || path.equals("/api/auth/super-admin/login")
+                || path.equals("/api/auth/super-admin/mfa/verify")) {
             return new Limit("auth", authMaxPerMinute);
         }
         if (path.equals("/api/audits/external-access/redeem")

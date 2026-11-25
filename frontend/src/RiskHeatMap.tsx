@@ -6,6 +6,7 @@ import {
   ERM_IMPACT_LABEL,
   ERM_LIKELIHOOD_LABEL,
   ERM_RATING_LABEL,
+  usesFcaMatrixLabels,
 } from './components/risk/ermRiskLabels'
 
 const AXIS: Record<RiskLevel, string> = {
@@ -17,15 +18,15 @@ const AXIS: Record<RiskLevel, string> = {
 }
 
 function axisLikelihood(riskType: RiskType, level: RiskLevel): string {
-  return riskType === 'ERM' ? ERM_LIKELIHOOD_LABEL[level] : AXIS[level]
+  return usesFcaMatrixLabels(riskType) ? ERM_LIKELIHOOD_LABEL[level] : AXIS[level]
 }
 
 function axisImpact(riskType: RiskType, level: RiskLevel): string {
-  return riskType === 'ERM' ? ERM_IMPACT_LABEL[level] : AXIS[level]
+  return usesFcaMatrixLabels(riskType) ? ERM_IMPACT_LABEL[level] : AXIS[level]
 }
 
 function axisBand(riskType: RiskType, level: RiskLevel): string {
-  return riskType === 'ERM' ? ERM_RATING_LABEL[level] : AXIS[level]
+  return usesFcaMatrixLabels(riskType) ? ERM_RATING_LABEL[level] : AXIS[level]
 }
 
 type HeatmapCellStyle = { bg: string; text: string; border: string }
@@ -278,7 +279,7 @@ export function RiskHeatMapPanel({
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   color: brand.mutedLight,
-                  minWidth: riskType === 'ERM' ? 108 : 58,
+                  minWidth: usesFcaMatrixLabels(riskType) ? 108 : 58,
                   whiteSpace: 'nowrap',
                 }}
               >

@@ -1,7 +1,7 @@
 import { Box, CircularProgress, LinearProgress, Typography } from '@mui/material'
 import { brand } from '../../theme'
 
-/** Blocking wait while an IS / ERM project is created (UAE IA default risks can take a minute). */
+/** Blocking wait while a risk project is created or Unified default risks are loading. */
 export default function ProjectCreateProgress({
   isErm,
   isPrivacy = false,
@@ -9,6 +9,7 @@ export default function ProjectCreateProgress({
   frameworkLabel,
   seeded,
   total,
+  mode = 'create',
 }: {
   isErm: boolean
   isPrivacy?: boolean
@@ -16,20 +17,30 @@ export default function ProjectCreateProgress({
   frameworkLabel: string | null
   seeded: number
   total: number
+  /** create = new project; seed = Add default risks on an empty Unified project. */
+  mode?: 'create' | 'seed'
 }) {
-  const title = isErm
-    ? 'Creating Enterprise Risk project'
-    : isPrivacy
-      ? 'Creating Privacy Risk project'
-      : 'Creating Unified Risk project'
+  const title =
+    mode === 'seed'
+      ? 'Loading default risks'
+      : isErm
+        ? 'Creating Enterprise Risk project'
+        : isPrivacy
+          ? 'Creating Privacy Risk project'
+          : 'Creating Unified Risk project'
   const name = projectName.trim()
   const fw = frameworkLabel ?? 'the selected framework'
   const showCount = !isErm && total > 0
-  const body = isErm
-    ? 'Saving the project. Stay on this page.'
-    : showCount
-      ? `Loading default risks for ${fw}. Stay on this page until the project opens.`
-      : 'Saving the project. Stay on this page.'
+  const body =
+    mode === 'seed'
+      ? showCount
+        ? `Loading default risks for ${fw}. Stay on this page.`
+        : 'Loading default risks. Stay on this page.'
+      : isErm
+        ? 'Saving the project. Stay on this page.'
+        : showCount
+          ? `Loading default risks for ${fw}. Stay on this page until the project opens.`
+          : 'Saving the project. Stay on this page.'
   const pct = showCount ? Math.min(100, Math.round((100 * seeded) / total)) : undefined
 
   return (

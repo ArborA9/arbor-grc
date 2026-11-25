@@ -127,6 +127,7 @@ public class SecurityConfig {
                                 antMatcher("/api/auth/sso/exchange"),
                                 antMatcher("/api/auth/tenant/**"),
                                 antMatcher("/api/auth/super-admin/login"),
+                                antMatcher("/api/auth/super-admin/mfa/verify"),
                                 antMatcher("/api/health"),
                                 antMatcher("/api/webhooks/malware-scan"),
                                 antMatcher("/api/audits/external-access/**"),

@@ -95,6 +95,7 @@ import {
 } from './api'
 import { brand, semantic } from './theme'
 import WorkspaceBootScreen from './components/login/WorkspaceBootScreen'
+import MfaSettingsCard from './components/MfaSettingsCard'
 
 const NAV: NavItem[] = [
   { id: 'tenants', label: 'Tenants', icon: <ApartmentRoundedIcon fontSize="small" /> },
@@ -411,6 +412,7 @@ export default function SuperAdminConsole({ session, onLogout }: { session: Sess
   const [menuEl, setMenuEl] = useState<null | HTMLElement>(null)
   const [menuTenant, setMenuTenant] = useState<Tenant | null>(null)
   const [activationBusy, setActivationBusy] = useState(false)
+  const [mfaOpen, setMfaOpen] = useState(false)
 
   const load = () =>
     api
@@ -1564,8 +1566,17 @@ export default function SuperAdminConsole({ session, onLogout }: { session: Sess
       workspaceName="Platform"
       onLogout={onLogout}
       canChangePassword
+      canSetupAuthenticator
+      onSetupAuthenticator={() => setMfaOpen(true)}
       superAdmin
     >
+      <MfaSettingsCard
+        session={session}
+        open={mfaOpen}
+        onClose={() => setMfaOpen(false)}
+        onError={(msg) => setError(msg)}
+        onOk={(msg) => setOk(msg)}
+      />
       {active === 'tenants' && (
         <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, height: '100%' }}>
           <KpiCardGrid columns={4}>

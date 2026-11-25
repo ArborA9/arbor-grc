@@ -42,6 +42,8 @@ const FOCUS_ORDER: string[] = [
 
 export function collectRiskRequiredErrors(input: {
   isErm: boolean
+  /** ERM + Unified Risk: FCA L×I residual. Privacy keeps typed residual score. */
+  useFcaMatrix?: boolean
   dateIdentified: string
   title: string
   description: string
@@ -66,6 +68,7 @@ export function collectRiskRequiredErrors(input: {
   const add = (id: string, label: string) => {
     errors[id] = requiredFieldMessage(label)
   }
+  const useFcaMatrix = input.useFcaMatrix ?? input.isErm
   if (!input.dateIdentified.trim()) add(RISK_INPUT_ID.dateIdentified, EXCEL_FIELD.dateIdentified)
   if (!input.title.trim()) add(RISK_INPUT_ID.title, EXCEL_FIELD.riskTitle)
   if (!input.description.trim()) add(RISK_INPUT_ID.description, EXCEL_FIELD.riskDescription)
@@ -86,9 +89,9 @@ export function collectRiskRequiredErrors(input: {
     add(RISK_INPUT_ID.associatedThreat, EXCEL_FIELD.associatedThreat)
   }
   if (input.riskOwnerUserId === '') add(RISK_INPUT_ID.riskOwner, EXCEL_FIELD.riskOwner)
-  // Unified Risk / IS: typed residual score. ERM manual uses Likelihood + Impact dropdowns.
+  // Privacy typed residual score. ERM + Unified manual uses Likelihood + Impact dropdowns.
   if (
-    !input.isErm &&
+    !useFcaMatrix &&
     input.residualScoringMode === 'MANUAL_PROBABILITY_IMPACT' &&
     !input.manualResidualScore.trim()
   ) {

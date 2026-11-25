@@ -339,7 +339,7 @@ async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
 
 function skipRefresh(input: string): boolean {
   const path = typeof input === 'string' ? input : ''
-  return /\/api\/auth\/(login|refresh|logout|forgot-password|reset-password|password-link|mfa\/verify|sso\/exchange|super-admin\/login|tenant\/)/.test(
+  return /\/api\/auth\/(login|refresh|logout|forgot-password|reset-password|password-link|mfa\/verify|sso\/exchange|super-admin\/login|super-admin\/mfa\/verify|tenant\/)/.test(
     path,
   )
 }
@@ -580,25 +580,66 @@ export const api = {
     currentPassword: string,
     newPassword: string,
     superAdmin = false,
-  ): Promise<Session> => {
+  ): Promise<Session | { mfaRequired: true; mfaToken: string; email: string }> => {
     const path = superAdmin ? '/api/auth/super-admin/change-password' : '/api/auth/change-password'
     const data = await apiFetch(path, {
       method: 'POST',
       headers: cookieHeaders({ 'Content-Type': 'application/json', ...authHeaders() }),
       body: JSON.stringify({ currentPassword, newPassword }),
     }).then(handle)
+    if (superAdmin && data.mfaRequired && data.mfaToken) {
+      return { mfaRequired: true, mfaToken: data.mfaToken, email: data.email }
+    }
     return adoptBrowserSession(data, superAdmin)
   },
 
   // --- auth: Arbor Super Admin (no tenant) ---
-  superAdminLogin: async (email: string, password: string): Promise<Session> => {
+  superAdminLogin: async (
+    email: string,
+    password: string,
+  ): Promise<Session | { mfaRequired: true; mfaToken: string; email: string }> => {
     const data = await apiFetch('/api/auth/super-admin/login', {
       method: 'POST',
       headers: cookieHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ email, password }),
     }).then(handle)
+    if (data.mfaRequired && data.mfaToken) {
+      return { mfaRequired: true, mfaToken: data.mfaToken, email: data.email }
+    }
     return adoptBrowserSession(data, true)
   },
+
+  verifySuperAdminMfa: async (mfaToken: string, code: string, rememberMe = false): Promise<Session> => {
+    const data = await apiFetch('/api/auth/super-admin/mfa/verify', {
+      method: 'POST',
+      headers: cookieHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ mfaToken, code, rememberMe }),
+    }).then(handle)
+    return adoptBrowserSession(data, true)
+  },
+
+  getSuperAdminMfaStatus: (): Promise<{ enrolled: boolean; enabled: boolean }> =>
+    apiFetch('/api/auth/super-admin/mfa/status', { headers: authHeaders() }).then(handle),
+
+  startSuperAdminMfaEnroll: (): Promise<{ secret: string; otpauthUri: string }> =>
+    apiFetch('/api/auth/super-admin/mfa/enroll/start', {
+      method: 'POST',
+      headers: authHeaders(),
+    }).then(handle),
+
+  confirmSuperAdminMfaEnroll: (code: string): Promise<{ enrolled: boolean; enabled: boolean }> =>
+    apiFetch('/api/auth/super-admin/mfa/enroll/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ code }),
+    }).then(handle),
+
+  disableSuperAdminMfa: (code: string): Promise<{ enrolled: boolean; enabled: boolean }> =>
+    apiFetch('/api/auth/super-admin/mfa', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ code }),
+    }).then(handle),
 
   // --- catalog / provisioning (Super Admin only) ---
   listTenants: (): Promise<Tenant[]> =>
@@ -1521,6 +1562,8 @@ export const api = {
     name: string
     year: number
     frameworkId?: number | null
+    /** Unified Risk only. Default false = empty register. */
+    seedDefaultRisks?: boolean | null
   }): Promise<RiskProjectSummary> =>
     apiFetch('/api/risk-projects', {
       method: 'POST',
@@ -1530,6 +1573,17 @@ export const api = {
 
   getRiskProject: (id: number): Promise<RiskProjectSummary> =>
     apiFetch(`/api/risk-projects/${id}`, { headers: authHeaders() }).then(handle),
+
+  getRiskProjectDefaultSeedCount: (frameworkId: number): Promise<{ count: number }> =>
+    apiFetch(`/api/risk-projects/default-seed-count?frameworkId=${frameworkId}`, {
+      headers: authHeaders(),
+    }).then(handle),
+
+  seedRiskProjectDefaults: (id: number): Promise<RiskProjectSummary> =>
+    apiFetch(`/api/risk-projects/${id}/seed-defaults`, {
+      method: 'POST',
+      headers: authHeaders(),
+    }).then(handle),
 
   listAcceptanceRegister: (): Promise<RiskAcceptanceForm[]> =>
     apiFetch('/api/risks/acceptance-register', { headers: authHeaders() }).then(handle),
@@ -6174,6 +6228,29 @@ export interface RiskSummary {
   treatedRiskScore?: string | null
   finalRiskStatus?: 'APPROVE' | 'REJECT' | null
   custodianComments?: string | null
+  controls?: RiskControlRow[]
+  consolidatedControlScore?: number | null
+  consolidatedControlLabel?: string | null
+}
+
+export type FcaControlAxisValue = 'SATISFACTORY' | 'NEEDS_IMPROVEMENT' | 'UNSATISFACTORY'
+
+export interface RiskControlRow {
+  id?: number | null
+  sortOrder?: number
+  description: string
+  design: string
+  performance: string
+  controlGap?: string | null
+  score?: number
+  scoreLabel?: string | null
+}
+
+export interface RiskControlInput {
+  description: string
+  design: FcaControlAxisValue | string
+  performance: FcaControlAxisValue | string
+  controlGap?: string | null
 }
 
 export interface SubmitRiskTaskBody {
@@ -6276,6 +6353,7 @@ export interface CreateRiskBody {
   thirdPartyName?: string | null
   treatmentJustification?: string | null
   compensatingControls?: string | null
+  controls?: RiskControlInput[] | null
 }
 
 export interface RiskKpis {

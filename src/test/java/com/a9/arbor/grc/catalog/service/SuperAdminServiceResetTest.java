@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.a9.arbor.grc.catalog.domain.SuperAdmin;
 import com.a9.arbor.grc.catalog.domain.SuperAdminReset;
+import com.a9.arbor.grc.catalog.repo.SuperAdminMfaTotpRepository;
 import com.a9.arbor.grc.catalog.repo.SuperAdminRepository;
 import com.a9.arbor.grc.catalog.repo.SuperAdminResetRepository;
 import com.a9.arbor.grc.config.ArborSecurityProperties;
@@ -32,6 +33,7 @@ class SuperAdminServiceResetTest {
 
     private SuperAdminRepository repository;
     private SuperAdminResetRepository resetRepository;
+    private SuperAdminMfaTotpRepository mfaRepository;
     private PasswordEncoder encoder;
     private SuperAdminService service;
 
@@ -39,15 +41,24 @@ class SuperAdminServiceResetTest {
     void setUp() {
         repository = mock(SuperAdminRepository.class);
         resetRepository = mock(SuperAdminResetRepository.class);
+        mfaRepository = mock(SuperAdminMfaTotpRepository.class);
         encoder = new BCryptPasswordEncoder(4);
         ArborSecurityProperties props = new ArborSecurityProperties();
         props.getPassword().setStrict(true);
-        service = new SuperAdminService(repository, resetRepository, encoder, new PasswordPolicyService(props));
-        when(repository.save(any(SuperAdmin.class))).thenAnswer(inv -> inv.getArgument(0));
+        service = new SuperAdminService(repository, resetRepository, mfaRepository, encoder,
+                new PasswordPolicyService(props));
+        when(repository.save(any(SuperAdmin.class))).thenAnswer(inv -> {
+            SuperAdmin sa = inv.getArgument(0);
+            if (sa.getId() == null) {
+                sa.setId(42L);
+            }
+            return sa;
+        });
     }
 
     private SuperAdmin existing(String status) {
         SuperAdmin admin = new SuperAdmin();
+        admin.setId(7L);
         admin.setEmail(EMAIL);
         admin.setFullName("Arbor Platform Admin");
         admin.setPasswordHash(encoder.encode("Old-Pass#2026x"));
@@ -66,6 +77,7 @@ class SuperAdminServiceResetTest {
         assertTrue(encoder.matches(TEMP, admin.getPasswordHash()));
         assertEquals("ACTIVE", admin.getStatus());
         assertTrue(admin.isMustChangePassword());
+        verify(mfaRepository).deleteBySuperAdminId(7L);
         ArgumentCaptor<SuperAdminReset> ledger = ArgumentCaptor.forClass(SuperAdminReset.class);
         verify(resetRepository).save(ledger.capture());
         assertEquals(SuperAdminService.sha256(CODE), ledger.getValue().getCodeHash());

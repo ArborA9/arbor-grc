@@ -92,8 +92,12 @@ class RiskBulkImportWorkbookTest {
             assertTrue(headers.contains("Control Effectiveness"), headers.toString());
             assertTrue(headers.stream().noneMatch(h -> h.contains("(1-5)")), headers.toString());
             var ref = x.getSheet("Reference");
-            assertEquals("Low", ref.getRow(1).getCell(4).getStringCellValue());
-            assertEquals("High", ref.getRow(3).getCell(4).getStringCellValue());
+            assertEquals("Likelihood", ref.getRow(0).getCell(4).getStringCellValue());
+            assertEquals("Impact", ref.getRow(0).getCell(12).getStringCellValue());
+            assertEquals("Unlikely", ref.getRow(1).getCell(4).getStringCellValue());
+            assertEquals("Likely", ref.getRow(3).getCell(4).getStringCellValue());
+            assertEquals("Low", ref.getRow(1).getCell(12).getStringCellValue());
+            assertEquals("High", ref.getRow(3).getCell(12).getStringCellValue());
             assertEquals("Weak", ref.getRow(1).getCell(11).getStringCellValue());
             assertEquals("Strong", ref.getRow(3).getCell(11).getStringCellValue());
             var r4 = ref.getRow(4);

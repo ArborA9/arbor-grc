@@ -22,7 +22,8 @@ import {
 import { apiRiskLevelToBadge } from '../ui/riskBadgeMappers'
 import { controlEffectivenessTone } from '../ui/ratingTone'
 import { fmtLevel } from '../../riskLevelLabels'
-import { fmtErmImpact, fmtErmLikelihood, fmtErmRating } from './ermRiskLabels'
+import { fmtErmImpact, fmtErmLikelihood, fmtErmRating, usesFcaMatrixLabels } from './ermRiskLabels'
+import { FCA_CONTROL_AXIS_LABEL, type FcaControlAxis } from './fcaRiskMatrix'
 import EvidenceAttachedList from '../evidence/EvidenceAttachedList'
 import { brand } from '../../theme'
 import { excelRating, excelRatingToLevel, parseGridSize } from './riskMatrix'
@@ -171,29 +172,29 @@ function LevelField({
   label,
   level,
   keep,
-  isErm,
+  useFcaMatrix,
 }: {
   label: string
   level: RiskLevel | null | undefined
   keep?: boolean
-  isErm?: boolean
+  useFcaMatrix?: boolean
 }) {
   if (!level && !keep) return null
   return (
     <Box sx={{ minWidth: 0 }}>
       <FormFieldLabel wrap>{sheetLabel(label)}</FormFieldLabel>
-      <ValueWell text={level ? levelCaption(label, level, isErm) : '-'} />
+      <ValueWell text={level ? levelCaption(label, level, useFcaMatrix) : '-'} />
     </Box>
   )
 }
 
-function levelCaption(label: string, level: RiskLevel, isErm?: boolean): string {
+function levelCaption(label: string, level: RiskLevel, useFcaMatrix?: boolean): string {
   if (label.includes('Control Effectiveness')) return CE_EXCEL_LABEL[level] ?? fmtLevel(level)
   if (label.includes('Likelihood')) {
-    return isErm ? fmtErmLikelihood(level) : (LIKELIHOOD_EXCEL_LABEL[level] ?? fmtLevel(level))
+    return useFcaMatrix ? fmtErmLikelihood(level) : (LIKELIHOOD_EXCEL_LABEL[level] ?? fmtLevel(level))
   }
   if (label.includes('Impact')) {
-    return isErm ? fmtErmImpact(level) : (LIKELIHOOD_EXCEL_LABEL[level] ?? fmtLevel(level))
+    return useFcaMatrix ? fmtErmImpact(level) : (LIKELIHOOD_EXCEL_LABEL[level] ?? fmtLevel(level))
   }
   return fmtLevel(level)
 }
@@ -281,6 +282,8 @@ export type ExcelRiskView = Pick<
   | 'inherentRisk'
   | 'existingControls'
   | 'controlEffectiveness'
+  | 'controls'
+  | 'consolidatedControlLabel'
   | 'riskReductionPct'
   | 'residualScore'
   | 'residualRating'
@@ -325,14 +328,15 @@ export default function ExcelRiskDossier({
   headerSlot?: ReactNode
 }) {
   const isErm = risk.riskType === 'ERM'
+  const useFcaMatrix = usesFcaMatrixLabels(risk.riskType)
   const category =
     risk.category === 'OTHER' && risk.categoryOther?.trim()
       ? `Other: ${risk.categoryOther.trim()}`
       : risk.category.replace(/_/g, ' ')
-  const inherentBand = isErm
+  const inherentBand = useFcaMatrix
     ? fmtErmRating(risk.inherentRating ?? risk.inherentRisk)
     : fmtLevel(risk.inherentRating ?? risk.inherentRisk)
-  const residualBand = isErm
+  const residualBand = useFcaMatrix
     ? fmtErmRating(risk.residualRating ?? risk.residualRisk)
     : fmtLevel(risk.residualRating ?? risk.residualRisk)
   const treat = risk.treatmentOption ? EXCEL_TREAT_LABEL[risk.treatmentOption as TreatmentOption] : null
@@ -482,8 +486,8 @@ export default function ExcelRiskDossier({
                   gap: 1,
                 }}
               >
-                <LevelField keep isErm={isErm} label={scaledExcelField('likelihood', gridSize)} level={risk.probability} />
-                <LevelField keep isErm={isErm} label={scaledExcelField('impact', gridSize)} level={risk.impact} />
+                <LevelField keep useFcaMatrix={useFcaMatrix} label={scaledExcelField('likelihood', gridSize)} level={risk.probability} />
+                <LevelField keep useFcaMatrix={useFcaMatrix} label={scaledExcelField('impact', gridSize)} level={risk.impact} />
               </Box>
               <Field
                 keep
@@ -500,19 +504,81 @@ export default function ExcelRiskDossier({
         </Box>
 
         <Box id="risk-section-controls" sx={sectionAnchorSx}>
-          <SettingsCard compact autoHeight titleCaps title="Existing controls" subtitle="What is already in place">
+          <SettingsCard
+            compact
+            autoHeight
+            titleCaps
+            title="Existing controls"
+            subtitle={useFcaMatrix ? 'Design and Performance' : 'What is already in place'}
+          >
             <Stack spacing={1}>
-              <Field keep span well wrap label={EXCEL_FIELD.existingControls} value={risk.existingControls} />
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
-                  gap: 1,
-                }}
-              >
-                <LevelField keep label={scaledExcelField('controlEffectiveness', gridSize)} level={risk.controlEffectiveness} />
-                <Field keep well label={EXCEL_FIELD.riskReduction} value={reductionPct(risk.riskReductionPct)} />
-              </Box>
+              {useFcaMatrix && (risk.controls?.length ?? 0) > 0 ? (
+                <>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+                      gap: 1,
+                    }}
+                  >
+                    <Field
+                      keep
+                      well
+                      label="Design"
+                      value={
+                        FCA_CONTROL_AXIS_LABEL[
+                          String(risk.controls![0].design ?? 'SATISFACTORY')
+                            .toUpperCase()
+                            .replace(/[\s-]+/g, '_') as FcaControlAxis
+                        ] ?? risk.controls![0].design
+                      }
+                    />
+                    <Field
+                      keep
+                      well
+                      label="Performance"
+                      value={
+                        FCA_CONTROL_AXIS_LABEL[
+                          String(risk.controls![0].performance ?? 'SATISFACTORY')
+                            .toUpperCase()
+                            .replace(/[\s-]+/g, '_') as FcaControlAxis
+                        ] ?? risk.controls![0].performance
+                      }
+                    />
+                  </Box>
+                  <Field
+                    keep
+                    well
+                    label={EXCEL_FIELD.controlEffectiveness}
+                    value={
+                      risk.consolidatedControlLabel ??
+                      (risk.controls![0].score != null
+                        ? `${risk.controls![0].score}${
+                            risk.controls![0].scoreLabel ? ` · ${risk.controls![0].scoreLabel}` : ''
+                          }`
+                        : '-')
+                    }
+                  />
+                </>
+              ) : (
+                <>
+                  <Field keep span well wrap label={EXCEL_FIELD.existingControls} value={risk.existingControls} />
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
+                      gap: 1,
+                    }}
+                  >
+                    <LevelField
+                      keep
+                      label={scaledExcelField('controlEffectiveness', gridSize)}
+                      level={risk.controlEffectiveness}
+                    />
+                    <Field keep well label={EXCEL_FIELD.riskReduction} value={reductionPct(risk.riskReductionPct)} />
+                  </Box>
+                </>
+              )}
             </Stack>
           </SettingsCard>
         </Box>

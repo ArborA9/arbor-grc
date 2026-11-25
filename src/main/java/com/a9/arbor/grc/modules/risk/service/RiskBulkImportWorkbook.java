@@ -59,7 +59,7 @@ public class RiskBulkImportWorkbook {
             RiskLevel.HIGH, "High",
             RiskLevel.VERY_HIGH, "Very High");
 
-    /** ERM Likelihood axis labels (FCA / Arbor P0). Impact still uses {@link #LEVEL_LABEL}. */
+    /** FCA Likelihood axis labels (ERM + Unified Risk). Impact still uses {@link #LEVEL_LABEL}. */
     static final Map<RiskLevel, String> ERM_LIKELIHOOD_LABEL = Map.of(
             RiskLevel.VERY_LOW, "Extremely Unlikely",
             RiskLevel.LOW, "Unlikely",
@@ -174,6 +174,7 @@ public class RiskBulkImportWorkbook {
                                     int gridSize,
                                     List<RiskLevel> scale) {
         boolean erm = type == RiskType.ERM;
+        boolean fcaLikelihood = type.usesFcaMatrixLabels();
         String likelihoodHeader = scaleHeader("Likelihood", gridSize);
         String impactHeader = scaleHeader("Impact", gridSize);
         String ceHeader = scaleHeader("Control Effectiveness", gridSize);
@@ -181,7 +182,7 @@ public class RiskBulkImportWorkbook {
                 .map(h -> h.endsWith(" (1-5)") ? scaleHeader(h.substring(0, h.length() - 6), gridSize) : h)
                 .toArray(String[]::new);
         List<String> likelihoodNames = scale.stream()
-                .map(l -> erm ? ERM_LIKELIHOOD_LABEL.get(l) : LEVEL_LABEL.get(l))
+                .map(l -> fcaLikelihood ? ERM_LIKELIHOOD_LABEL.get(l) : LEVEL_LABEL.get(l))
                 .toList();
         List<String> impactNames = scale.stream().map(LEVEL_LABEL::get).toList();
         List<String> ceNames = scale.stream().map(CE_LABEL::get).toList();
@@ -198,9 +199,9 @@ public class RiskBulkImportWorkbook {
             }
 
             Sheet ref = wb.createSheet(SHEET_REF);
-            writeReference(wb, ref, erm, orgUnitNames, contributorEmails, ownerEmails, frameworkCodes,
+            writeReference(wb, ref, erm, fcaLikelihood, orgUnitNames, contributorEmails, ownerEmails, frameworkCodes,
                     vendorNames, controlRefs, associatedThreats, likelihoodNames, impactNames, ceNames);
-            addValidations(wb, risks, headers, erm,
+            addValidations(wb, risks, headers, erm, fcaLikelihood,
                     orgUnitNames.size(), contributorEmails.size(), ownerEmails.size(),
                     associatedThreats.size(), controlRefs.size(), likelihoodHeader, impactHeader, ceHeader);
 
@@ -399,7 +400,7 @@ public class RiskBulkImportWorkbook {
         sheet.setColumnWidth(0, 20000);
     }
 
-    private static void writeReference(XSSFWorkbook wb, Sheet ref, boolean erm,
+    private static void writeReference(XSSFWorkbook wb, Sheet ref, boolean erm, boolean fcaLikelihood,
                                        List<String> orgUnits,
                                        List<String> contributors,
                                        List<String> owners,
@@ -412,9 +413,9 @@ public class RiskBulkImportWorkbook {
                                        List<String> ceNames) {
         String[] headers = {
                 "Division / Department", "Risk Custodian", "Risk Owner",
-                "Risk Category", erm ? "Likelihood" : "Likelihood / Impact", "Treatment Option", "Framework", "Vendor",
+                "Risk Category", fcaLikelihood ? "Likelihood" : "Likelihood / Impact", "Treatment Option", "Framework", "Vendor",
                 "Control Ref", "Associated Threat", "Risk Cause / Source", "Control Effectiveness",
-                erm ? "Impact" : ""
+                fcaLikelihood ? "Impact" : ""
         };
         Row h = ref.createRow(0);
         for (int i = 0; i < headers.length; i++) {
@@ -446,7 +447,7 @@ public class RiskBulkImportWorkbook {
             if (i < associatedThreats.size()) r.createCell(9).setCellValue(associatedThreats.get(i));
             if (erm && i < ERM_CAUSES.length) r.createCell(10).setCellValue(ERM_CAUSES[i]);
             if (i < ceNames.size()) r.createCell(11).setCellValue(ceNames.get(i));
-            if (erm && i < impactNames.size()) r.createCell(12).setCellValue(impactNames.get(i));
+            if (fcaLikelihood && i < impactNames.size()) r.createCell(12).setCellValue(impactNames.get(i));
         }
         defineListName(wb, "OrgUnits", 0, orgUnits.size());
         defineListName(wb, "Contributors", 1, contributors.size());
@@ -459,6 +460,8 @@ public class RiskBulkImportWorkbook {
         defineListName(wb, "AssociatedThreats", 9, associatedThreats.size());
         if (erm) {
             defineListName(wb, "Causes", 10, ERM_CAUSES.length);
+        }
+        if (fcaLikelihood) {
             defineListName(wb, "ImpactLevels", 12, impactNames.size());
         }
     }
@@ -478,13 +481,14 @@ public class RiskBulkImportWorkbook {
     }
 
     private static void addValidations(XSSFWorkbook wb, Sheet risks, String[] headers, boolean erm,
+                                       boolean fcaLikelihood,
                                        int orgCount, int contribCount, int ownerCount,
                                        int threatCount, int controlCount,
                                        String likelihoodHeader, String impactHeader, String ceHeader) {
         DataValidationHelper helper = risks.getDataValidationHelper();
         int lastDataRow = MAX_ROWS;
         addNamedValidation(helper, risks, headers, likelihoodHeader, "Levels", lastDataRow);
-        if (erm) {
+        if (fcaLikelihood) {
             addNamedValidation(helper, risks, headers, impactHeader, "ImpactLevels", lastDataRow);
         } else {
             addNamedValidation(helper, risks, headers, impactHeader, "Levels", lastDataRow);
