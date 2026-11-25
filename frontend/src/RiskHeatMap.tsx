@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Box, Card, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Box, Card, Stack, ToggleButton, ToggleButtonGroup, Typography, alpha } from '@mui/material'
 import { api, type HeatMapScoreBasis, type RiskHeatMap, type RiskLevel, type RiskType } from './api'
 import { brand, semantic } from './theme'
 import {
@@ -39,7 +39,7 @@ export function heatmapCellStyle(band: RiskLevel, _count: number): HeatmapCellSt
     case 'HIGH':
       return { bg: semantic.heatmap.high, text: '#fff', border: semantic.heatmap.high }
     case 'MEDIUM':
-      return { bg: semantic.heatmap.medium, text: '#92400E', border: semantic.heatmap.medHigh }
+      return { bg: semantic.heatmap.medium, text: '#fff', border: semantic.heatmap.medHigh }
     case 'LOW':
       return { bg: semantic.heatmap.low, text: '#065F46', border: semantic.heatmap.low }
     case 'VERY_LOW':
@@ -92,7 +92,8 @@ export function RiskHeatMapPanel({
 }) {
   const mode = embedded ? 'dialog' : presentation
   const [basis, setBasis] = useState<HeatMapScoreBasis>('INHERENT')
-  const [picture, setPicture] = useState<'bands' | 'matrix'>('bands')
+  /** Dashboard refined view defaults to the heat matrix (the graphic users expect). */
+  const [picture, setPicture] = useState<'bands' | 'matrix'>(refined ? 'matrix' : 'bands')
   const [map, setMap] = useState<RiskHeatMap | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -127,8 +128,8 @@ export function RiskHeatMapPanel({
   const squareStretch = mode !== 'inline'
   const nCols = cols.length
   const nRows = rows.length
-  const mapMaxWidth = refined ? 460 : compact ? 260 : mode === 'dialog' ? 320 : 360
-  const cellGap = refined ? '4px' : '2px'
+  const mapMaxWidth = refined ? 400 : compact ? 260 : mode === 'dialog' ? 320 : 360
+  const cellGap = refined ? '3px' : '2px'
   const showBands = refined && picture === 'bands'
   const bandTotals = useMemo(() => {
     const totals = new Map<RiskLevel, number>()
@@ -149,12 +150,44 @@ export function RiskHeatMapPanel({
         justifyContent="space-between"
         sx={{ mb: 1.5 }}
       >
-        <Typography sx={{ fontSize: '0.6875rem', fontWeight: 600, color: refined ? brand.goldDark : brand.ink, lineHeight: 1.3 }}>
-          {title}
-          <Typography component="span" sx={{ fontSize: '0.59375rem', color: brand.mutedLight, ml: 0.5 }}>
-            · {map ? `${map.total} risk${map.total === 1 ? '' : 's'} plotted` : busy ? 'loading…' : '…'}
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontSize: refined ? '0.6875rem' : '0.75rem', fontWeight: 700, color: refined ? brand.muted : brand.ink, lineHeight: 1.3 }}>
+            {title}
+            <Typography component="span" sx={{ fontSize: '0.625rem', color: brand.mutedLight, ml: 0.5, fontWeight: 600 }}>
+              · {map ? `${map.total} risk${map.total === 1 ? '' : 's'} plotted` : busy ? 'loading…' : '…'}
+            </Typography>
           </Typography>
-        </Typography>
+          {refined && map && map.total > 0 && (
+            <Stack direction="row" spacing={0.5} sx={{ mt: 0.65 }} flexWrap="wrap" useFlexGap>
+              {bandTotals
+                .filter((b) => b.count > 0)
+                .slice(0, 4)
+                .map((b) => {
+                  const style = heatmapCellStyle(b.level, b.count)
+                  return (
+                    <Box
+                      key={b.level}
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.4,
+                        px: 0.65,
+                        py: 0.15,
+                        borderRadius: '99px',
+                        bgcolor: alpha(style.bg, 0.35),
+                        border: `1px solid ${alpha(style.border, 0.55)}`,
+                      }}
+                    >
+                      <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: style.bg }} />
+                      <Typography sx={{ fontSize: '0.5625rem', fontWeight: 700, color: brand.goldDark, lineHeight: 1.2 }}>
+                        {axisBand(riskType, b.level)} {b.count}
+                      </Typography>
+                    </Box>
+                  )
+                })}
+            </Stack>
+          )}
+        </Box>
         <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
           {refined && (
             <ToggleButtonGroup
@@ -235,13 +268,14 @@ export function RiskHeatMapPanel({
                     {band.count}
                   </Typography>
                 </Stack>
-                <Box sx={{ height: 8, bgcolor: '#F3F0EA', borderRadius: 99 }}>
+                <Box sx={{ height: refined ? 12 : 8, bgcolor: '#F3F0EA', borderRadius: 99, overflow: 'hidden' }}>
                   <Box
                     sx={{
                       width: `${(band.count / bandMax) * 100}%`,
                       height: '100%',
                       bgcolor: style.bg,
                       borderRadius: 99,
+                      boxShadow: band.count > 0 ? `inset 0 0 0 1px ${alpha(style.border, 0.4)}` : undefined,
                     }}
                   />
                 </Box>
@@ -306,6 +340,7 @@ export function RiskHeatMapPanel({
                 const count = cell?.count ?? 0
                 const band = cell?.band ?? 'MEDIUM'
                 const style = heatmapCellStyle(band, count)
+                const hot = refined && count > 0 && (band === 'VERY_HIGH' || band === 'HIGH')
                 return (
                   <Box
                     key={`${r}-${c}`}
@@ -327,22 +362,31 @@ export function RiskHeatMapPanel({
                       height: '100%',
                       minWidth: 0,
                       minHeight: 0,
-                      border: `1px solid ${style.border}`,
-                      borderRadius: refined ? '6px' : 0.5,
+                      border: `1px solid ${count > 0 ? style.border : brand.border}`,
+                      borderRadius: refined ? '8px' : 0.5,
                       bgcolor: style.bg,
+                      opacity: count === 0 ? (refined ? 0.38 : 0.55) : 1,
                       cursor: 'pointer',
                       font: 'inherit',
                       fontWeight: 700,
-                      fontSize: compact ? '0.6875rem' : '0.75rem',
+                      fontSize: refined
+                        ? count > 0
+                          ? '0.875rem'
+                          : '0.6875rem'
+                        : compact
+                          ? '0.6875rem'
+                          : '0.75rem',
                       color: style.text,
-                      transition: 'opacity 100ms ease, transform 100ms ease',
+                      boxShadow: hot ? `0 0 0 1px ${style.border}, 0 6px 14px ${alpha(style.bg, 0.55)}` : undefined,
+                      transition: 'opacity 100ms ease, transform 100ms ease, box-shadow 120ms ease',
                       '&:hover': {
-                        opacity: 0.88,
-                        transform: 'scale(1.06)',
+                        opacity: 1,
+                        transform: 'scale(1.07)',
+                        zIndex: 1,
                       },
                     }}
                   >
-                    {count}
+                    {count > 0 ? count : refined ? '' : 0}
                   </Box>
                 )
               }),
@@ -416,9 +460,12 @@ export function RiskHeatMapPanel({
     <Card
       sx={{
         border: `1px solid ${brand.border}`,
-        borderRadius: refined ? '12px' : 1.125,
-        boxShadow: refined ? '0 1px 2px rgba(23,23,23,0.04), 0 8px 24px rgba(23,23,23,0.04)' : brand.shadowCard,
-        p: refined ? 2.5 : compact ? '14px 16px' : 2.25,
+        borderRadius: refined ? '10px' : 1.125,
+        boxShadow: refined ? '0 1px 2px rgba(23,23,23,0.04)' : brand.shadowCard,
+        p: refined ? 1.5 : compact ? '14px 16px' : 2.25,
+        height: refined ? '100%' : undefined,
+        width: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {panelBody}
@@ -426,7 +473,214 @@ export function RiskHeatMapPanel({
   )
 }
 
-/** Compact dual register heat maps for the overview dashboard. */
+/** Portfolio severity stack for Overview (uses open inherent heat maps). */
+function RiskPortfolioComposition({
+  showIs,
+  showErm,
+  onError,
+}: {
+  showIs: boolean
+  showErm: boolean
+  onError?: (msg: string) => void
+}) {
+  const [erm, setErm] = useState<RiskHeatMap | null>(null)
+  const [isMap, setIsMap] = useState<RiskHeatMap | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const loads: Promise<void>[] = []
+    if (showErm) {
+      loads.push(
+        api
+          .getRiskHeatMap('ERM', 'INHERENT', true)
+          .then((m) => {
+            if (!cancelled) setErm(m)
+          })
+          .catch((e) => onError?.(String(e))),
+      )
+    }
+    if (showIs) {
+      loads.push(
+        api
+          .getRiskHeatMap('IS_RISK', 'INHERENT', true)
+          .then((m) => {
+            if (!cancelled) setIsMap(m)
+          })
+          .catch((e) => onError?.(String(e))),
+      )
+    }
+    void Promise.all(loads)
+    return () => {
+      cancelled = true
+    }
+  }, [showErm, showIs, onError])
+
+  const bands = useMemo(() => {
+    const totals = new Map<RiskLevel, number>()
+    for (const level of LEGEND) totals.set(level, 0)
+    for (const map of [erm, isMap]) {
+      if (!map) continue
+      for (const cell of map.cells) {
+        totals.set(cell.band, (totals.get(cell.band) ?? 0) + cell.count)
+      }
+    }
+    return LEGEND.map((level) => ({ level, count: totals.get(level) ?? 0 }))
+  }, [erm, isMap])
+
+  const total = bands.reduce((s, b) => s + b.count, 0)
+  const ermTotal = erm?.total ?? 0
+  const isTotal = isMap?.total ?? 0
+  const donutSize = 112
+  const donutStroke = 16
+  const donutR = (donutSize - donutStroke) / 2
+  const donutC = 2 * Math.PI * donutR
+
+  return (
+    <Card
+      sx={{
+        border: `1px solid ${brand.border}`,
+        borderRadius: '10px',
+        boxShadow: '0 1px 2px rgba(23,23,23,0.04)',
+        p: 1.5,
+        height: '100%',
+        width: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1} sx={{ mb: 1.25 }}>
+        <Box>
+          <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, color: brand.muted, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            Composition
+          </Typography>
+          <Typography sx={{ fontSize: '0.625rem', color: brand.mutedLight, mt: 0.2 }}>
+            Open inherent bands
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          {showErm && (
+            <Typography sx={{ fontSize: '0.6875rem', fontWeight: 650, color: brand.muted }}>
+              ERM {ermTotal}
+            </Typography>
+          )}
+          {showIs && (
+            <Typography sx={{ fontSize: '0.6875rem', fontWeight: 650, color: brand.muted }}>
+              Unified {isTotal}
+            </Typography>
+          )}
+          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: brand.goldDark, fontVariantNumeric: 'tabular-nums' }}>
+            {total} open
+          </Typography>
+        </Stack>
+      </Stack>
+
+      {total === 0 ? (
+        <Typography sx={{ color: semantic.risk.low, fontWeight: 600, fontSize: '0.8125rem' }}>
+          All good: nothing to action
+        </Typography>
+      ) : (
+        <Stack spacing={1.25} alignItems="stretch">
+          <Box sx={{ position: 'relative', width: donutSize, height: donutSize, mx: 'auto' }}>
+            <Box
+              component="svg"
+              width={donutSize}
+              height={donutSize}
+              viewBox={`0 0 ${donutSize} ${donutSize}`}
+              aria-hidden
+              sx={{ display: 'block', transform: 'rotate(-90deg)' }}
+            >
+              {(() => {
+                let offset = 0
+                return bands.map((b) => {
+                  if (b.count === 0) return null
+                  const style = heatmapCellStyle(b.level, b.count)
+                  const len = (b.count / total) * donutC
+                  const node = (
+                    <circle
+                      key={b.level}
+                      cx={donutSize / 2}
+                      cy={donutSize / 2}
+                      r={donutR}
+                      fill="none"
+                      stroke={style.bg}
+                      strokeWidth={donutStroke}
+                      strokeDasharray={`${len} ${donutC - len}`}
+                      strokeDashoffset={-offset}
+                      strokeLinecap="butt"
+                    />
+                  )
+                  offset += len
+                  return node
+                })
+              })()}
+            </Box>
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography sx={{ fontWeight: 750, fontSize: '1.25rem', letterSpacing: '-0.04em', color: brand.inkSoft, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                {total}
+              </Typography>
+              <Typography sx={{ fontSize: '0.625rem', fontWeight: 700, letterSpacing: '0.06em', color: brand.muted, mt: 0.35 }}>
+                OPEN
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box>
+            <Box sx={{ height: 12, borderRadius: 99, overflow: 'hidden', display: 'flex', bgcolor: '#F3F0EA', mb: 1.25 }}>
+              {bands.map((b) => {
+                if (b.count === 0) return null
+                const style = heatmapCellStyle(b.level, b.count)
+                const pct = (b.count / total) * 100
+                return (
+                  <Box
+                    key={b.level}
+                    title={`${axisBand('IS_RISK', b.level)}: ${b.count} (${Math.round(pct)}%)`}
+                    sx={{
+                      width: `${pct}%`,
+                      minWidth: pct > 0 ? 4 : 0,
+                      height: '100%',
+                      bgcolor: style.bg,
+                      transition: 'width 240ms ease',
+                    }}
+                  />
+                )
+              })}
+            </Box>
+            <Stack spacing={0.75}>
+              {bands.map((b) => {
+                const style = heatmapCellStyle(b.level, b.count)
+                const pct = total > 0 ? Math.round((b.count / total) * 100) : 0
+                return (
+                  <Stack key={b.level} direction="row" alignItems="center" spacing={1}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '2px', bgcolor: style.bg, flexShrink: 0, opacity: b.count ? 1 : 0.35 }} />
+                    <Typography sx={{ flex: 1, fontSize: '0.6875rem', fontWeight: 650, color: brand.muted }} noWrap>
+                      {axisBand('IS_RISK', b.level)}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 750, color: brand.goldDark, fontVariantNumeric: 'tabular-nums' }}>
+                      {b.count}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.625rem', color: brand.mutedLight, width: 28, textAlign: 'right' }}>{pct}%</Typography>
+                  </Stack>
+                )
+              })}
+            </Stack>
+          </Box>
+        </Stack>
+      )}
+    </Card>
+  )
+}
+
+/** Dense command-center: slim composition + one large matrix (ERM / Unified tabs). */
 export function DashboardRiskHeatMaps({
   showIs,
   showErm,
@@ -438,31 +692,80 @@ export function DashboardRiskHeatMaps({
   onNavigate: (navId: string, drill?: RiskHeatMapDrill & { riskType: RiskType }) => void
   onError: (msg: string) => void
 }) {
+  const defaultType: RiskType = showIs ? 'IS_RISK' : 'ERM'
+  const [active, setActive] = useState<RiskType>(defaultType)
+
+  useEffect(() => {
+    if (active === 'IS_RISK' && !showIs && showErm) setActive('ERM')
+    if (active === 'ERM' && !showErm && showIs) setActive('IS_RISK')
+  }, [active, showErm, showIs])
+
   if (!showIs && !showErm) return null
+
+  const both = showIs && showErm
+  const riskType: RiskType = both ? active : defaultType
+
+  const registerTabs = both ? (
+    <ToggleButtonGroup
+      size="small"
+      exclusive
+      value={active}
+      onChange={(_, v: RiskType | null) => {
+        if (v) setActive(v)
+      }}
+      aria-label="Risk register heat map"
+      sx={{
+        bgcolor: brand.hover,
+        borderRadius: 0.75,
+        p: 0.25,
+        '& .MuiToggleButton-root': {
+          border: 0,
+          px: 1.25,
+          py: 0.35,
+          fontSize: '0.625rem',
+          fontWeight: 650,
+          color: brand.muted,
+          textTransform: 'none',
+          '&.Mui-selected': {
+            bgcolor: brand.paper,
+            color: brand.goldDark,
+            boxShadow: `inset 0 0 0 1px ${brand.gold}`,
+          },
+        },
+      }}
+    >
+      <ToggleButton value="IS_RISK">Unified</ToggleButton>
+      <ToggleButton value="ERM">Enterprise</ToggleButton>
+    </ToggleButtonGroup>
+  ) : undefined
+
   return (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: showIs && showErm ? '1fr 1fr' : '1fr' },
-        gap: 2.5,
+        gridTemplateColumns: {
+          xs: '1fr',
+          lg: 'minmax(200px, 240px) minmax(0, 1fr)',
+        },
+        gap: 1.25,
+        alignItems: 'stretch',
+        height: '100%',
       }}
     >
-      {showErm && (
+      <Box sx={{ height: '100%', minHeight: 0, display: 'flex' }}>
+        <RiskPortfolioComposition showIs={showIs} showErm={showErm} onError={onError} />
+      </Box>
+      <Box sx={{ minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
         <RiskHeatMapPanel
-          riskType="ERM"
+          riskType={riskType}
           refined
+          headerAction={registerTabs}
           onError={onError}
-          onCellClick={(drill) => onNavigate('erm-risk', { ...drill, riskType: 'ERM' })}
+          onCellClick={(drill) =>
+            onNavigate(riskType === 'ERM' ? 'erm-risk' : 'risk', { ...drill, riskType })
+          }
         />
-      )}
-      {showIs && (
-        <RiskHeatMapPanel
-          riskType="IS_RISK"
-          refined
-          onError={onError}
-          onCellClick={(drill) => onNavigate('risk', { ...drill, riskType: 'IS_RISK' })}
-        />
-      )}
+      </Box>
     </Box>
   )
 }

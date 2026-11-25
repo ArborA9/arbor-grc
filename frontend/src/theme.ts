@@ -60,16 +60,19 @@ export const semantic = {
   riskChip: {
     critical: { bg: '#DC2626', text: '#FFFFFF' },
     high: { bg: '#FFEDD5', text: '#C2410C' },
-    medium: { bg: '#FEF3C7', text: '#854D0E' },
+    /** High rating (FCA MEDIUM) - orange wash, not yellow */
+    medium: { bg: '#FED7AA', text: '#9A3412' },
     low: { bg: '#DCFCE7', text: '#166534' },
     veryLow: { bg: '#F1F5F9', text: '#475569' },
   },
   heatmap: {
     critical: '#DC2626',
     veryHigh: '#EF4444',
-    high: '#F97316',
-    medHigh: '#FBBF24',
-    medium: '#FDE68A',
+    /** Significant (FCA) - deep orange-red */
+    high: '#EA580C',
+    medHigh: '#F97316',
+    /** High (FCA MEDIUM band) - coral/orange in the red family, not yellow */
+    medium: '#FB923C',
     low: '#D1FAE5',
     veryLow: '#F1F5F9',
     empty: '#FAFAF8',
