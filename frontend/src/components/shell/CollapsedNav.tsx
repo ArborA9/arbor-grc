@@ -151,7 +151,12 @@ function IconHit({
               : undefined,
             '&:hover': disabled ? undefined : { bgcolor: brand.sidebarHover, color: brand.ink },
             '&:focus-visible': { outline: `2px solid ${brand.accent}`, outlineOffset: 1 },
-            '& .MuiSvgIcon-root': { fontSize: 22 },
+            // Same icon size and weight as the plain links in the collapsed rail.
+            '& .MuiSvgIcon-root': {
+              fontSize: 20,
+              opacity: selected || expanded ? 1 : 0.72,
+              color: selected || expanded ? brand.accent : 'inherit',
+            },
           }}
         >
           {icon}

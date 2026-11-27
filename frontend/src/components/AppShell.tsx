@@ -26,6 +26,7 @@ import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded'
 import { brand, layout } from '../theme'
+import LogoMark from './ui/LogoMark'
 import { api } from '../api'
 import ChangePasswordDialog from './ChangePasswordDialog'
 import {
@@ -149,28 +150,6 @@ const SIDEBAR_COLLAPSED = layout.sidebarCollapsedWidth
 const NAV_ROW = layout.sidebarNavRow
 const NAV_MOTION = 'width 200ms cubic-bezier(0.2, 0, 0, 1)'
 
-function LogoMark({ size = 30 }: { size?: number }) {
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: 1,
-        display: 'grid',
-        placeItems: 'center',
-        bgcolor: brand.gold,
-        color: '#fff',
-        fontSize: size * 0.47,
-        fontWeight: 800,
-        letterSpacing: '-0.5px',
-        flexShrink: 0,
-      }}
-    >
-      A
-    </Box>
-  )
-}
-
 function navContainsActive(item: NavItem, active: string): boolean {
   if (item.id === active) return true
   return !!item.children?.some((c) => navContainsActive(c, active))
@@ -225,7 +204,7 @@ function NavButton({
         color: disabled ? brand.navMuted : selected ? brand.accentHover : brand.nav,
         opacity: disabled ? 0.55 : 1,
         bgcolor: selected ? brand.sidebarSelected : 'transparent',
-        fontWeight: selected ? 650 : 500,
+        fontWeight: selected ? 600 : nested ? 400 : 500,
         transition: 'background-color .12s ease, color .12s ease',
         '&::before': selected
           ? {
@@ -254,7 +233,7 @@ function NavButton({
           display: 'flex',
           color: selected ? brand.accent : 'inherit',
           opacity: selected ? 1 : 0.72,
-          '& .MuiSvgIcon-root': { fontSize: collapsed ? 20 : 16 },
+          '& .MuiSvgIcon-root': { fontSize: collapsed ? 20 : nested ? 16 : 18 },
         }}
       >
         {icon}
@@ -263,11 +242,13 @@ function NavButton({
         <>
           <Typography
             variant="body2"
+            noWrap
+            title={label}
             sx={{
-              fontWeight: selected ? 650 : 500,
+              fontWeight: selected ? 600 : nested ? 400 : 500,
               flexGrow: 1,
-              fontSize: nested ? '0.75rem' : '0.8125rem',
-              letterSpacing: '-0.01em',
+              minWidth: 0,
+              fontSize: nested ? '0.8125rem' : '0.875rem',
               color: 'inherit',
             }}
           >
@@ -361,12 +342,14 @@ function NestedNavGroup({
           '&:hover': { bgcolor: brand.sidebarHover, color: brand.ink },
         }}
       >
-        <Box sx={{ display: 'flex', color: selfActive || childActive ? brand.accent : 'inherit', opacity: 0.85, '& .MuiSvgIcon-root': { fontSize: 14 } }}>
+        <Box sx={{ display: 'flex', color: selfActive || childActive ? brand.accent : 'inherit', opacity: 0.85, '& .MuiSvgIcon-root': { fontSize: 16 } }}>
           {item.icon}
         </Box>
         <Typography
           variant="body2"
-          sx={{ fontWeight: 650, flexGrow: 1, fontSize: '0.75rem', letterSpacing: '-0.01em' }}
+          noWrap
+          title={item.label}
+          sx={{ fontWeight: 400, flexGrow: 1, minWidth: 0, fontSize: '0.8125rem' }}
         >
           {item.label}
         </Typography>
@@ -584,10 +567,10 @@ export default function AppShell({
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
               <Typography
                 sx={{
-                  fontWeight: 700,
-                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  fontSize: '0.9375rem',
                   lineHeight: 1.2,
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.01em',
                   color: brand.ink,
                 }}
               >
@@ -664,6 +647,9 @@ export default function AppShell({
             flexGrow: 1,
             overflow: 'auto',
             overflowX: 'hidden',
+            // Hidden track: a 15px scrollbar would truncate the longest labels ("Compliance Assessment").
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
           }}
           role="list"
         >
@@ -701,6 +687,7 @@ export default function AppShell({
                       width: '100%',
                       px: 1.1,
                       py: 0.75,
+                      minHeight: NAV_ROW,
                       border: 0,
                       borderRadius: 1,
                       textAlign: 'left',
@@ -712,12 +699,14 @@ export default function AppShell({
                       '&:focus-visible': { outline: `2px solid ${brand.accent}`, outlineOffset: 1 },
                     }}
                   >
-                    <Box sx={{ display: 'flex', color: settingsChildActive ? brand.accent : 'inherit', opacity: 0.85 }}>
+                    <Box sx={{ display: 'flex', color: settingsChildActive ? brand.accent : 'inherit', opacity: 0.85, '& .MuiSvgIcon-root': { fontSize: 18 } }}>
                       {item.icon}
                     </Box>
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 650, flexGrow: 1, fontSize: '0.8125rem', letterSpacing: '-0.01em' }}
+                      noWrap
+                      title={item.label}
+                      sx={{ fontWeight: 500, flexGrow: 1, minWidth: 0, fontSize: '0.875rem' }}
                     >
                       {item.label}
                     </Typography>
@@ -786,7 +775,8 @@ export default function AppShell({
                             </Box>
                             <Typography
                               variant="body2"
-                              sx={{ fontWeight: 650, flexGrow: 1, fontSize: '0.75rem', letterSpacing: '-0.01em' }}
+                              noWrap
+                              sx={{ fontWeight: 400, flexGrow: 1, minWidth: 0, fontSize: '0.8125rem' }}
                             >
                               Modules
                             </Typography>

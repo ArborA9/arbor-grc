@@ -117,7 +117,7 @@ const successMain = semantic.risk.low
 const successDark = '#166534'
 
 const INPUT_HEIGHT = 32
-const SIDEBAR_WIDTH_PX = 232
+const SIDEBAR_WIDTH_PX = 264
 const SIDEBAR_COLLAPSED_WIDTH_PX = 64
 const SIDEBAR_NAV_ROW_PX = 40
 const TOPBAR_HEIGHT_PX = 56
